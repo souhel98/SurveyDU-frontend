@@ -8,6 +8,7 @@ export function generateStaticParams() {
   ]
 }
 
-export default function SurveyParticipationPage({ params }: { params: { id: string } }) {
+// Next.js dynamic route page for /surveys/[id]
+export default function Page({ params }: { params: { id: string } }) {
   return <SurveyParticipation surveyId={params.id} />
 }
