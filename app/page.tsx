@@ -1,15 +1,60 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { BookOpen, ChevronRight, GraduationCap, BarChart2, MessageSquare, Award } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import Image from "next/image";
+import Image from "next/image"
+import { AuthService } from "@/lib/services/auth-service"
+
 export default function LandingPage() {
 const router = useRouter()
 const [isMenuOpen, setIsMenuOpen] = useState(false)
+const [isLoading, setIsLoading] = useState(true)
+
+// Check authentication and redirect if logged in
+// If user is already logged in, they will be automatically redirected to their dashboard
+useEffect(() => {
+  const checkAuthAndRedirect = () => {
+    try {
+      // Check if user is authenticated
+      if (AuthService.isAuthenticated()) {
+        const user = AuthService.getCurrentUser()
+        if (user) {
+          // Redirect based on user type
+          if (user.userType === 'Admin') {
+            router.replace('/dashboard/admin')
+          } else if (user.userType === 'Teacher') {
+            router.replace('/dashboard/teacher')
+          } else {
+            router.replace('/dashboard/student')
+          }
+          return
+        }
+      }
+      setIsLoading(false)
+    } catch (error) {
+      console.error('Auth check error:', error)
+      setIsLoading(false)
+    }
+  }
+
+  checkAuthAndRedirect()
+}, [router])
+
+// Show loading spinner while checking authentication
+if (isLoading) {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+      <div className="flex flex-col items-center">
+        <div className="inline-block h-16 w-16 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent shadow-lg mb-6" />
+        <span className="text-gray-600 text-lg">Checking authentication...</span>
+      </div>
+    </div>
+  )
+}
 
 return (
     <div className="min-h-screen flex flex-col">
@@ -312,14 +357,12 @@ return (
             Join our university survey platform today and be part of improving the educational experience.
         </p>
         <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link href="/auth/student/signup">
             <Button
-            onClick={() => router.push("/role-selection")}
+            onClick={() => router.push("/auth/student/signup")}
             className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-6 text-lg"
             >
             Create Account
             </Button>
-            </Link>
             <Button
             variant="outline"
             onClick={() => router.push("/auth/signin")}
