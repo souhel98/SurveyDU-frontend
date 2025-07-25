@@ -72,12 +72,8 @@ export const API_CONFIG = {
 
 // Environment-specific configuration
 export const getApiConfig = () => {
-  const isDevelopment = process.env.NODE_ENV === 'development';
-  
   return {
     ...API_CONFIG,
-    BASE_URL: isDevelopment 
-      ? process.env.NEXT_PUBLIC_API_URL || API_CONFIG.BASE_URL
-      : API_CONFIG.BASE_URL,
+    BASE_URL: process.env.NEXT_PUBLIC_API_URL || API_CONFIG.BASE_URL,
   };
 }; 
