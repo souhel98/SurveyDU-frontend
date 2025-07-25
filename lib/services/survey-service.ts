@@ -29,7 +29,7 @@ export class SurveyService {
   // Teacher: Create survey with questions
   static async createSurveyWithQuestions(surveyData: any): Promise<any> {
     try {
-      const response = await api.post('http://mhhmd6g-001-site1.rtempurl.com/api/Teacher/surveys/with-questions', surveyData);
+      const response = await api.post('/Teacher/surveys/with-questions', surveyData);
       return response.data;
     } catch (error: any) {
       console.error('Error creating teacher survey with questions:', error);
@@ -196,7 +196,7 @@ export class SurveyService {
   // Fetch all teacher surveys
   static async getTeacherSurveys(): Promise<any[]> {
     try {
-      const response = await api.get('http://mhhmd6g-001-site1.rtempurl.com/api/Teacher/surveys');
+      const response = await api.get('/Teacher/surveys');
       if (response.data && response.data.success && Array.isArray(response.data.data)) {
         return response.data.data;
       } else {

@@ -5,7 +5,7 @@ export class RegistrationService {
   // Register student
   static async registerStudent(studentData: any): Promise<any> {
     try {
-      const response = await api.post('http://mhhmd6g-001-site1.rtempurl.com/api/Auth/register/student', studentData);
+      const response = await api.post('/Auth/register/student', studentData);
       return response.data;
     } catch (error: any) {
       if (error.response) {
@@ -105,7 +105,7 @@ export class RegistrationService {
 
   // Fetch all departments
   static async getDepartments(): Promise<{ id: number; name: string }[]> {
-    const response = await api.get('http://mhhmd6g-001-site1.rtempurl.com/api/Department');
+    const response = await api.get('/Department');
     return response.data;
   }
 } 

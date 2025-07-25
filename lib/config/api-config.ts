@@ -1,7 +1,7 @@
 // API Configuration
 export const API_CONFIG = {
   // Base URL for the ASP.NET Core backend
-  BASE_URL: 'http://mhhmd6g-001-site1.rtempurl.com/api',
+  BASE_URL: 'https://mhhmd6g-001-site1.rtempurl.com/api',
   
   // Request timeout in milliseconds
   TIMEOUT: 10000,
@@ -72,8 +72,20 @@ export const API_CONFIG = {
 
 // Environment-specific configuration
 export const getApiConfig = () => {
+  // Check if we're in development mode
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  
+  // For development, allow HTTP if explicitly set
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || API_CONFIG.BASE_URL;
+  
+  // If in development and no explicit API URL is set, try to use HTTP for local backend
+  if (isDevelopment && !process.env.NEXT_PUBLIC_API_URL) {
+    // You can uncomment the line below if you have a local HTTP backend running
+    // return { ...API_CONFIG, BASE_URL: 'http://localhost:5000/api' };
+  }
+  
   return {
     ...API_CONFIG,
-    BASE_URL: process.env.NEXT_PUBLIC_API_URL || API_CONFIG.BASE_URL,
+    BASE_URL: baseUrl,
   };
 }; 

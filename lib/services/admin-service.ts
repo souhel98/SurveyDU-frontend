@@ -1,6 +1,6 @@
 import axios from "../api/axios";
 
-const API_BASE = "http://mhhmd6g-001-site1.rtempurl.com/api/Admin";
+const API_BASE = "/Admin";
 
 export const AdminService = {
   async getDashboard() {

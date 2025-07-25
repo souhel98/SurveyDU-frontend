@@ -7,19 +7,21 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { getApiConfig } from "@/lib/config/api-config";
 
 export default function ForgotPassword() {
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const apiConfig = getApiConfig();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setSuccess(false);
     try {
-      const response = await fetch("http://mhhmd6g-001-site1.rtempurl.com/api/Auth/forgot-password", {
+      const response = await fetch(`${apiConfig.BASE_URL}/Auth/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),

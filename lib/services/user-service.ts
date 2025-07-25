@@ -203,7 +203,7 @@ export class UserService {
   // Get student points balance
   static async getStudentPointsBalance(): Promise<number> {
     try {
-      const response = await api.get('http://mhhmd6g-001-site1.rtempurl.com/api/Student/points/balance');
+      const response = await api.get('/Student/points/balance');
       if (response.data && response.data.success && response.data.data && typeof response.data.data.balance === 'number') {
         return response.data.data.balance;
       } else {
