@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import React, { useState, useEffect, useMemo, ChangeEvent } from "react"
 import { SurveyService } from "@/lib/services/survey-service"
+import { DepartmentService } from "@/lib/services/department-service"
 import { useToast } from "@/hooks/use-toast"
 import {
   PlusCircle,
@@ -23,6 +24,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { ACADEMIC_YEARS, TARGET_GENDER_SELECT } from "@/lib/constants"
+import { Progress } from "@/components/ui/progress"
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 
 export default function TeacherDashboard() {
   const { toast } = useToast();
@@ -30,6 +34,7 @@ export default function TeacherDashboard() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [departments, setDepartments] = useState<{ id: number; name: string }[]>([]);
 
   useEffect(() => {
     setLoading(true);
@@ -42,13 +47,15 @@ export default function TeacherDashboard() {
         toast({ title: err.message || "Failed to fetch surveys", variant: "destructive" });
         setLoading(false);
       });
+    DepartmentService.getDepartments()
+      .then((data) => setDepartments(data))
+      .catch(() => setDepartments([]));
   }, []);
 
   const filteredSurveys = useMemo(() => {
-    return surveys.filter((survey) => {
+    return surveys.filter((survey: any) => {
       const matchesSearch =
-        survey.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (survey.targetAudience ? survey.targetAudience.toLowerCase().includes(searchQuery.toLowerCase()) : "");
+        survey.title.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus =
         statusFilter === "all" || survey.status === statusFilter;
       return matchesSearch && matchesStatus;
@@ -59,7 +66,7 @@ export default function TeacherDashboard() {
 
   useEffect(() => {
     const newFormatted: {[id: string]: {createdAt: string, expiresAt: string}} = {};
-    filteredSurveys.forEach(survey => {
+    filteredSurveys.forEach((survey: any) => {
       newFormatted[survey.surveyId || survey.id] = {
         createdAt: survey.startDate ? new Date(survey.startDate).toLocaleDateString() : "-",
         expiresAt: survey.endDate ? new Date(survey.endDate).toLocaleDateString() : "-"
@@ -81,7 +88,7 @@ export default function TeacherDashboard() {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500">Total Responses</p>
-                <h3 className="text-2xl font-bold">{surveys.reduce((acc, s) => acc + (s.currentParticipants || 0), 0)}</h3>
+                <h3 className="text-2xl font-bold">{surveys.reduce((acc: number, s: any) => acc + (s.currentParticipants || 0), 0)}</h3>
               </div>
             </CardContent>
           </Card>
@@ -105,7 +112,7 @@ export default function TeacherDashboard() {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500">Active Surveys</p>
-                <h3 className="text-2xl font-bold">{surveys.filter(s => s.status === 'active').length}</h3>
+                <h3 className="text-2xl font-bold">{surveys.filter((s: any) => s.status === 'active').length}</h3>
               </div>
             </CardContent>
           </Card>
@@ -120,7 +127,7 @@ export default function TeacherDashboard() {
                 placeholder="Search surveys..."
                 className="pl-10"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
               />
             </div>
             <div className="w-full md:w-64">
@@ -156,7 +163,9 @@ export default function TeacherDashboard() {
                       <th className="text-left py-3 px-4 font-medium text-gray-500">Title</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-500">Status</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-500">Participants</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-500">Teacher</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Target Gender</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Academic Years</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Departments</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-500">Created</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-500">Expires</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-500">Points Reward</th>
@@ -164,8 +173,11 @@ export default function TeacherDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredSurveys.map((survey) => (
-                      <tr key={survey.surveyId} className="border-b hover:bg-gray-50">
+                    {filteredSurveys.map((survey: any, idx: number) => (
+                      <tr
+                        key={survey.surveyId}
+                        className={`${idx === filteredSurveys.length - 1 ? '' : 'border-b'} hover:bg-gray-50`}
+                      >
                         <td className="py-3 px-4">
                           <div className="font-medium">{survey.title}</div>
                           <div className="text-sm text-gray-500">{survey.description}</div>
@@ -182,39 +194,54 @@ export default function TeacherDashboard() {
                             {survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
                           </Badge>
                         </td>
-                        <td className="py-3 px-4">{survey.currentParticipants} / {survey.requiredParticipants}</td>
-                        <td className="py-3 px-4">{survey.teacherName}</td>
+                        <td className="py-3 px-4">
+                          <div className="font-medium">{survey.currentParticipants} / {survey.requiredParticipants}</div>
+                          <Progress value={survey.requiredParticipants ? (survey.currentParticipants / survey.requiredParticipants) * 100 : 0} className="h-2 mt-1 w-32" />
+                        </td>
+                        <td className="py-3 px-4">{
+                          TARGET_GENDER_SELECT.find(g => g.value.toLowerCase() === String(survey.targetGender).toLowerCase())?.label || survey.targetGender
+                        }</td>
+                        <td className="py-3 px-4">{
+                          Array.isArray(survey.targetAcademicYears)
+                            ? survey.targetAcademicYears.map((year: number) => {
+                                const found = ACADEMIC_YEARS.find(y => y.value === year);
+                                return found ? found.label : year;
+                              }).join(", ")
+                            : "-"
+                        }</td>
+                        <td className="py-3 px-4">{
+                          Array.isArray(survey.targetDepartmentIds)
+                            ? survey.targetDepartmentIds.map((id: number) => {
+                                const found = departments.find(dep => dep.id === id);
+                                return found ? found.name : id;
+                              }).join(", ")
+                            : "-"
+                        }</td>
                         <td className="py-3 px-4">{formattedDates[survey.surveyId]?.createdAt || "-"}</td>
                         <td className="py-3 px-4">{formattedDates[survey.surveyId]?.expiresAt || "-"}</td>
                         <td className="py-3 px-4">{survey.pointsReward}</td>
                         <td className="py-3 px-4 text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
+                          <Popover>
+                            <PopoverTrigger asChild>
                               <Button variant="ghost" size="icon">
                                 <MoreVertical className="h-4 w-4" />
                               </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem asChild>
-                                <Link href={`/surveys/${survey.surveyId}/analytics`}>
-                                <BarChart2 className="h-4 w-4 mr-2" />
-                                View Results
-                                </Link>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Copy className="h-4 w-4 mr-2" />
-                                Duplicate
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="text-red-600">
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                            </PopoverTrigger>
+                            <PopoverContent align="end" className="w-48 p-2">
+                              <button className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded text-left">
+                                <Edit className="h-4 w-4 mr-2" /> Edit
+                              </button>
+                              <Link href={`/surveys/${survey.surveyId}/analytics`} className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded">
+                                <BarChart2 className="h-4 w-4 mr-2" /> View Results
+                              </Link>
+                              <button className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded text-left">
+                                <Copy className="h-4 w-4 mr-2" /> Duplicate
+                              </button>
+                              <button className="flex items-center w-full px-2 py-2 hover:bg-red-100 text-red-600 rounded text-left">
+                                <Trash2 className="h-4 w-4 mr-2" /> Delete
+                              </button>
+                            </PopoverContent>
+                          </Popover>
                         </td>
                       </tr>
                     ))}
