@@ -7,6 +7,57 @@ body {
 }
 
 @layer utilities {
+  @reference bg-background {
+    background-color: hsl(var(--background));
+  }
+  @reference text-foreground {
+    color: hsl(var(--foreground));
+  }
+  @reference border-input {
+    border-color: hsl(var(--input));
+  }
+  @reference bg-card {
+    background-color: hsl(var(--card));
+  }
+  @reference text-card-foreground {
+    color: hsl(var(--card-foreground));
+  }
+  @reference bg-popover {
+    background-color: hsl(var(--popover));
+  }
+  @reference text-popover-foreground {
+    color: hsl(var(--popover-foreground));
+  }
+  @reference bg-primary {
+    background-color: #19P394;
+  }
+  @reference text-primary-foreground {
+    color: hsl(var(--primary-foreground));
+  }
+  @reference bg-secondary {
+    background-color: hsl(var(--secondary));
+  }
+  @reference text-secondary-foreground {
+    color: hsl(var(--secondary-foreground));
+  }
+  @reference bg-muted {
+    background-color: hsl(var(--muted));
+  }
+  @reference text-muted-foreground {
+    color: hsl(var(--muted-foreground));
+  }
+  @reference bg-accent {
+    background-color: #FF9814;
+  }
+  @reference text-accent-foreground {
+    color: hsl(var(--accent-foreground));
+  }
+  @reference bg-destructive {
+    background-color: hsl(var(--destructive));
+  }
+  @reference text-destructive-foreground {
+    color: hsl(var(--destructive-foreground));
+  }
   .text-balance {
     text-wrap: balance;
   }
@@ -86,9 +137,7 @@ body {
 
 @layer base {
   * {
-    @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
   }
 }

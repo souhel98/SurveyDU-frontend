@@ -392,18 +392,8 @@ export default function SurveyCreator() {
 
   useEffect(() => {
     DepartmentService.getDepartments().then((data) => {
-      if (Array.isArray(data)) {
-        // Filter out departments with empty or duplicate ids
-        const filtered = data
-          .filter((dept: { id: number; name: string }) => dept.id && dept.name)
-          .filter((dept: { id: number; name: string }, idx: number, arr: { id: number; name: string }[]) => arr.findIndex((d: { id: number }) => d.id === dept.id) === idx);
-        setDepartments(filtered);
-      } else if (data && Array.isArray(data.data)) {
-        const filtered = data.data
-          .filter((dept: { id: number; name: string }) => dept.id && dept.name)
-          .filter((dept: { id: number; name: string }, idx: number, arr: { id: number; name: string }[]) => arr.findIndex((d: { id: number }) => d.id === dept.id) === idx);
-        setDepartments(filtered);
-      }
+      if (Array.isArray(data)) setDepartments(data);
+      else if (data && Array.isArray(data.data)) setDepartments(data.data);
     });
   }, []);
 
