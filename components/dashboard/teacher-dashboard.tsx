@@ -16,6 +16,8 @@ import {
   Trash2,
   MoreVertical,
   User,
+  FileText,
+  Play,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -27,6 +29,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ACADEMIC_YEARS, TARGET_GENDER_SELECT } from "@/lib/constants"
 import { Progress } from "@/components/ui/progress"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 export default function TeacherDashboard() {
   const { toast } = useToast();
@@ -35,6 +38,8 @@ export default function TeacherDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [departments, setDepartments] = useState<{ id: number; name: string }[]>([]);
+  const [duplicatingSurveyId, setDuplicatingSurveyId] = useState<number | null>(null);
+  const [publishingSurveyId, setPublishingSurveyId] = useState<number | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -74,6 +79,56 @@ export default function TeacherDashboard() {
     });
     setFormattedDates(newFormatted);
   }, [filteredSurveys]);
+
+  const handleDuplicateSurvey = async (surveyId: number) => {
+    try {
+      setDuplicatingSurveyId(surveyId);
+      const duplicatedSurvey = await SurveyService.duplicateTeacherSurvey(surveyId);
+      
+      toast({
+        title: "Success",
+        description: "Survey duplicated successfully!",
+      })
+      
+      // Refresh the surveys list
+      const updatedSurveys = await SurveyService.getTeacherSurveys();
+      setSurveys(updatedSurveys);
+      
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to duplicate survey",
+        variant: "destructive"
+      })
+    } finally {
+      setDuplicatingSurveyId(null);
+    }
+  };
+
+  const handlePublishSurvey = async (surveyId: number) => {
+    try {
+      setPublishingSurveyId(surveyId);
+      await SurveyService.publishTeacherSurvey(surveyId);
+      
+      toast({
+        title: "Success",
+        description: "Survey published successfully!",
+      })
+      
+      // Refresh the surveys list
+      const updatedSurveys = await SurveyService.getTeacherSurveys();
+      setSurveys(updatedSurveys);
+      
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to publish survey",
+        variant: "destructive"
+      })
+    } finally {
+      setPublishingSurveyId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -179,20 +234,53 @@ export default function TeacherDashboard() {
                         className={`${idx === filteredSurveys.length - 1 ? '' : 'border-b'} hover:bg-gray-50`}
                       >
                         <td className="py-3 px-4">
-                          <div className="font-medium">{survey.title}</div>
-                          <div className="text-sm text-gray-500">{survey.description}</div>
+                          <Link href={`/surveys/${survey.surveyId}/view`} className="block hover:bg-gray-50 -m-2 p-2 rounded transition-colors">
+                            <div className="font-medium text-emerald-600 hover:text-emerald-700 cursor-pointer">{survey.title}</div>
+                            <div className="text-sm text-gray-500">{survey.description}</div>
+                          </Link>
                         </td>
                         <td className="py-3 px-4">
-                          <Badge
-                            variant="outline"
-                            className={`
-                              ${survey.status === "active" ? "bg-green-50 text-green-600 border-green-200" : ""}
-                              ${survey.status === "draft" ? "bg-gray-50 text-gray-600 border-gray-200" : ""}
-                              ${survey.status === "expired" ? "bg-red-50 text-red-600 border-red-200" : ""}
-                            `}
-                          >
-                            {survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
-                          </Badge>
+                          {survey.status === "draft" ? (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="relative group">
+                                    <Badge
+                                      variant="outline"
+                                      className="bg-gray-50 text-gray-600 border-gray-200 cursor-pointer group-hover:bg-gray-100 transition-colors"
+                                    >
+                                      {survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
+                                    </Badge>
+                                    <div className="absolute top-full left-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+                                      <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-2 min-w-[120px]">
+                                        <button
+                                          className="flex items-center w-full px-2 py-1 text-sm text-green-600 hover:bg-green-50 rounded transition-colors"
+                                          onClick={() => handlePublishSurvey(survey.surveyId)}
+                                          disabled={publishingSurveyId === survey.surveyId}
+                                        >
+                                          <Play className="h-3 w-3 mr-2" />
+                                          {publishingSurveyId === survey.surveyId ? "Publishing..." : "Publish"}
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Click to publish this draft survey</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          ) : (
+                            <Badge
+                              variant="outline"
+                              className={`
+                                ${survey.status === "active" ? "bg-green-50 text-green-600 border-green-200" : ""}
+                                ${survey.status === "expired" ? "bg-red-50 text-red-600 border-red-200" : ""}
+                              `}
+                            >
+                              {survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
+                            </Badge>
+                          )}
                         </td>
                         <td className="py-3 px-4">
                           <div className="font-medium">{survey.currentParticipants} / {survey.requiredParticipants}</div>
@@ -228,14 +316,34 @@ export default function TeacherDashboard() {
                               </Button>
                             </PopoverTrigger>
                             <PopoverContent align="end" className="w-48 p-2">
-                              <button className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded text-left">
-                                <Edit className="h-4 w-4 mr-2" /> Edit
-                              </button>
+                              <Link href={`/surveys/${survey.surveyId}/view`} className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded">
+                                <FileText className="h-4 w-4 mr-2" /> View
+                              </Link>
+                              {survey.status === 'draft' && (
+                                <button className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded text-left">
+                                  <Edit className="h-4 w-4 mr-2" /> Edit
+                                </button>
+                              )}
                               <Link href={`/surveys/${survey.surveyId}/analytics`} className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded">
                                 <BarChart2 className="h-4 w-4 mr-2" /> View Results
                               </Link>
-                              <button className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded text-left">
-                                <Copy className="h-4 w-4 mr-2" /> Duplicate
+                              {survey.status === 'draft' && (
+                                <button 
+                                  className="flex items-center w-full px-2 py-2 hover:bg-green-100 text-green-600 rounded text-left"
+                                  onClick={() => handlePublishSurvey(survey.surveyId)}
+                                  disabled={publishingSurveyId === survey.surveyId}
+                                >
+                                  <Play className="h-4 w-4 mr-2" /> 
+                                  {publishingSurveyId === survey.surveyId ? "Publishing..." : "Publish"}
+                                </button>
+                              )}
+                              <button 
+                                className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded text-left"
+                                onClick={() => handleDuplicateSurvey(survey.surveyId)}
+                                disabled={duplicatingSurveyId === survey.surveyId}
+                              >
+                                <Copy className="h-4 w-4 mr-2" /> 
+                                {duplicatingSurveyId === survey.surveyId ? "Duplicating..." : "Duplicate"}
                               </button>
                               <button className="flex items-center w-full px-2 py-2 hover:bg-red-100 text-red-600 rounded text-left">
                                 <Trash2 className="h-4 w-4 mr-2" /> Delete

@@ -1,0 +1,492 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
+import { Separator } from "@/components/ui/separator"
+import { 
+  ArrowLeft, 
+  Calendar, 
+  Clock, 
+  Users, 
+  Award, 
+  Target, 
+  GraduationCap, 
+  Building,
+  CheckCircle,
+  Circle,
+  FileText,
+  BarChart2,
+  Edit,
+  Copy,
+  Trash2
+} from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+import { SurveyService } from "@/lib/services/survey-service"
+import { DepartmentService } from "@/lib/services/department-service"
+import { ACADEMIC_YEARS, TARGET_GENDER_SELECT } from "@/lib/constants"
+import { motion } from "framer-motion"
+
+interface SurveyViewProps {
+  surveyId?: string | number;
+}
+
+interface SurveyData {
+  surveyId: number;
+  title: string;
+  description: string;
+  pointsReward: number;
+  startDate: string;
+  endDate: string;
+  status: string;
+  ownerName: string;
+  requiredParticipants: number;
+  currentParticipants: number;
+  targetGender: string;
+  targetAcademicYears: number[];
+  targetDepartmentIds: number[];
+  questions: {
+    questionId: number;
+    questionText: string;
+    questionType: string;
+    isRequired: boolean;
+    questionOrder: number;
+    options: {
+      optionId: number;
+      optionText: string;
+      optionOrder: number;
+    }[];
+  }[];
+}
+
+export default function SurveyView({ surveyId }: SurveyViewProps) {
+  const router = useRouter()
+  const { toast } = useToast()
+  const [survey, setSurvey] = useState<SurveyData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [duplicating, setDuplicating] = useState(false)
+  const [departments, setDepartments] = useState<{ id: number; name: string }[]>([])
+
+  useEffect(() => {
+    if (!surveyId) return
+
+    const fetchSurveyData = async () => {
+      try {
+        setLoading(true)
+        const data = await SurveyService.getTeacherSurveyById(Number(surveyId))
+        setSurvey(data)
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to fetch survey details",
+          variant: "destructive"
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    const fetchDepartments = async () => {
+      try {
+        const deps = await DepartmentService.getDepartments()
+        setDepartments(deps)
+      } catch (error) {
+        console.error("Failed to fetch departments:", error)
+      }
+    }
+
+    fetchSurveyData()
+    fetchDepartments()
+  }, [surveyId, toast])
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      active: { color: "bg-green-50 text-green-600 border-green-200", label: "Active" },
+      draft: { color: "bg-gray-50 text-gray-600 border-gray-200", label: "Draft" },
+      expired: { color: "bg-red-50 text-red-600 border-red-200", label: "Expired" },
+      completed: { color: "bg-blue-50 text-blue-600 border-blue-200", label: "Completed" }
+    }
+    
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft
+    return (
+      <Badge variant="outline" className={config.color}>
+        {config.label}
+      </Badge>
+    )
+  }
+
+  const getQuestionTypeIcon = (type: string) => {
+    switch (type) {
+      case 'single_answer':
+        return <Circle className="h-4 w-4" />
+      case 'multiple_choice':
+        return <CheckCircle className="h-4 w-4" />
+      case 'open_text':
+        return <FileText className="h-4 w-4" />
+      case 'percentage':
+        return <BarChart2 className="h-4 w-4" />
+      default:
+        return <FileText className="h-4 w-4" />
+    }
+  }
+
+  const getQuestionTypeLabel = (type: string) => {
+    switch (type) {
+      case 'single_answer':
+        return 'Single Answer'
+      case 'multiple_choice':
+        return 'Multiple Choice'
+      case 'open_text':
+        return 'Open Text'
+      case 'percentage':
+        return 'Percentage'
+      default:
+        return type
+    }
+  }
+
+  const handleDuplicateSurvey = async () => {
+    if (!survey) return
+    
+    try {
+      setDuplicating(true)
+      const duplicatedSurvey = await SurveyService.duplicateTeacherSurvey(survey.surveyId)
+      
+      toast({
+        title: "Success",
+        description: "Survey duplicated successfully! Redirecting to the new survey...",
+      })
+      
+      // Redirect to the new survey view page
+      setTimeout(() => {
+        router.push(`/surveys/${duplicatedSurvey.surveyId}/view`)
+      }, 1500)
+      
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to duplicate survey",
+        variant: "destructive"
+      })
+    } finally {
+      setDuplicating(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent mb-4" />
+          <p className="text-gray-600">Loading survey details...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!survey) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Survey Not Found</h2>
+          <p className="text-gray-600 mb-4">The survey you're looking for doesn't exist or you don't have permission to view it.</p>
+          <Button onClick={() => router.back()}>Go Back</Button>
+        </div>
+      </div>
+    )
+  }
+
+  const completionRate = survey.requiredParticipants > 0 
+    ? (survey.currentParticipants / survey.requiredParticipants) * 100 
+    : 0
+
+  const isExpired = new Date(survey.endDate) < new Date()
+  const isActive = survey.status === 'active' && !isExpired
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.back()}
+                className="flex items-center space-x-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>Back</span>
+              </Button>
+              <Separator orientation="vertical" className="h-6" />
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">{survey.title}</h1>
+                <p className="text-sm text-gray-500">Survey Details</p>
+              </div>
+            </div>
+                         <div className="flex items-center space-x-2">
+               <Button
+                 variant="outline"
+                 size="sm"
+                 onClick={() => router.push(`/surveys/${survey.surveyId}/analytics`)}
+               >
+                 <BarChart2 className="h-4 w-4 mr-2" />
+                 View Analytics
+               </Button>
+               {survey.status === 'draft' && (
+                 <Button
+                   variant="outline"
+                   size="sm"
+                   onClick={() => router.push(`/dashboard/teacher/create-survey?edit=${survey.surveyId}`)}
+                 >
+                   <Edit className="h-4 w-4 mr-2" />
+                   Edit
+                 </Button>
+               )}
+             </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Survey Overview */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <FileText className="h-5 w-5" />
+                  <span>Survey Overview</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">{survey.title}</h3>
+                  <p className="text-gray-600">{survey.description}</p>
+                </div>
+                
+                <div className="flex items-center space-x-4">
+                  {getStatusBadge(survey.status)}
+                  <div className="flex items-center space-x-1 text-sm text-gray-500">
+                    <Users className="h-4 w-4" />
+                    <span>Created by {survey.ownerName}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Questions */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <FileText className="h-5 w-5" />
+                  <span>Questions ({survey.questions.length})</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {survey.questions.map((question, index) => (
+                    <motion.div
+                      key={question.questionId}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="border rounded-lg p-4"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center space-x-2">
+                          <span className="bg-emerald-100 text-emerald-600 px-2 py-1 rounded-full text-sm font-medium">
+                            Q{index + 1}
+                          </span>
+                          {getQuestionTypeIcon(question.questionType)}
+                          <span className="text-sm text-gray-500">
+                            {getQuestionTypeLabel(question.questionType)}
+                          </span>
+                          {question.isRequired && (
+                            <Badge variant="destructive" className="text-xs">Required</Badge>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <p className="text-gray-900 mb-3">{question.questionText}</p>
+                      
+                      {question.options && question.options.length > 0 && (
+                        <div className="space-y-2">
+                          {question.options.map((option) => (
+                            <div key={option.optionId} className="flex items-center space-x-2 text-sm text-gray-600">
+                              <div className="w-2 h-2 bg-gray-300 rounded-full" />
+                              <span>{option.optionText}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </motion.div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Survey Stats */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Survey Statistics</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Status</span>
+                  {getStatusBadge(survey.status)}
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Participants</span>
+                  <span className="font-medium">
+                    {survey.currentParticipants} / {survey.requiredParticipants}
+                  </span>
+                </div>
+                
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm text-gray-500">Completion Rate</span>
+                    <span className="text-sm font-medium">{completionRate.toFixed(1)}%</span>
+                  </div>
+                  <Progress value={completionRate} className="h-2" />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Points Reward</span>
+                  <div className="flex items-center space-x-1">
+                    <Award className="h-4 w-4 text-yellow-500" />
+                    <span className="font-medium">{survey.pointsReward}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Survey Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Survey Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Calendar className="h-4 w-4 text-gray-400" />
+                  <div>
+                    <p className="text-sm font-medium">Start Date</p>
+                    <p className="text-sm text-gray-500">
+                      {new Date(survey.startDate).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Clock className="h-4 w-4 text-gray-400" />
+                  <div>
+                    <p className="text-sm font-medium">End Date</p>
+                    <p className="text-sm text-gray-500">
+                      {new Date(survey.endDate).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Target className="h-4 w-4 text-gray-400" />
+                  <div>
+                    <p className="text-sm font-medium">Target Gender</p>
+                    <p className="text-sm text-gray-500">
+                      {TARGET_GENDER_SELECT.find(g => g.value === survey.targetGender)?.label || survey.targetGender}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start space-x-2">
+                  <GraduationCap className="h-4 w-4 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium">Academic Years</p>
+                    <p className="text-sm text-gray-500">
+                      {survey.targetAcademicYears.map(year => {
+                        const found = ACADEMIC_YEARS.find(y => y.value === year)
+                        return found ? found.label : year
+                      }).join(", ")}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start space-x-2">
+                  <Building className="h-4 w-4 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium">Departments</p>
+                    <p className="text-sm text-gray-500">
+                      {survey.targetDepartmentIds.map(id => {
+                        const found = departments.find(dep => dep.id === id)
+                        return found ? found.name : id
+                      }).join(", ")}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Actions */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => router.push(`/surveys/${survey.surveyId}/analytics`)}
+                >
+                  <BarChart2 className="h-4 w-4 mr-2" />
+                  View Analytics
+                </Button>
+                                 {survey.status === 'draft' && (
+                   <Button 
+                     className="w-full justify-start" 
+                     variant="outline"
+                     onClick={() => router.push(`/dashboard/teacher/create-survey?edit=${survey.surveyId}`)}
+                   >
+                     <Edit className="h-4 w-4 mr-2" />
+                     Edit Survey
+                   </Button>
+                 )}
+                                 <Button 
+                   className="w-full justify-start" 
+                   variant="outline"
+                   onClick={handleDuplicateSurvey}
+                   disabled={duplicating}
+                 >
+                   <Copy className="h-4 w-4 mr-2" />
+                   {duplicating ? "Duplicating..." : "Duplicate Survey"}
+                 </Button>
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => {
+                    // Copy survey URL to clipboard
+                    navigator.clipboard.writeText(`${window.location.origin}/surveys/${survey.surveyId}`)
+                    toast({
+                      title: "Link copied",
+                      description: "Survey link has been copied to clipboard",
+                    })
+                  }}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy Link
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+} 

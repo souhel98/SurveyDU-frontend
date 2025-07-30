@@ -207,4 +207,129 @@ export class SurveyService {
       throw new Error(error.message || 'Failed to fetch teacher surveys.');
     }
   }
+
+  // Get teacher survey by ID
+  static async getTeacherSurveyById(id: number): Promise<any> {
+    try {
+      const response = await api.get(`/Teacher/surveys/${id}`);
+      if (response.data && response.data.success) {
+        return response.data.data;
+      } else {
+        throw new Error(response.data?.message || 'Failed to fetch teacher survey.');
+      }
+    } catch (error: any) {
+      console.error('Error fetching teacher survey:', error);
+      
+      if (error.response?.status === 404) {
+        throw new Error('Survey not found.');
+      } else if (error.response?.status === 401) {
+        throw new Error('You are not authorized to view this survey. Please log in.');
+      } else if (error.response?.status >= 500) {
+        throw new Error('Server error. Please try again later.');
+      } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        throw new Error('Request timeout. Please check your internet connection and try again.');
+      } else if (!error.response) {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      } else {
+        throw new Error(error.response.data?.message || 'Failed to fetch survey. Please try again.');
+      }
+    }
+  }
+
+  // Duplicate teacher survey
+  static async duplicateTeacherSurvey(id: number): Promise<any> {
+    try {
+      // First, get the original survey data
+      const originalSurvey = await this.getTeacherSurveyById(id);
+      
+      // Map question types to typeId
+      const getTypeId = (questionType: string): number => {
+        switch (questionType) {
+          case 'multiple_choice': return 1;
+          case 'single_answer': return 2;
+          case 'open_text': return 3;
+          case 'percentage': return 4;
+          default: return 1;
+        }
+      };
+
+      // Prepare the duplicate data according to the API structure
+      const duplicateData = {
+        title: `${originalSurvey.title} (Copy)`,
+        description: originalSurvey.description,
+        targetAcademicYears: originalSurvey.targetAcademicYears,
+        targetDepartmentIds: originalSurvey.targetDepartmentIds,
+        targetGender: originalSurvey.targetGender,
+        requiredParticipants: originalSurvey.requiredParticipants,
+        pointsReward: originalSurvey.pointsReward,
+        startDate: originalSurvey.startDate,
+        endDate: originalSurvey.endDate,
+        publishImmediately: false, // Always create as draft
+        questions: originalSurvey.questions.map((question: any) => ({
+          questionText: question.questionText,
+          typeId: getTypeId(question.questionType),
+          isRequired: question.isRequired,
+          questionOrder: question.questionOrder,
+          options: question.options?.map((option: any) => ({
+            optionText: option.optionText,
+            optionOrder: option.optionOrder
+          })) || []
+        }))
+      };
+
+      // Create the duplicate survey
+      const response = await api.post('/Teacher/surveys/with-questions', duplicateData);
+      if (response.data && response.data.success) {
+        return response.data.data;
+      } else {
+        throw new Error(response.data?.message || 'Failed to duplicate survey.');
+      }
+    } catch (error: any) {
+      console.error('Error duplicating teacher survey:', error);
+      
+      if (error.response?.status === 400) {
+        throw new Error(error.response.data?.message || 'Invalid survey data. Please check your input.');
+      } else if (error.response?.status === 401) {
+        throw new Error('You are not authorized to duplicate surveys. Please log in.');
+      } else if (error.response?.status >= 500) {
+        throw new Error('Server error. Please try again later.');
+      } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        throw new Error('Request timeout. Please check your internet connection and try again.');
+      } else if (!error.response) {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      } else {
+        throw new Error(error.response.data?.message || 'Failed to duplicate survey. Please try again.');
+      }
+    }
+  }
+
+  // Publish teacher survey (change from draft to active)
+  static async publishTeacherSurvey(id: number): Promise<any> {
+    try {
+      const response = await api.post(`/Teacher/surveys/${id}/publish`);
+      if (response.data && response.data.success) {
+        return response.data;
+      } else {
+        throw new Error(response.data?.message || 'Failed to publish survey.');
+      }
+    } catch (error: any) {
+      console.error('Error publishing teacher survey:', error);
+      
+      if (error.response?.status === 404) {
+        throw new Error('Survey not found.');
+      } else if (error.response?.status === 400) {
+        throw new Error(error.response.data?.message || 'Survey cannot be published. Please check the survey details.');
+      } else if (error.response?.status === 401) {
+        throw new Error('You are not authorized to publish this survey. Please log in.');
+      } else if (error.response?.status >= 500) {
+        throw new Error('Server error. Please try again later.');
+      } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        throw new Error('Request timeout. Please check your internet connection and try again.');
+      } else if (!error.response) {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      } else {
+        throw new Error(error.response.data?.message || 'Failed to publish survey. Please try again.');
+      }
+    }
+  }
 } 
