@@ -8,7 +8,7 @@ A full-stack survey platform for universities, built with Next.js 14 (App Router
 - **Survey Management**: Teachers can create, edit, and manage surveys
 - **Question Types**: Multiple question types (Single Line, Long Text, Radio Buttons, Checkboxes, Dropdown, Multi-Select, Rating Scale, Yes/No)
 - **Teacher Dashboard**: View all your surveys, see points reward, participants, and analytics
-- **Comment System**: Survey comments with moderation
+
 - **Analytics**: Survey response analytics and insights
 - **Modern UI**: Responsive design with Tailwind CSS and shadcn/ui
 - **Real API Integration**: Connects to ASP.NET Core backend
@@ -93,11 +93,7 @@ SurveyDU-master/
 - **Survey Participation**: Students can view and complete available surveys
 - **Analytics**: Teachers can view survey results and participation stats
 
-## 💬 Comment System
 
-- Students can comment on surveys
-- Teachers/Admins can moderate comments
-- Approval workflow for comments
 
 ## 🛠️ Development
 

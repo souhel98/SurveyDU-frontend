@@ -33,8 +33,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { SurveyService } from "@/lib/services/survey-service";
+import { QuestionTypeService, QuestionType } from "@/lib/services/question-type-service";
 import { motion, AnimatePresence } from "framer-motion";
-import { TEACHER_QUESTION_TYPES } from "@/lib/constants";
 import { ACADEMIC_YEARS_SELECT, TARGET_GENDER_SELECT } from "@/lib/constants";
 import { CustomSelect, CustomSelectOption } from "@/components/ui/custom-select";
 import { DepartmentService } from "@/lib/services/department-service";
@@ -43,24 +43,16 @@ import { Popover } from "@/components/ui/popover";
 import { PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragOverlay, useDroppable, useDraggable } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogHeader, DialogFooter, DialogClose, DialogTrigger } from "@/components/ui/dialog";
 
 // Import question type components
-import RadioButtonGroup from "./question-types/RadioButtonGroup";
-import RatingScale from "./question-types/RatingScale";
-import Checkboxes from "./question-types/Checkboxes";
-import Dropdown from "./question-types/Dropdown";
-import MultiSelectDropdown from "./question-types/MultiSelectDropdown";
-import YesNo from "./question-types/YesNo";
-import SingleLineInput from "./question-types/SingleLineInput";
-import LongText from "./question-types/LongText";
+import MultipleChoice from "@/components/question-types/MultipleChoice";
+import SingleAnswer from "@/components/question-types/SingleAnswer";
+import OpenText from "@/components/question-types/OpenText";
+import Percentage from "@/components/question-types/Percentage";
 
-interface QuestionType {
-  typeId: number;
-  typeName: string;
-  description: string;
-}
+
 
 interface QuestionData {
   id: number;
@@ -121,7 +113,6 @@ function SortableSidebarQuestion({ q, idx, activeQuestionId, setActiveQuestionId
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.3, delay: idx * 0.07 }}
         style={{
-          transform: CSS.Transform.toString(transform),
           transition,
           zIndex: isDragging ? 50 : undefined,
         }}
@@ -245,7 +236,6 @@ function SortableQuestionCard({ question, index, activeQuestionId, setActiveQues
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.3, delay: index * 0.1 }}
         style={{
-          transform: CSS.Transform.toString(transform),
           transition,
           zIndex: isDragging ? 50 : undefined,
         }}
@@ -345,6 +335,8 @@ export default function SurveyCreator() {
     publishImmediately: true
   });
   const [departments, setDepartments] = useState<{ id: number; name: string }[]>([]);
+  const [questionTypes, setQuestionTypes] = useState<QuestionType[]>([]);
+  const [loadingQuestionTypes, setLoadingQuestionTypes] = useState(true);
   const [activeQuestionId, setActiveQuestionId] = useState<number | null>(null);
   const [showTypePicker, setShowTypePicker] = useState(false);
   const [activeDragId, setActiveDragId] = useState<number | null>(null);
@@ -365,8 +357,7 @@ export default function SurveyCreator() {
     }
   }, [activeQuestionId]);
 
-  // Use TEACHER_QUESTION_TYPES for selection
-  const questionTypes = TEACHER_QUESTION_TYPES;
+
 
   // Add a mapping for question type display names and icons
   const QUESTION_TYPE_LABELS: Record<string, string> = {
@@ -384,18 +375,38 @@ export default function SurveyCreator() {
 
   // Map typeName to component
   const QUESTION_TYPE_COMPONENTS: Record<string, React.ComponentType<any>> = {
-    multiple_choice: Checkboxes, // expects options, onOptionsChange
-    single_answer: RadioButtonGroup, // expects options, onOptionsChange
-    open_text: SingleLineInput, // no options
-    percentage: RatingScale, // no options
+    multiple_choice: MultipleChoice,
+    single_answer: SingleAnswer,
+    open_text: OpenText,
+    percentage: Percentage,
   };
 
   useEffect(() => {
-    DepartmentService.getDepartments().then((data) => {
-      if (Array.isArray(data)) setDepartments(data);
-      else if (data && Array.isArray(data.data)) setDepartments(data.data);
-    });
-  }, []);
+    const fetchData = async () => {
+      try {
+        setLoadingQuestionTypes(true);
+        const [departmentsData, questionTypesData] = await Promise.all([
+          DepartmentService.getDepartments(),
+          QuestionTypeService.getQuestionTypes()
+        ]);
+        
+        if (Array.isArray(departmentsData)) setDepartments(departmentsData);
+        else if (departmentsData && Array.isArray(departmentsData.data)) setDepartments(departmentsData.data);
+        
+        setQuestionTypes(questionTypesData);
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to fetch data",
+          variant: "destructive"
+        });
+      } finally {
+        setLoadingQuestionTypes(false);
+      }
+    };
+
+    fetchData();
+  }, [toast]);
 
   const handleAddQuestion = (typeId: number, insertAt?: number) => {
     const type = questionTypes.find(qt => qt.typeId === typeId);
@@ -837,19 +848,26 @@ export default function SurveyCreator() {
                           </PopoverTrigger>
                           <PopoverContent align="center" className="w-64 p-2">
                             <div className="flex flex-col gap-1">
-                              {questionTypes.map((type) => (
-                                <button
-                                  key={type.typeId}
-                                  className="flex items-center w-full px-3 py-2 text-sm rounded-lg hover:bg-emerald-50 transition-colors"
-                                  onClick={() => {
-                                    handleAddQuestion(type.typeId, index + 1);
-                                    setShowTypePickerAt(null);
-                                  }}
-                                >
-                                  <span className="mr-2">{QUESTION_TYPE_ICONS[type.typeName]}</span>
-                                  <span>{QUESTION_TYPE_LABELS[type.typeName] || type.typeName}</span>
-                                </button>
-                              ))}
+                              {loadingQuestionTypes ? (
+                                <div className="flex items-center justify-center py-4">
+                                  <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent"></div>
+                                  <span className="ml-2 text-sm text-gray-500">Loading question types...</span>
+                                </div>
+                              ) : (
+                                questionTypes.map((type) => (
+                                  <button
+                                    key={type.typeId}
+                                    className="flex items-center w-full px-3 py-2 text-sm rounded-lg hover:bg-emerald-50 transition-colors"
+                                    onClick={() => {
+                                      handleAddQuestion(type.typeId, index + 1);
+                                      setShowTypePickerAt(null);
+                                    }}
+                                  >
+                                    <span className="mr-2">{QUESTION_TYPE_ICONS[type.typeName]}</span>
+                                    <span>{QUESTION_TYPE_LABELS[type.typeName] || type.typeName}</span>
+                                  </button>
+                                ))
+                              )}
                             </div>
                           </PopoverContent>
                         </Popover>
@@ -888,19 +906,26 @@ export default function SurveyCreator() {
                         </PopoverTrigger>
                         <PopoverContent align="center" className="w-64 p-2">
                           <div className="flex flex-col gap-1">
-                            {questionTypes.map((type) => (
-                              <button
-                                key={type.typeId}
-                                className="flex items-center w-full px-3 py-2 text-sm rounded-lg hover:bg-emerald-50 transition-colors"
-                                onClick={() => {
-                                  handleAddQuestion(type.typeId);
-                                  setShowTypePicker(false);
-                                }}
-                              >
-                                <span className="mr-2">{QUESTION_TYPE_ICONS[type.typeName]}</span>
-                                <span>{QUESTION_TYPE_LABELS[type.typeName] || type.typeName}</span>
-                              </button>
-                            ))}
+                            {loadingQuestionTypes ? (
+                              <div className="flex items-center justify-center py-4">
+                                <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent"></div>
+                                <span className="ml-2 text-sm text-gray-500">Loading question types...</span>
+                              </div>
+                            ) : (
+                              questionTypes.map((type) => (
+                                <button
+                                  key={type.typeId}
+                                  className="flex items-center w-full px-3 py-2 text-sm rounded-lg hover:bg-emerald-50 transition-colors"
+                                  onClick={() => {
+                                    handleAddQuestion(type.typeId);
+                                    setShowTypePicker(false);
+                                  }}
+                                >
+                                  <span className="mr-2">{QUESTION_TYPE_ICONS[type.typeName]}</span>
+                                  <span>{QUESTION_TYPE_LABELS[type.typeName] || type.typeName}</span>
+                                </button>
+                              ))
+                            )}
                           </div>
                         </PopoverContent>
                       </Popover>
@@ -924,19 +949,26 @@ export default function SurveyCreator() {
                     </PopoverTrigger>
                     <PopoverContent align="center" className="w-64 p-2">
                       <div className="flex flex-col gap-1">
-                        {questionTypes.map((type) => (
-                          <button
-                            key={type.typeId}
-                            className="flex items-center w-full px-3 py-2 text-sm rounded-lg hover:bg-emerald-50 transition-colors"
-                            onClick={() => {
-                              handleAddQuestion(type.typeId);
-                              setShowTypePicker(false);
-                            }}
-                          >
-                            <span className="mr-2">{QUESTION_TYPE_ICONS[type.typeName]}</span>
-                            <span>{QUESTION_TYPE_LABELS[type.typeName] || type.typeName}</span>
-                          </button>
-                        ))}
+                        {loadingQuestionTypes ? (
+                          <div className="flex items-center justify-center py-4">
+                            <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent"></div>
+                            <span className="ml-2 text-sm text-gray-500">Loading question types...</span>
+                          </div>
+                        ) : (
+                          questionTypes.map((type) => (
+                            <button
+                              key={type.typeId}
+                              className="flex items-center w-full px-3 py-2 text-sm rounded-lg hover:bg-emerald-50 transition-colors"
+                              onClick={() => {
+                                handleAddQuestion(type.typeId);
+                                setShowTypePicker(false);
+                              }}
+                            >
+                              <span className="mr-2">{QUESTION_TYPE_ICONS[type.typeName]}</span>
+                              <span>{QUESTION_TYPE_LABELS[type.typeName] || type.typeName}</span>
+                            </button>
+                          ))
+                        )}
                       </div>
                     </PopoverContent>
                   </Popover>

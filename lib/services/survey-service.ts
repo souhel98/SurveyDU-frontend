@@ -332,4 +332,140 @@ export class SurveyService {
       }
     }
   }
+
+  // Unpublish teacher survey (change from active to draft)
+  static async unpublishTeacherSurvey(id: number): Promise<any> {
+    try {
+      const response = await api.post(`/Teacher/surveys/${id}/unpublish`);
+      if (response.data && response.data.success) {
+        return response.data;
+      } else {
+        throw new Error(response.data?.message || 'Failed to unpublish survey.');
+      }
+    } catch (error: any) {
+      console.error('Error unpublishing teacher survey:', error);
+      
+      if (error.response?.status === 404) {
+        throw new Error('Survey not found.');
+      } else if (error.response?.status === 400) {
+        throw new Error(error.response.data?.message || 'Survey cannot be unpublished. Please check the survey details.');
+      } else if (error.response?.status === 401) {
+        throw new Error('You are not authorized to unpublish this survey. Please log in.');
+      } else if (error.response?.status >= 500) {
+        throw new Error('Server error. Please try again later.');
+      } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        throw new Error('Request timeout. Please check your internet connection and try again.');
+      } else if (!error.response) {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      } else {
+        throw new Error(error.response.data?.message || 'Failed to unpublish survey. Please try again.');
+      }
+    }
+  }
+
+  // Student: Get survey by ID for participation
+  static async getStudentSurveyById(id: number): Promise<any> {
+    try {
+      const response = await api.get(`/Student/surveys/${id}`);
+      if (response.data && response.data.success) {
+        return response.data.data;
+      } else {
+        throw new Error(response.data?.message || 'Failed to fetch survey.');
+      }
+    } catch (error: any) {
+      console.error('Error fetching student survey:', error);
+      
+      if (error.response?.status === 404) {
+        throw new Error('Survey not found.');
+      } else if (error.response?.status === 401) {
+        throw new Error('You are not authorized to view this survey. Please log in.');
+      } else if (error.response?.status >= 500) {
+        throw new Error('Server error. Please try again later.');
+      } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        throw new Error('Request timeout. Please check your internet connection and try again.');
+      } else if (!error.response) {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      } else {
+        throw new Error(error.response.data?.message || 'Failed to fetch survey. Please try again.');
+      }
+    }
+  }
+
+  // Student: Submit survey answers
+  static async submitStudentSurveyAnswers(surveyId: number, answers: any): Promise<any> {
+    try {
+      const response = await api.post(`/Student/surveys/${surveyId}/submit`, answers);
+      if (response.data && response.data.success) {
+        return response.data;
+      } else {
+        throw new Error(response.data?.message || 'Failed to submit survey answers.');
+      }
+    } catch (error: any) {
+      console.error('Error submitting student survey answers:', error);
+      
+      if (error.response?.status === 400) {
+        throw new Error(error.response.data?.message || 'Invalid answer data. Please check your input.');
+      } else if (error.response?.status === 401) {
+        throw new Error('You are not authorized to submit answers. Please log in.');
+      } else if (error.response?.status >= 500) {
+        throw new Error('Server error. Please try again later.');
+      } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        throw new Error('Request timeout. Please check your internet connection and try again.');
+      } else if (!error.response) {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      } else {
+        throw new Error(error.response.data?.message || 'Failed to submit answers. Please try again.');
+      }
+    }
+  }
+
+  // Student: Get participation history
+  static async getStudentParticipationHistory(): Promise<any> {
+    try {
+      const response = await api.get('/Student/participation-history');
+      return response.data;
+    } catch (error: any) {
+      console.error('Error fetching student participation history:', error);
+      
+      if (error.response?.status === 401) {
+        throw new Error('You are not authorized to view participation history. Please log in.');
+      } else if (error.response?.status >= 500) {
+        throw new Error('Server error. Please try again later.');
+      } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        throw new Error('Request timeout. Please check your internet connection and try again.');
+      } else if (!error.response) {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      } else {
+        throw new Error(error.response.data?.message || 'Failed to fetch participation history. Please try again.');
+      }
+    }
+  }
+
+  // Teacher: Get survey statistics
+  static async getSurveyStatistics(surveyId: string): Promise<any> {
+    try {
+      const response = await api.get(`/Teacher/surveys/${surveyId}/statistics`);
+      if (response.data && response.data.success) {
+        return response.data.data;
+      } else {
+        throw new Error(response.data?.message || 'Failed to fetch survey statistics.');
+      }
+    } catch (error: any) {
+      console.error('Error fetching survey statistics:', error);
+      
+      if (error.response?.status === 404) {
+        throw new Error('Survey not found.');
+      } else if (error.response?.status === 401) {
+        throw new Error('You are not authorized to view statistics. Please log in.');
+      } else if (error.response?.status >= 500) {
+        throw new Error('Server error. Please try again later.');
+      } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        throw new Error('Request timeout. Please check your internet connection and try again.');
+      } else if (!error.response) {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      } else {
+        throw new Error(error.response.data?.message || 'Failed to fetch statistics. Please try again.');
+      }
+    }
+  }
 } 

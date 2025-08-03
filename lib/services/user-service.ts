@@ -224,4 +224,26 @@ export class UserService {
       }
     }
   }
+
+  // Get student points history
+  static async getStudentPointsHistory(): Promise<any> {
+    try {
+      const response = await api.get('/Student/points/history');
+      return response.data;
+    } catch (error: any) {
+      console.error('Error fetching student points history:', error);
+      
+      if (error.response?.status === 401) {
+        throw new Error('You are not authorized to view points history. Please log in.');
+      } else if (error.response?.status >= 500) {
+        throw new Error('Server error. Please try again later.');
+      } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        throw new Error('Request timeout. Please check your internet connection and try again.');
+      } else if (!error.response) {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      } else {
+        throw new Error(error.response.data?.message || 'Failed to fetch points history. Please try again.');
+      }
+    }
+  }
 } 

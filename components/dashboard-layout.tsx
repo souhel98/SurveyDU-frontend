@@ -4,7 +4,7 @@ import type React from "react"
 import { useRouter } from "next/navigation"
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
-import { ChevronDown, ShoppingCart, User, MessageSquare, PlusCircle, Award, ArrowLeft, LogOut } from "lucide-react"
+import { ChevronDown, ShoppingCart, User, PlusCircle, Award, ArrowLeft, LogOut, History, TrendingUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { AuthService } from "@/lib/services/auth-service"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -16,6 +16,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [loading, setLoading] = useState(true)
   const [userName, setUserName] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [pointsDropdownOpen, setPointsDropdownOpen] = useState(false);
 
   useEffect(() => {
     // Helper to get cookie value
@@ -105,7 +106,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     subtitle = 'Full access to all system data and user management';
   } else if (role === 'Teacher') {
     title = 'Teacher Dashboard';
-    subtitle = 'Manage your surveys and view analytics';
+            subtitle = 'Manage your surveys and view statistics';
   } else {
     title = 'Student Dashboard';
     subtitle = 'Browse and participate in surveys';
@@ -113,7 +114,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   // Dynamic button links based on role
   let profileLink = '/dashboard/student/profile';
-  let commentsLink = '';
   let createSurveyLink = '';
   let userManagementLink = '';
   if (role === 'Admin') {
@@ -121,7 +121,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     userManagementLink = '/dashboard/admin/users';
   } else if (role === 'Teacher') {
     profileLink = '/dashboard/teacher/profile';
-    commentsLink = '/dashboard/teacher/comments';
     createSurveyLink = '/dashboard/teacher/create-survey';
   } else {
     profileLink = '/dashboard/student/profile';
@@ -133,9 +132,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isActive = (href: string) => {
     if (!href) return false;
     if (href === '/dashboard/teacher/profile') return pathname === '/dashboard/teacher/profile' || pathname === '/dashboard/teacher/profile/';
-    if (href === '/dashboard/teacher/comments') return pathname === '/dashboard/teacher/comments' || pathname === '/dashboard/teacher/comments/';
     if (href === '/dashboard/teacher/create-survey') return pathname === '/dashboard/teacher/create-survey' || pathname === '/dashboard/teacher/create-survey/';
     if (href === '/dashboard/student/profile') return pathname === '/dashboard/student/profile' || pathname === '/dashboard/student/profile/';
+    if (href === '/dashboard/student/participation-history') return pathname === '/dashboard/student/participation-history' || pathname === '/dashboard/student/participation-history/';
     if (href === '/dashboard/admin/users') return pathname.startsWith('/dashboard/admin/users');
     return pathname === href;
   };
@@ -165,6 +164,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const handleMouseLeave = () => {
     closeTimeout.current = setTimeout(() => {
       setDropdownOpen(false);
+    }, 200); // 200ms delay
+  };
+
+  const pointsDropdownRef = useRef<HTMLDivElement>(null);
+  const pointsCloseTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  const handlePointsMouseEnter = () => {
+    if (pointsCloseTimeout.current) {
+      clearTimeout(pointsCloseTimeout.current);
+      pointsCloseTimeout.current = null;
+    }
+    setPointsDropdownOpen(true);
+  };
+
+  const handlePointsMouseLeave = () => {
+    pointsCloseTimeout.current = setTimeout(() => {
+      setPointsDropdownOpen(false);
     }, 200); // 200ms delay
   };
 
@@ -222,7 +238,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Admin Buttons */}
             {role === 'Admin' && (
               <>
-                <Button variant={isActive(userManagementLink) ? undefined : "outline"} className={isActive(userManagementLink) ? "gap-2 bg-emerald-100 text-emerald-700 font-bold" : "gap-2"} asChild>
+                <Button 
+                  variant={isActive(userManagementLink) ? undefined : "outline"} 
+                  className={isActive(userManagementLink) 
+                    ? "gap-2 bg-emerald-100 text-emerald-700 font-bold shadow-sm" 
+                    : "gap-2 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 text-blue-800 font-semibold shadow-sm hover:shadow-md transition-all duration-200"
+                  } 
+                  asChild
+                >
                   <Link href={userManagementLink}>User Management</Link>
                 </Button>
                 {/* User Profile Dropdown (Custom) */}
@@ -234,42 +257,38 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 >
                   <Button
                     variant="outline"
-                    className="gap-2 min-w-[120px] justify-between"
-                    // Remove onClick handler
+                    className="gap-2 min-w-[120px] justify-between bg-gradient-to-r from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100 border-orange-200 hover:border-orange-300 text-orange-800 hover:text-orange-900 font-semibold shadow-sm hover:shadow-md transition-all duration-200"
+                    asChild
                   >
-                    <User className="h-5 w-5 text-emerald-600" />
-                    {userName.trim() ? (
-                      <span>{userName.trim()}</span>
-                    ) : (
-                      <span className="animate-pulse text-gray-400">Loading...</span>
-                    )}
+                    <Link href={profileLink}>
+                      <User className="h-4 w-4 text-orange-600 hover:text-orange-700" />
+                      {userName.trim() ? (
+                        <span>{userName.trim()}</span>
+                      ) : (
+                        <span className="animate-pulse text-gray-400">Loading...</span>
+                      )}
+                    </Link>
                   </Button>
                   {dropdownOpen && (
                     <div
-                      className="absolute right-0 mt-2 w-36 rounded-md shadow-lg bg-white border border-gray-200 z-50 max-h-[60vh] overflow-y-auto"
+                      className="absolute right-0 mt-2 w-36 rounded-lg shadow-xl bg-gradient-to-b from-orange-50 to-amber-50 border border-orange-200 z-50 max-h-[60vh] overflow-y-auto"
                       onMouseEnter={handleMouseEnter}
                       onMouseLeave={handleMouseLeave}
                     >
                       <button
-                        className="w-full text-left px-4 py-2 hover:text-white flex items-center gap-2"
-                        style={{ transition: 'background 0.2s' }}
+                        className="w-full text-left px-4 py-3 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 text-orange-800 hover:text-orange-900 flex items-center gap-2 font-semibold transition-all duration-200"
                         onMouseDown={() => {
                           window.location.href = profileLink;
                         }}
-                        onMouseOver={e => (e.currentTarget.style.background = '#ff9814')}
-                        onMouseOut={e => (e.currentTarget.style.background = '')}
                       >
-                        <User className="h-4 w-4" />
+                        <User className="h-4 w-4 text-orange-600" />
                         Profile
                       </button>
                       <button
-                        className="w-full text-left px-4 py-2 hover:text-white flex items-center gap-2"
-                        style={{ transition: 'background 0.2s' }}
+                        className="w-full text-left px-4 py-3 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 text-orange-800 hover:text-orange-900 flex items-center gap-2 font-semibold transition-all duration-200"
                         onMouseDown={handleLogout}
-                        onMouseOver={e => (e.currentTarget.style.background = '#ff9814')}
-                        onMouseOut={e => (e.currentTarget.style.background = '')}
                       >
-                        <LogOut className="h-4 w-4" />
+                        <LogOut className="h-4 w-4 text-orange-600" />
                         Logout
                       </button>
                     </div>
@@ -280,10 +299,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Teacher Buttons */}
             {role === 'Teacher' && (
               <>
-                <Button variant={isActive(commentsLink) ? undefined : "outline"} className={isActive(commentsLink) ? "gap-2 bg-emerald-100 text-emerald-700 font-bold" : "gap-2"} asChild>
-                  <Link href={commentsLink}><MessageSquare className="h-4 w-4" /> Comments</Link>
-                </Button>
-                <Button variant={isActive(createSurveyLink) ? undefined : "outline"} className={isActive(createSurveyLink) ? "gap-2 bg-emerald-100 text-emerald-700 font-bold" : "gap-2"} asChild>
+                <Button 
+                  variant={isActive(createSurveyLink) ? undefined : "outline"} 
+                  className={isActive(createSurveyLink) 
+                    ? "gap-2 bg-emerald-100 text-emerald-700 font-bold shadow-sm" 
+                    : "gap-2 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border-green-200 text-green-800 font-semibold shadow-sm hover:shadow-md transition-all duration-200"
+                  } 
+                  asChild
+                >
                   <Link href={createSurveyLink}><PlusCircle className="h-4 w-4" /> Create Survey</Link>
                 </Button>
                 {/* User Profile Dropdown (Custom) - always last */}
@@ -295,41 +318,38 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 >
                   <Button
                     variant="outline"
-                    className="gap-2 min-w-[120px] justify-between"
+                    className="gap-2 min-w-[120px] justify-between bg-gradient-to-r from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100 border-orange-200 hover:border-orange-300 text-orange-800 hover:text-orange-900 font-semibold shadow-sm hover:shadow-md transition-all duration-200"
+                    asChild
                   >
-                    <User className="h-5 w-5 text-emerald-600" />
-                    {userName.trim() ? (
-                      <span>{userName.trim()}</span>
-                    ) : (
-                      <span className="animate-pulse text-gray-400">Loading...</span>
-                    )}
+                    <Link href={profileLink}>
+                      <User className="h-4 w-4 text-orange-600 hover:text-orange-700" />
+                      {userName.trim() ? (
+                        <span>{userName.trim()}</span>
+                      ) : (
+                        <span className="animate-pulse text-gray-400">Loading...</span>
+                      )}
+                    </Link>
                   </Button>
                   {dropdownOpen && (
                     <div
-                      className="absolute right-0 mt-2 w-36 rounded-md shadow-lg bg-white border border-gray-200 z-50 max-h-[60vh] overflow-y-auto"
+                      className="absolute right-0 mt-2 w-36 rounded-lg shadow-xl bg-gradient-to-b from-orange-50 to-amber-50 border border-orange-200 z-50 max-h-[60vh] overflow-y-auto"
                       onMouseEnter={handleMouseEnter}
                       onMouseLeave={handleMouseLeave}
                     >
                       <button
-                        className="w-full text-left px-4 py-2 hover:text-white flex items-center gap-2"
-                        style={{ transition: 'background 0.2s' }}
+                        className="w-full text-left px-4 py-3 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 text-orange-800 hover:text-orange-900 flex items-center gap-2 font-semibold transition-all duration-200"
                         onMouseDown={() => {
                           window.location.href = profileLink;
                         }}
-                        onMouseOver={e => (e.currentTarget.style.background = '#ff9814')}
-                        onMouseOut={e => (e.currentTarget.style.background = '')}
                       >
-                        <User className="h-4 w-4" />
+                        <User className="h-4 w-4 text-orange-600" />
                         Profile
                       </button>
                       <button
-                        className="w-full text-left px-4 py-2 hover:text-white flex items-center gap-2"
-                        style={{ transition: 'background 0.2s' }}
+                        className="w-full text-left px-4 py-3 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 text-orange-800 hover:text-orange-900 flex items-center gap-2 font-semibold transition-all duration-200"
                         onMouseDown={handleLogout}
-                        onMouseOver={e => (e.currentTarget.style.background = '#ff9814')}
-                        onMouseOut={e => (e.currentTarget.style.background = '')}
                       >
-                        <LogOut className="h-4 w-4" />
+                        <LogOut className="h-4 w-4 text-orange-600" />
                         Logout
                       </button>
                     </div>
@@ -340,14 +360,63 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Student Buttons and Points */}
             {role === 'Student' && (
               <>
-                <div className="flex items-center space-x-2">
-                  <Award className="h-5 w-5 text-[#FF9814]" />
-                  {pointsLoading ? (
-                    <span className="font-medium animate-pulse">Loading...</span>
-                  ) : pointsError ? (
-                    <span className="font-medium text-red-500">{pointsError}</span>
-                  ) : (
-                    <span className="font-medium">{studentPoints} Points</span>
+                <Button 
+                  variant={isActive('/dashboard/student/participation-history') ? undefined : "outline"} 
+                  className={isActive('/dashboard/student/participation-history') 
+                    ? "gap-2 bg-emerald-100 text-emerald-700 font-bold shadow-sm" 
+                    : "gap-2 bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 border-emerald-200 text-emerald-800 font-semibold shadow-sm hover:shadow-md transition-all duration-200"
+                  } 
+                  asChild
+                >
+                  <Link href="/dashboard/student/participation-history"><History className="h-4 w-4" /> Participation History</Link>
+                </Button>
+                <div 
+                  className="relative"
+                  ref={pointsDropdownRef}
+                  onMouseEnter={handlePointsMouseEnter}
+                  onMouseLeave={handlePointsMouseLeave}
+                >
+                  <Button 
+                    variant="outline" 
+                    className="gap-2 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 text-blue-800 font-semibold shadow-sm hover:shadow-md transition-all duration-200"
+                    asChild
+                  >
+                    <Link href="/dashboard/student/points-history">
+                      <Award className="h-4 w-4 text-blue-600" />
+                      {pointsLoading ? (
+                        <span className="animate-pulse">Loading...</span>
+                      ) : pointsError ? (
+                        <span className="text-red-500">{pointsError}</span>
+                      ) : (
+                        <span>{studentPoints} Points</span>
+                      )}
+                    </Link>
+                  </Button>
+                  {pointsDropdownOpen && (
+                    <div
+                      className="absolute right-0 mt-2 w-56 rounded-lg shadow-xl bg-white border border-blue-200 z-50 overflow-hidden"
+                      onMouseEnter={handlePointsMouseEnter}
+                      onMouseLeave={handlePointsMouseLeave}
+                    >
+                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 border-b border-blue-100">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-blue-800">Current Balance</span>
+                          <span className="text-lg font-bold text-blue-900">{studentPoints} points</span>
+                        </div>
+                      </div>
+                      <Link 
+                        href="/dashboard/student/points-history"
+                        className="flex items-center w-full px-4 py-4 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-emerald-100 text-left transition-all duration-200 group"
+                      >
+                        <div className="p-2 bg-emerald-100 rounded-lg mr-3 group-hover:bg-emerald-200 transition-colors">
+                          <TrendingUp className="h-4 w-4 text-emerald-600" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900 group-hover:text-emerald-700">Points History</p>
+                          <p className="text-sm text-gray-600">View transaction history</p>
+                        </div>
+                      </Link>
+                    </div>
                   )}
                 </div>
                 {/* User Profile Dropdown (Custom) */}
@@ -359,42 +428,38 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 >
                   <Button
                     variant="outline"
-                    className="gap-2 min-w-[120px] justify-between"
-                    // Remove onClick handler
+                    className="gap-2 min-w-[120px] justify-between bg-gradient-to-r from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100 border-orange-200 hover:border-orange-300 text-orange-800 hover:text-orange-900 font-semibold shadow-sm hover:shadow-md transition-all duration-200"
+                    asChild
                   >
-                    <User className="h-5 w-5 text-emerald-600" />
-                    {userName.trim() ? (
-                      <span>{userName.trim()}</span>
-                    ) : (
-                      <span className="animate-pulse text-gray-400">Loading...</span>
-                    )}
+                    <Link href={profileLink}>
+                      <User className="h-4 w-4 text-orange-600 hover:text-orange-700" />
+                      {userName.trim() ? (
+                        <span>{userName.trim()}</span>
+                      ) : (
+                        <span className="animate-pulse text-gray-400">Loading...</span>
+                      )}
+                    </Link>
                   </Button>
                   {dropdownOpen && (
                     <div
-                      className="absolute right-0 mt-2 w-36 rounded-md shadow-lg bg-white border border-gray-200 z-50 max-h-[60vh] overflow-y-auto"
+                      className="absolute right-0 mt-2 w-36 rounded-lg shadow-xl bg-gradient-to-b from-orange-50 to-amber-50 border border-orange-200 z-50 max-h-[60vh] overflow-y-auto"
                       onMouseEnter={handleMouseEnter}
                       onMouseLeave={handleMouseLeave}
                     >
                       <button
-                        className="w-full text-left px-4 py-2 hover:text-white flex items-center gap-2"
-                        style={{ transition: 'background 0.2s' }}
+                        className="w-full text-left px-4 py-3 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 text-orange-800 hover:text-orange-900 flex items-center gap-2 font-semibold transition-all duration-200"
                         onMouseDown={() => {
                           window.location.href = profileLink;
                         }}
-                        onMouseOver={e => (e.currentTarget.style.background = '#ff9814')}
-                        onMouseOut={e => (e.currentTarget.style.background = '')}
                       >
-                        <User className="h-4 w-4" />
+                        <User className="h-4 w-4 text-orange-600" />
                         Profile
                       </button>
                       <button
-                        className="w-full text-left px-4 py-2 hover:text-white flex items-center gap-2"
-                        style={{ transition: 'background 0.2s' }}
+                        className="w-full text-left px-4 py-3 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 text-orange-800 hover:text-orange-900 flex items-center gap-2 font-semibold transition-all duration-200"
                         onMouseDown={handleLogout}
-                        onMouseOver={e => (e.currentTarget.style.background = '#ff9814')}
-                        onMouseOut={e => (e.currentTarget.style.background = '')}
                       >
-                        <LogOut className="h-4 w-4" />
+                        <LogOut className="h-4 w-4 text-orange-600" />
                         Logout
                       </button>
                     </div>
@@ -404,7 +469,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             )}
             {/* Back to Dashboard button in header, only on subpages */}
             {!isDashboardMainPage && (
-              <Button variant="outline" className="gap-2" asChild>
+              <Button 
+                variant="outline" 
+                className="gap-2 bg-gradient-to-r from-gray-50 to-slate-50 hover:from-blue-50 hover:to-indigo-50 border-gray-200 hover:border-blue-200 text-gray-800 hover:text-blue-800 font-semibold shadow-sm hover:shadow-md transition-all duration-200" 
+                asChild
+              >
                 <Link href={
                   role === 'Admin' ? '/dashboard/admin' :
                   role === 'Teacher' ? '/dashboard/teacher' :
@@ -412,7 +481,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 }>
                   <ArrowLeft className="h-4 w-4" /> Back to Dashboard
                 </Link>
-            </Button>
+              </Button>
             )}
           </div>
         </div>

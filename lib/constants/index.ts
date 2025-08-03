@@ -12,28 +12,20 @@ export const USER_ROLES = {
   ADMIN: 'Admin',
 } as const;
 
-// Question Types
+// Question Types (from API)
 export const QUESTION_TYPES = {
-  SINGLE_LINE_INPUT: 'SingleLineInput',
-  LONG_TEXT: 'LongText',
-  RADIO_BUTTON_GROUP: 'RadioButtonGroup',
-  CHECKBOXES: 'Checkboxes',
-  DROPDOWN: 'Dropdown',
-  MULTI_SELECT_DROPDOWN: 'MultiSelectDropdown',
-  RATING_SCALE: 'RatingScale',
-  YES_NO: 'YesNo',
+  MULTIPLE_CHOICE: 'multiple_choice',
+  SINGLE_ANSWER: 'single_answer',
+  OPEN_TEXT: 'open_text',
+  PERCENTAGE: 'percentage',
 } as const;
 
-// Question Type Labels
+// Question Type Labels (for display)
 export const QUESTION_TYPE_LABELS = {
-  [QUESTION_TYPES.SINGLE_LINE_INPUT]: 'Single Line Input',
-  [QUESTION_TYPES.LONG_TEXT]: 'Long Text',
-  [QUESTION_TYPES.RADIO_BUTTON_GROUP]: 'Radio Button Group',
-  [QUESTION_TYPES.CHECKBOXES]: 'Checkboxes',
-  [QUESTION_TYPES.DROPDOWN]: 'Dropdown',
-  [QUESTION_TYPES.MULTI_SELECT_DROPDOWN]: 'Multi-Select Dropdown',
-  [QUESTION_TYPES.RATING_SCALE]: 'Rating Scale',
-  [QUESTION_TYPES.YES_NO]: 'Yes/No',
+  [QUESTION_TYPES.MULTIPLE_CHOICE]: 'Multiple Choice',
+  [QUESTION_TYPES.SINGLE_ANSWER]: 'Single Answer',
+  [QUESTION_TYPES.OPEN_TEXT]: 'Open Text',
+  [QUESTION_TYPES.PERCENTAGE]: 'Percentage',
 } as const;
 
 // Survey Status
@@ -42,6 +34,14 @@ export const SURVEY_STATUS = {
   Active: 1,
   Completed: 2,
   Inactive: 3,
+} as const;
+
+// Survey Status Labels (for display)
+export const SURVEY_STATUS_LABELS = {
+  draft: 'Draft',
+  active: 'Active',
+  completed: 'Completed',
+  inactive: 'Inactive',
 } as const;
 
 // Comment Status
@@ -62,14 +62,12 @@ export const NAVIGATION_ITEMS = {
     { title: 'Dashboard', href: '/dashboard/teacher' },
     { title: 'Create Survey', href: '/dashboard/teacher/create-survey' },
     { title: 'Surveys', href: '/dashboard/teacher/surveys' },
-    { title: 'Comments', href: '/dashboard/teacher/comments' },
     { title: 'Profile', href: '/dashboard/teacher/profile' },
   ],
   ADMIN: [
     { title: 'Dashboard', href: '/dashboard/admin' },
     { title: 'Users', href: '/dashboard/admin/users' },
     { title: 'Surveys', href: '/dashboard/admin/surveys' },
-    { title: 'Comments', href: '/dashboard/admin/comments' },
     { title: 'Profile', href: '/dashboard/admin/profile' },
   ],
 } as const;
@@ -203,26 +201,4 @@ export const ACADEMIC_YEARS_SELECT = [
   { value: 5, label: 'Fifth' },
 ];
 
-// Teacher Question Types (from API)
-export const TEACHER_QUESTION_TYPES = [
-  {
-    typeId: 1,
-    typeName: "multiple_choice",
-    description: "Multiple choice question with multiple possible answers",
-  },
-  {
-    typeId: 2,
-    typeName: "single_answer",
-    description: "Multiple choice question with single possible answer",
-  },
-  {
-    typeId: 3,
-    typeName: "open_text",
-    description: "Free text response question",
-  },
-  {
-    typeId: 4,
-    typeName: "percentage",
-    description: "Percentage-based response question",
-  },
-] as const; 
+ 

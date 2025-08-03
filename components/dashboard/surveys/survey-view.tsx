@@ -22,12 +22,14 @@ import {
   BarChart2,
   Edit,
   Copy,
-  Trash2
+  Trash2,
+  Play,
+  AlertCircle
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { SurveyService } from "@/lib/services/survey-service"
 import { DepartmentService } from "@/lib/services/department-service"
-import { ACADEMIC_YEARS, TARGET_GENDER_SELECT } from "@/lib/constants"
+import { ACADEMIC_YEARS, TARGET_GENDER_SELECT, SURVEY_STATUS_LABELS } from "@/lib/constants"
 import { motion } from "framer-motion"
 
 interface SurveyViewProps {
@@ -104,15 +106,16 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      active: { color: "bg-green-50 text-green-600 border-green-200", label: "Active" },
-      draft: { color: "bg-gray-50 text-gray-600 border-gray-200", label: "Draft" },
-      expired: { color: "bg-red-50 text-red-600 border-red-200", label: "Expired" },
-      completed: { color: "bg-blue-50 text-blue-600 border-blue-200", label: "Completed" }
+      active: { color: "bg-green-50 text-green-600 border-green-200", label: "Active", icon: <Play className="h-3 w-3 mr-1" /> },
+      draft: { color: "bg-orange-50 text-orange-600 border-orange-200", label: "Draft", icon: <Clock className="h-3 w-3 mr-1" /> },
+      completed: { color: "bg-blue-50 text-blue-600 border-blue-200", label: "Completed", icon: <CheckCircle className="h-3 w-3 mr-1" /> },
+      inactive: { color: "bg-red-50 text-red-600 border-red-200", label: "Inactive", icon: <AlertCircle className="h-3 w-3 mr-1" /> }
     }
     
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft
     return (
       <Badge variant="outline" className={config.color}>
+        {config.icon}
         {config.label}
       </Badge>
     )
@@ -162,7 +165,7 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
       
       // Redirect to the new survey view page
       setTimeout(() => {
-        router.push(`/surveys/${duplicatedSurvey.surveyId}/view`)
+                 router.push(`/dashboard/teacher/surveys/${duplicatedSurvey.surveyId}/view`)
       }, 1500)
       
     } catch (error: any) {
@@ -229,14 +232,14 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
               </div>
             </div>
                          <div className="flex items-center space-x-2">
-               <Button
-                 variant="outline"
-                 size="sm"
-                 onClick={() => router.push(`/surveys/${survey.surveyId}/analytics`)}
-               >
-                 <BarChart2 className="h-4 w-4 mr-2" />
-                 View Analytics
-               </Button>
+                                       <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => router.push(`/dashboard/teacher/surveys/${survey.surveyId}/statistics`)}
+                        >
+                          <BarChart2 className="h-4 w-4 mr-2" />
+                          View Statistics
+                        </Button>
                {survey.status === 'draft' && (
                  <Button
                    variant="outline"
@@ -443,10 +446,10 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
-                  onClick={() => router.push(`/surveys/${survey.surveyId}/analytics`)}
+                  onClick={() => router.push(`/dashboard/teacher/surveys/${survey.surveyId}/statistics`)}
                 >
                   <BarChart2 className="h-4 w-4 mr-2" />
-                  View Analytics
+                  View Statistics
                 </Button>
                                  {survey.status === 'draft' && (
                    <Button 
@@ -472,7 +475,7 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                   variant="outline"
                   onClick={() => {
                     // Copy survey URL to clipboard
-                    navigator.clipboard.writeText(`${window.location.origin}/surveys/${survey.surveyId}`)
+                                         navigator.clipboard.writeText(`${window.location.origin}/dashboard/teacher/surveys/${survey.surveyId}/view`)
                     toast({
                       title: "Link copied",
                       description: "Survey link has been copied to clipboard",
