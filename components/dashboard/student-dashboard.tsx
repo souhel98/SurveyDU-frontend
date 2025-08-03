@@ -100,9 +100,11 @@ export default function StudentDashboard() {
       )
     }
     
-    // Sort by survey ID from newest to oldest
+    // Sort by survey ID from newest to oldest (highest ID to lowest ID)
     filtered.sort((a, b) => {
-      return (b.surveyId || 0) - (a.surveyId || 0)
+      const idA = parseInt(a.surveyId) || 0
+      const idB = parseInt(b.surveyId) || 0
+      return idB - idA
     })
     
     return filtered

@@ -540,6 +540,23 @@ export default function SurveyCreator() {
         });
         return;
       }
+
+      // Validate that all options have text/title
+      const questionsWithEmptyOptions = questions.filter(q => {
+        if (q.typeName === 'multiple_choice' || q.typeName === 'single_answer') {
+          return q.options && q.options.some((opt: any) => !opt.text || opt.text.trim() === '');
+        }
+        return false;
+      });
+      
+      if (questionsWithEmptyOptions.length > 0) {
+        toast({
+          title: "Question choices cannot be empty",
+          description: "Please fill in all option titles for multiple choice and single answer questions",
+          variant: "destructive",
+        });
+        return;
+      }
       // Validate at least one academic year selected
       if (!metadata.targetAcademicYears || metadata.targetAcademicYears.length === 0 || metadata.targetAcademicYears[0] === "") {
         toast({
