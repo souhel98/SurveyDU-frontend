@@ -370,10 +370,19 @@ export class SurveyService {
       if (response.data && response.data.success) {
         return response.data.data;
       } else {
+        // Handle the specific "Survey not found or not available" case
+        if (response.data?.message === "Survey not found or not available") {
+          throw new Error("Survey not found or not available");
+        }
         throw new Error(response.data?.message || 'Failed to fetch survey.');
       }
     } catch (error: any) {
       console.error('Error fetching student survey:', error);
+      
+      // Handle the specific "Survey not found or not available" case from response
+      if (error.response?.data?.message === "Survey not found or not available") {
+        throw new Error("Survey not found or not available");
+      }
       
       if (error.response?.status === 404) {
         throw new Error('Survey not found.');

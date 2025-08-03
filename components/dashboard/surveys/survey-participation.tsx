@@ -46,6 +46,7 @@ export default function SurveyParticipation({ surveyId }: SurveyParticipationPro
   const [submitting, setSubmitting] = useState(false)
   const [departments, setDepartments] = useState<{ id: number; name: string }[]>([])
   const [showJsonDialog, setShowJsonDialog] = useState(false)
+  const [surveyNotAvailable, setSurveyNotAvailable] = useState(false)
 
   // Memoized values - must be at the top level
   const currentQuestion = useMemo(() => 
@@ -129,6 +130,12 @@ export default function SurveyParticipation({ surveyId }: SurveyParticipationPro
         } catch (individualError: any) {
           console.warn('Failed to fetch individual survey, trying to get from list:', individualError)
           
+          // Check if it's the specific "Survey not found or not available" error
+          if (individualError.message === "Survey not found or not available" || 
+              individualError.response?.data?.message === "Survey not found or not available") {
+            throw new Error("SURVEY_NOT_AVAILABLE")
+          }
+          
           // Fallback: try to get from the surveys list
           try {
             const surveysResponse = await api.get("/Student/surveys")
@@ -176,6 +183,14 @@ export default function SurveyParticipation({ surveyId }: SurveyParticipationPro
       } catch (error: any) {
         console.error('Error in fetchData:', error)
         
+        // Handle the specific "Survey not found or not available" case
+        if (error.message === "SURVEY_NOT_AVAILABLE" || error.message === "Survey not found or not available") {
+          setSurvey(null)
+          setSurveyNotAvailable(true)
+          setLoading(false)
+          return // Don't redirect, let the component show the appropriate message
+        }
+        
         let errorMessage = "Failed to fetch survey"
         if (error.response?.status === 401) {
           errorMessage = "You are not authorized to view this survey. Please log in."
@@ -213,10 +228,59 @@ export default function SurveyParticipation({ surveyId }: SurveyParticipationPro
   if (!survey) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Survey Not Found</h2>
-          <p className="text-gray-600 mb-4">The survey you're looking for doesn't exist or you don't have permission to view it.</p>
-          <Button onClick={() => router.push("/dashboard/student")}>Go to Dashboard</Button>
+        <div className="text-center max-w-md mx-auto px-4">
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            {surveyNotAvailable ? (
+              <>
+                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <HelpCircle className="h-8 w-8 text-orange-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-3">Survey Not Available</h2>
+                <p className="text-gray-600 mb-6 leading-relaxed">
+                  This survey is currently not available for participation. This could be because:
+                </p>
+                <div className="text-left space-y-2 mb-6">
+                  <div className="flex items-start space-x-3">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <p className="text-sm text-gray-600">You have already completed this survey</p>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <p className="text-sm text-gray-600">The survey has ended or is not yet active</p>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <p className="text-sm text-gray-600">The survey has been removed by the creator</p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <HelpCircle className="h-8 w-8 text-red-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-3">Survey Not Found</h2>
+                <p className="text-gray-600 mb-6 leading-relaxed">
+                  The survey you're looking for doesn't exist or you don't have permission to view it.
+                </p>
+              </>
+            )}
+            <div className="space-y-3">
+              <Button 
+                onClick={() => router.push("/dashboard/student")}
+                className="w-full bg-emerald-500 hover:bg-emerald-600"
+              >
+                Go to Dashboard
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => router.push("/dashboard/student/participation-history")}
+                className="w-full"
+              >
+                View Participation History
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     )

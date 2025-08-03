@@ -100,11 +100,9 @@ export default function StudentDashboard() {
       )
     }
     
-    // Sort by newest to oldest (using startDate as creation date)
+    // Sort by survey ID from newest to oldest
     filtered.sort((a, b) => {
-      const dateA = new Date(a.startDate || 0)
-      const dateB = new Date(b.startDate || 0)
-      return dateB.getTime() - dateA.getTime()
+      return (b.surveyId || 0) - (a.surveyId || 0)
     })
     
     return filtered
