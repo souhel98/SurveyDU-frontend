@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
+import { Input } from "@/components/ui/input"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { 
   ArrowLeft, 
   Calendar, 
@@ -24,7 +26,9 @@ import {
   Copy,
   Trash2,
   Play,
-  AlertCircle
+  AlertCircle,
+  Save,
+  X
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { SurveyService } from "@/lib/services/survey-service"
@@ -71,6 +75,13 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
   const [loading, setLoading] = useState(true)
   const [duplicating, setDuplicating] = useState(false)
   const [departments, setDepartments] = useState<{ id: number; name: string }[]>([])
+  const [quickEditDialogOpen, setQuickEditDialogOpen] = useState(false)
+  const [editingData, setEditingData] = useState({
+    startDate: '',
+    endDate: '',
+    requiredParticipants: 0
+  })
+  const [updatingSurveyId, setUpdatingSurveyId] = useState<number | null>(null)
 
   useEffect(() => {
     if (!surveyId) return
@@ -150,6 +161,69 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
       default:
         return type
     }
+  }
+
+  const handleStartQuickEdit = () => {
+    if (!survey) return
+    
+    setEditingData({
+      startDate: survey.startDate ? new Date(survey.startDate).toISOString().split('T')[0] : '',
+      endDate: survey.endDate ? new Date(survey.endDate).toISOString().split('T')[0] : '',
+      requiredParticipants: survey.requiredParticipants
+    })
+    setQuickEditDialogOpen(true)
+  }
+
+  const handleCancelQuickEdit = () => {
+    setQuickEditDialogOpen(false)
+    setEditingData({
+      startDate: '',
+      endDate: '',
+      requiredParticipants: 0
+    })
+  }
+
+  const handleSaveQuickEdit = async () => {
+    if (!survey) return
+    
+    try {
+      setUpdatingSurveyId(survey.surveyId)
+      
+      const updateData = {
+        startDate: editingData.startDate,
+        endDate: editingData.endDate,
+        requiredParticipants: editingData.requiredParticipants
+      }
+      
+      await SurveyService.updateTeacherSurveyDates(survey.surveyId, updateData)
+      
+      // Refresh survey data
+      const updatedSurvey = await SurveyService.getTeacherSurveyById(survey.surveyId)
+      setSurvey(updatedSurvey)
+      
+      toast({
+        title: "Success",
+        description: "Survey updated successfully!",
+      })
+      
+      setQuickEditDialogOpen(false)
+      
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update survey",
+        variant: "destructive"
+      })
+    } finally {
+      setUpdatingSurveyId(null)
+    }
+  }
+
+  const handleInputChange = (field: string, value: string | number) => {
+    setEditingData(prev => ({
+      ...prev,
+      [field]: value
+    }))
   }
 
   const handleDuplicateSurvey = async () => {
@@ -240,6 +314,14 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                         >
                           <BarChart2 className="h-4 w-4 mr-2" />
                           View Statistics
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleStartQuickEdit}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Quick Edit
                         </Button>
                {survey.status === 'draft' && (
                  <Button
@@ -452,6 +534,14 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                   <BarChart2 className="h-4 w-4 mr-2" />
                   View Statistics
                 </Button>
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={handleStartQuickEdit}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Quick Edit
+                </Button>
                                  {survey.status === 'draft' && (
                    <Button 
                      className="w-full justify-start" 
@@ -491,6 +581,177 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
           </div>
         </div>
       </div>
+
+      {/* Quick Edit Dialog */}
+      <Dialog open={quickEditDialogOpen} onOpenChange={setQuickEditDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>
+              Quick Edit Survey
+              {survey && (
+                <span className="block text-sm font-normal text-gray-600 mt-1">
+                  {survey.title}
+                </span>
+              )}
+            </DialogTitle>
+            <DialogDescription>
+              {survey?.status === 'active' && survey?.currentParticipants > 0
+                ? "Update the end date and participant requirements for this active survey. Start date cannot be changed once survey has participants."
+                : survey?.status === 'expired' && survey?.currentParticipants > 0
+                ? "Update the end date and participant requirements for this expired survey. Start date cannot be changed once survey has participants."
+                : survey?.status === 'completed' && survey?.currentParticipants > 0
+                ? "Update the end date and participant requirements for this completed survey. Start date cannot be changed once survey has participants."
+                : survey?.status === 'inactive'
+                ? "Update the survey dates and participant requirements for this scheduled survey. All fields can be modified."
+                : "Update the survey dates and participant requirements."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {survey?.status === 'active' && survey?.currentParticipants > 0 || 
+             survey?.status === 'expired' && survey?.currentParticipants > 0 ||
+             survey?.status === 'completed' && survey?.currentParticipants > 0 ? (
+              // For active/expired/completed surveys with participants - only end date and participants
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                  <Input
+                    type="date"
+                    value={editingData.startDate}
+                    disabled
+                    className="h-10 bg-gray-50"
+                    placeholder="Cannot be changed"
+                  />
+                  {survey?.startDate && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Current: {new Date(survey.startDate).toLocaleString('en-GB', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                      }).replace(',', ' -')}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                  <Input
+                    type="date"
+                    value={editingData.endDate}
+                    onChange={(e) => handleInputChange('endDate', e.target.value)}
+                    className="h-10"
+                    placeholder="YYYY-MM-DD"
+                  />
+                  {survey?.endDate && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Current: {new Date(survey.endDate).toLocaleString('en-GB', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                      }).replace(',', ' -')}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ) : (
+              // For surveys without participants - show both start and end date
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                  <Input
+                    type="date"
+                    value={editingData.startDate}
+                    onChange={(e) => handleInputChange('startDate', e.target.value)}
+                    className="h-10"
+                    placeholder="YYYY-MM-DD"
+                  />
+                  {survey?.startDate && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Current: {new Date(survey.startDate).toLocaleString('en-GB', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                      }).replace(',', ' -')}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                  <Input
+                    type="date"
+                    value={editingData.endDate}
+                    onChange={(e) => handleInputChange('endDate', e.target.value)}
+                    className="h-10"
+                    placeholder="YYYY-MM-DD"
+                  />
+                  {survey?.endDate && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Current: {new Date(survey.endDate).toLocaleString('en-GB', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                      }).replace(',', ' -')}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Required Participants</label>
+              <Input
+                type="number"
+                min="1"
+                value={editingData.requiredParticipants}
+                onChange={(e) => handleInputChange('requiredParticipants', parseInt(e.target.value) || 0)}
+                className="h-10"
+                placeholder="Minimum: 1"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Current: {survey?.requiredParticipants || 0}
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={handleCancelQuickEdit}
+                disabled={updatingSurveyId !== null}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSaveQuickEdit}
+                disabled={updatingSurveyId !== null}
+                className="bg-emerald-500 hover:bg-emerald-600"
+              >
+                {updatingSurveyId !== null ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Changes
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 } 

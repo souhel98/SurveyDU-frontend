@@ -28,6 +28,7 @@ import {
   GraduationCap,
   Save,
   X,
+  Award,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -69,6 +70,7 @@ export default function TeacherDashboard() {
   const [updatingSurveyId, setUpdatingSurveyId] = useState<number | null>(null);
   const [refreshingSurveys, setRefreshingSurveys] = useState(false);
   const [quickEditDialogOpen, setQuickEditDialogOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
   useEffect(() => {
     setLoading(true);
@@ -558,14 +560,47 @@ export default function TeacherDashboard() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="flex gap-2">
+              <Button
+                variant={(viewMode === 'table' && !activeFilter) ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setViewMode('table');
+                  setActiveFilter(null);
+                }}
+                className={`flex items-center gap-2 ${
+                  (viewMode === 'table' && !activeFilter)
+                    ? 'bg-emerald-500 hover:bg-emerald-600 text-white' 
+                    : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                <FileText className="h-4 w-4" />
+                Table
+              </Button>
+              <Button
+                variant={(viewMode === 'cards' || activeFilter) ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setViewMode('cards');
+                  setActiveFilter(null);
+                }}
+                className={`flex items-center gap-2 ${
+                  (viewMode === 'cards' || activeFilter)
+                    ? 'bg-emerald-500 hover:bg-emerald-600 text-white' 
+                    : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                <BarChart3 className="h-4 w-4" />
+                Cards
+              </Button>
+            </div>
           </div>
         </div>
 
         {/* Surveys List */}
-        {activeFilter ? (
+        {activeFilter || viewMode === 'cards' ? (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
+                          <div>
                 <h2 className="text-2xl font-bold text-gray-900">
                   {activeFilter === "responses" && "Surveys with Responses"}
                   {activeFilter === "all" && "All Surveys"}
@@ -574,6 +609,7 @@ export default function TeacherDashboard() {
                   {activeFilter === "inactive" && "Inactive Surveys"}
                   {activeFilter === "expired" && "Expired Surveys"}
                   {activeFilter === "completed" && "Completed Surveys"}
+                  {!activeFilter && viewMode === 'cards' && "All Surveys"}
                 </h2>
                 <p className="text-gray-600">
                   {activeFilter === "responses" && "Surveys that have received responses from participants"}
@@ -583,16 +619,9 @@ export default function TeacherDashboard() {
                   {activeFilter === "inactive" && "Surveys that are inactive and not accepting responses"}
                   {activeFilter === "expired" && "Surveys that have passed their end date and are no longer accepting responses"}
                   {activeFilter === "completed" && "Surveys that have been completed and are no longer accepting responses"}
+                  {!activeFilter && viewMode === 'cards' && "All surveys created by you"}
                 </p>
               </div>
-              <Button 
-                className="bg-gray-500 hover:bg-gray-600"
-                onClick={() => setActiveFilter(null)}
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                View Table
-              </Button>
-            </div>
 
             {loading ? (
               <div className="text-center py-12">
@@ -600,126 +629,207 @@ export default function TeacherDashboard() {
                 <p className="mt-4 text-gray-600">Loading surveys...</p>
               </div>
             ) : filteredSurveys.length > 0 ? (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {filteredSurveys.map((survey: any) => (
-                  <Card key={survey.surveyId || survey.id} className="group hover:shadow-lg transition-all duration-300 border-0 shadow-sm bg-gradient-to-br from-white to-gray-50/50">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
+                  <Card key={survey.surveyId || survey.id} className="group relative overflow-hidden border-0 shadow-sm hover:shadow-xl transition-all duration-500 bg-gradient-to-br from-white via-gray-50/30 to-white">
+                    {/* Status Indicator Bar */}
+                    <div className={`absolute top-0 left-0 right-0 h-1 ${
+                      survey.status === "draft" ? "bg-gradient-to-r from-orange-400 to-orange-600" :
+                      survey.status === "active" ? "bg-gradient-to-r from-green-400 to-green-600" :
+                      survey.status === "expired" ? "bg-gradient-to-r from-purple-400 to-purple-600" :
+                      survey.status === "completed" ? "bg-gradient-to-r from-blue-400 to-blue-600" :
+                      "bg-gradient-to-r from-red-400 to-red-600"
+                    }`} />
+                    
+                    <CardHeader className="pb-4 pt-6">
+                      {/* Header with Status Badge */}
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1 min-w-0">
                           <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/view`}>
-                            <CardTitle className="text-lg font-semibold text-emerald-600 hover:text-emerald-700 cursor-pointer line-clamp-2">
+                            <CardTitle className="text-lg font-bold text-gray-900 hover:text-emerald-600 cursor-pointer line-clamp-2 transition-colors duration-200">
                               {survey.title}
                             </CardTitle>
                           </Link>
-                          <p className="text-sm text-gray-500 mt-1 line-clamp-2">{survey.description}</p>
+                          <p className="text-sm text-gray-600 mt-2 line-clamp-2 leading-relaxed">{survey.description}</p>
                         </div>
-                        {survey.currentParticipants > 0 ? (
-                          <div 
-                            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 ml-2 p-1 rounded cursor-not-allowed"
-                            title="Cannot edit survey with participants"
-                          >
-                            <Edit className="h-4 w-4 text-gray-300" />
-                          </div>
-                        ) : (
-                          <Link 
-                            href={`/dashboard/teacher/create-survey?edit=${survey.surveyId}`}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 ml-2 p-1 hover:bg-gray-100 rounded"
-                            title="Edit survey"
-                          >
-                            <Edit className="h-4 w-4 text-gray-500 hover:text-gray-700" />
-                          </Link>
-                        )}
                       </div>
-                      <div className="flex items-center gap-2 mt-3">
+                      
+                      {/* Status Badge */}
+                      <div className="flex items-center justify-between">
                         {survey.status === "draft" ? (
-                          <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200">
-                            <Clock className="h-3 w-3 mr-1" />
+                          <Badge className="bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-200 transition-colors">
+                            <Clock className="h-3 w-3 mr-1.5" />
                             {survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
                           </Badge>
                         ) : survey.status === "active" ? (
-                          <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">
-                            <Play className="h-3 w-3 mr-1" />
+                          <Badge className="bg-green-100 text-green-700 border-green-200 hover:bg-green-200 transition-colors">
+                            <Play className="h-3 w-3 mr-1.5" />
                             {SURVEY_STATUS_LABELS[survey.status as keyof typeof SURVEY_STATUS_LABELS] || survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
                           </Badge>
                         ) : survey.status === "expired" ? (
-                          <Badge variant="outline" className="bg-purple-50 text-purple-600 border-purple-200">
-                            <Clock className="h-3 w-3 mr-1" />
+                          <Badge className="bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200 transition-colors">
+                            <Clock className="h-3 w-3 mr-1.5" />
                             {SURVEY_STATUS_LABELS[survey.status as keyof typeof SURVEY_STATUS_LABELS] || survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className={`
-                            ${survey.status === "completed" ? "bg-blue-50 text-blue-600 border-blue-200" : ""}
-                            ${survey.status === "inactive" ? "bg-red-50 text-red-600 border-red-200" : ""}
+                          <Badge className={`
+                            ${survey.status === "completed" ? "bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200" : ""}
+                            ${survey.status === "inactive" ? "bg-red-100 text-red-700 border-red-200 hover:bg-red-200" : ""}
+                            transition-colors
                           `}>
-                            {survey.status === "completed" && <CheckCircle className="h-3 w-3 mr-1" />}
-                            {survey.status === "inactive" && <AlertCircle className="h-3 w-3 mr-1" />}
+                            {survey.status === "completed" && <CheckCircle className="h-3 w-3 mr-1.5" />}
+                            {survey.status === "inactive" && <AlertCircle className="h-3 w-3 mr-1.5" />}
                             {SURVEY_STATUS_LABELS[survey.status as keyof typeof SURVEY_STATUS_LABELS] || survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
                           </Badge>
                         )}
+                        
+                        {/* Points Reward */}
+                        <div className="flex items-center gap-1 text-sm font-medium text-amber-600">
+                          <Award className="h-4 w-4" />
+                          <span>{survey.pointsReward || 0}</span>
+                        </div>
                       </div>
                     </CardHeader>
                     
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-5">
                       {/* Participants Progress */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">Participants</span>
-                          <span className="font-medium">{survey.currentParticipants} / {survey.requiredParticipants}</span>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-gray-700">Participants</span>
+                          <span className="text-sm font-bold text-gray-900">{survey.currentParticipants} / {survey.requiredParticipants}</span>
                         </div>
-                        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-300 ease-out"
-                            style={{ 
-                              width: `${survey.requiredParticipants ? (survey.currentParticipants / survey.requiredParticipants) * 100 : 0}%` 
-                            }}
-                          />
+                        <div className="relative">
+                          <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600 transition-all duration-500 ease-out shadow-sm"
+                              style={{ 
+                                width: `${survey.requiredParticipants ? (survey.currentParticipants / survey.requiredParticipants) * 100 : 0}%` 
+                              }}
+                            />
+                          </div>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-xs font-medium text-gray-600">
+                              {survey.requiredParticipants ? Math.round((survey.currentParticipants / survey.requiredParticipants) * 100) : 0}%
+                            </span>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Survey Details */}
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-gray-400" />
-                          <span className="text-gray-600">Created: {formattedDates[survey.surveyId || survey.id]?.createdAt || "-"}</span>
+                      {/* Survey Details Grid */}
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                          <Calendar className="h-4 w-4 text-emerald-500" />
+                          <div className="min-w-0">
+                            <p className="text-xs text-gray-500 font-medium">Created</p>
+                            <p className="text-gray-700 truncate">{formattedDates[survey.surveyId || survey.id]?.createdAt || "-"}</p>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-gray-400" />
-                          <span className="text-gray-600">Expires: {formattedDates[survey.surveyId || survey.id]?.expiresAt || "-"}</span>
+                        <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                          <Clock className="h-4 w-4 text-orange-500" />
+                          <div className="min-w-0">
+                            <p className="text-xs text-gray-500 font-medium">Expires</p>
+                            <p className="text-gray-700 truncate">{formattedDates[survey.surveyId || survey.id]?.expiresAt || "-"}</p>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Target className="h-4 w-4 text-gray-400" />
-                          <span className="text-gray-600">
-                            {TARGET_GENDER_SELECT.find(g => g.value.toLowerCase() === String(survey.targetGender).toLowerCase())?.label || survey.targetGender}
-                          </span>
+                        <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                          <Target className="h-4 w-4 text-blue-500" />
+                          <div className="min-w-0">
+                            <p className="text-xs text-gray-500 font-medium">Gender</p>
+                            <p className="text-gray-700 truncate">
+                              {TARGET_GENDER_SELECT.find(g => g.value.toLowerCase() === String(survey.targetGender).toLowerCase())?.label || survey.targetGender}
+                            </p>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <GraduationCap className="h-4 w-4 text-gray-400" />
-                          <span className="text-gray-600">
-                            {Array.isArray(survey.targetAcademicYears)
-                              ? survey.targetAcademicYears.map((year: number) => {
-                                  const found = ACADEMIC_YEARS.find(y => y.value === year);
-                                  return found ? found.label : year;
-                                }).join(", ")
-                              : "-"}
-                          </span>
+                        <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                          <GraduationCap className="h-4 w-4 text-purple-500" />
+                          <div className="min-w-0">
+                            <p className="text-xs text-gray-500 font-medium">Years</p>
+                            {(() => {
+                              const academicYearsText = Array.isArray(survey.targetAcademicYears) && survey.targetAcademicYears.length > 0
+                                ? survey.targetAcademicYears.length === ACADEMIC_YEARS.length
+                                  ? "All"
+                                  : survey.targetAcademicYears.map((year: number) => {
+                                      const found = ACADEMIC_YEARS.find(y => y.value === year);
+                                      return found ? found.label : year;
+                                    }).join(", ")
+                                : "-";
+                              const fullText = Array.isArray(survey.targetAcademicYears) && survey.targetAcademicYears.length > 0
+                                ? survey.targetAcademicYears.map((year: number) => {
+                                    const found = ACADEMIC_YEARS.find(y => y.value === year);
+                                    return found ? found.label : year;
+                                  }).join(", ")
+                                : "-";
+                              
+                                                             return academicYearsText !== fullText ? (
+                                 <TooltipProvider>
+                                   <Tooltip>
+                                     <TooltipTrigger asChild>
+                                       <p className="text-gray-700 truncate cursor-help hover:bg-gray-100 hover:text-gray-900 px-1 py-0.5 rounded transition-colors duration-200">
+                                         {academicYearsText}
+                                       </p>
+                                     </TooltipTrigger>
+                                     <TooltipContent>
+                                       <p>{fullText}</p>
+                                     </TooltipContent>
+                                   </Tooltip>
+                                 </TooltipProvider>
+                               ) : (
+                                 <p className="text-gray-700 truncate">
+                                   {academicYearsText}
+                                 </p>
+                               );
+                            })()}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Building className="h-4 w-4 text-gray-400" />
-                          <span className="text-gray-600">
-                            {Array.isArray(survey.targetDepartmentIds)
+                      </div>
+
+                      {/* Departments */}
+                      <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                        <Building className="h-4 w-4 text-indigo-500" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs text-gray-500 font-medium">Departments</p>
+                          {(() => {
+                            const departmentsText = Array.isArray(survey.targetDepartmentIds) && survey.targetDepartmentIds.length > 0
+                              ? survey.targetDepartmentIds.length === departments.length
+                                ? "All"
+                                : survey.targetDepartmentIds.map((id: number) => {
+                                    const found = departments.find(dep => dep.id === id);
+                                    return found ? found.name : id;
+                                  }).join(", ")
+                              : "-";
+                            const fullText = Array.isArray(survey.targetDepartmentIds) && survey.targetDepartmentIds.length > 0
                               ? survey.targetDepartmentIds.map((id: number) => {
                                   const found = departments.find(dep => dep.id === id);
                                   return found ? found.name : id;
                                 }).join(", ")
-                              : "-"}
-                          </span>
+                              : "-";
+                            
+                            return departmentsText !== fullText ? (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <p className="text-gray-700 truncate cursor-help hover:bg-gray-100 hover:text-gray-900 px-1 py-0.5 rounded transition-colors duration-200">
+                                      {departmentsText}
+                                    </p>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{fullText}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            ) : (
+                              <p className="text-gray-700 truncate">
+                                {departmentsText}
+                              </p>
+                            );
+                          })()}
                         </div>
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="flex flex-col gap-2 pt-2">
+                      <div className="space-y-3 pt-2">
                         <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/statistics`}>
-                          <Button className="w-full bg-emerald-500 hover:bg-emerald-600 text-white">
+                          <Button className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-medium shadow-sm transition-all duration-200">
                             <BarChart3 className="h-4 w-4 mr-2" />
                             View Statistics
                           </Button>
@@ -727,18 +837,27 @@ export default function TeacherDashboard() {
                         
                         <div className="flex gap-2">
                           <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/view`} className="flex-1">
-                            <Button variant="outline" size="sm" className="w-full">
+                            <Button variant="outline" size="sm" className="w-full border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 transition-all duration-200">
                               <FileText className="h-3 w-3 mr-1" />
                               View
                             </Button>
                           </Link>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="outline" size="sm">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleStartEdit(survey)}
+                            className="flex-1 border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200"
+                          >
+                            <Edit className="h-3 w-3 mr-1" />
+                            Quick Edit
+                          </Button>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="outline" size="sm" className="border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all duration-200">
                                 <MoreVertical className="h-3 w-3" />
                               </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48 p-2">
+                            </PopoverTrigger>
+                            <PopoverContent align="end" className="w-48 p-2">
                               {survey.currentParticipants > 0 ? (
                                 <div className="flex items-center w-full px-2 py-2 text-gray-400 cursor-not-allowed">
                                   <Edit className="h-4 w-4 mr-2" /> Edit (Not available)
@@ -751,9 +870,7 @@ export default function TeacherDashboard() {
                                   <Edit className="h-4 w-4 mr-2" /> Edit
                                 </Link>
                               )}
-                              <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/statistics`} className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded">
-                                <BarChart2 className="h-4 w-4 mr-2" /> View Statistics
-                              </Link>
+ 
                               {survey.status === 'draft' && (
                                 <button 
                                   className="flex items-center w-full px-2 py-2 hover:bg-green-100 text-green-600 rounded text-left"
@@ -785,8 +902,8 @@ export default function TeacherDashboard() {
                               <button className="flex items-center w-full px-2 py-2 hover:bg-red-100 text-red-600 rounded text-left">
                                 <Trash2 className="h-4 w-4 mr-2" /> Delete
                               </button>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                            </PopoverContent>
+                          </Popover>
                         </div>
                       </div>
                     </CardContent>
@@ -822,8 +939,8 @@ export default function TeacherDashboard() {
               </div>
             )}
           </div>
-        ) : (
-          // Original table layout for all surveys
+        ) : viewMode === 'table' ? (
+          // Table layout for all surveys
           <Card>
             <CardHeader className="pb-2">
               <CardTitle>Your Surveys</CardTitle>
@@ -853,210 +970,220 @@ export default function TeacherDashboard() {
                     </thead>
                     <tbody>
                       {filteredSurveys.map((survey: any, idx: number) => (
-                                                <tr key={survey.surveyId} className={`${idx === filteredSurveys.length - 1 ? '' : 'border-b'} hover:bg-gray-50 group`}>
-                          <td colSpan={9} className="p-0">
-                            {/* Survey Data Row */}
-                            <div className="grid grid-cols-9 gap-0">
-                              <div className="py-3 px-4 text-left flex items-center">
-                                <div>
-                                  <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/view`} className="hover:bg-gray-50 -m-2 p-2 rounded transition-colors">
-                                    <div className="font-medium text-emerald-600 hover:text-emerald-700 cursor-pointer truncate" title={survey.title}>{survey.title}</div>
-                                    <div className="text-sm text-gray-500 truncate" title={survey.description}>{survey.description}</div>
-                                  </Link>
-                                </div>
+                        <tr key={survey.surveyId} className={`${idx === filteredSurveys.length - 1 ? '' : 'border-b'} hover:bg-gray-50 group`}>
+                          {/* Title Column */}
+                          <td className="py-3 px-4 text-left">
+                            <div>
+                              <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/view`} className="hover:bg-gray-50 -m-2 p-2 rounded transition-colors">
+                                <div className="font-medium text-emerald-600 hover:text-emerald-700 cursor-pointer truncate text-sm" title={survey.title}>{survey.title}</div>
+                                <div className="text-xs text-gray-500 truncate" title={survey.description}>{survey.description}</div>
+                              </Link>
+                            </div>
+                          </td>
+                          
+                          {/* Status Column */}
+                          <td className="py-3 px-4 text-left">
+                            {survey.status === "draft" ? (
+                              <Badge
+                                variant="outline"
+                                className="bg-orange-50 text-orange-600 border-orange-200 text-xs"
+                              >
+                                <Clock className="h-3 w-3 mr-1" />
+                                {survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
+                              </Badge>
+                            ) : survey.status === "active" ? (
+                              <Badge
+                                variant="outline"
+                                className="bg-green-50 text-green-600 border-green-200 text-xs"
+                              >
+                                <Play className="h-3 w-3 mr-1" />
+                                {SURVEY_STATUS_LABELS[survey.status as keyof typeof SURVEY_STATUS_LABELS] || survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
+                              </Badge>
+                            ) : survey.status === "expired" ? (
+                              <Badge
+                                variant="outline"
+                                className="bg-purple-50 text-purple-600 border-purple-200 text-xs"
+                              >
+                                <Clock className="h-3 w-3 mr-1" />
+                                {SURVEY_STATUS_LABELS[survey.status as keyof typeof SURVEY_STATUS_LABELS] || survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="outline"
+                                className={`
+                                  ${survey.status === "completed" ? "bg-blue-50 text-blue-600 border-blue-200 text-xs" : ""}
+                                  ${survey.status === "inactive" ? "bg-red-50 text-red-600 border-red-200 text-xs" : ""}
+                                `}
+                              >
+                                {survey.status === "completed" && <CheckCircle className="h-3 w-3 mr-1" />}
+                                {survey.status === "inactive" && <AlertCircle className="h-3 w-3 mr-1" />}
+                                {SURVEY_STATUS_LABELS[survey.status as keyof typeof SURVEY_STATUS_LABELS] || survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
+                              </Badge>
+                            )}
+                          </td>
+                          
+                          {/* Created Date Column */}
+                          <td className="py-3 px-4 text-left text-sm">{formattedDates[survey.surveyId]?.createdAt || "-"}</td>
+                          
+                          {/* Expires Date Column */}
+                          <td className="py-3 px-4 text-left text-sm">{formattedDates[survey.surveyId]?.expiresAt || "-"}</td>
+                          
+                          {/* Participants Column */}
+                          <td className="py-3 px-4 text-left">
+                            <div>
+                              <div className="font-medium text-sm">{survey.currentParticipants} / {survey.requiredParticipants}</div>
+                              <div className="mt-1 w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-300 ease-out"
+                                  style={{ 
+                                    width: `${survey.requiredParticipants ? (survey.currentParticipants / survey.requiredParticipants) * 100 : 0}%` 
+                                  }}
+                                />
                               </div>
-                              <div className="py-3 px-4 text-left flex items-center justify-center">
-                                {survey.status === "draft" ? (
-                                  <Badge
-                                    variant="outline"
-                                    className="bg-orange-50 text-orange-600 border-orange-200"
-                                  >
-                                    <Clock className="h-3 w-3 mr-1" />
-                                    {survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
-                                  </Badge>
-                                ) : survey.status === "active" ? (
-                                  <Badge
-                                    variant="outline"
-                                    className="bg-green-50 text-green-600 border-green-200"
-                                  >
-                                    <Play className="h-3 w-3 mr-1" />
-                                    {SURVEY_STATUS_LABELS[survey.status as keyof typeof SURVEY_STATUS_LABELS] || survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
-                                  </Badge>
-                                ) : survey.status === "expired" ? (
-                                  <Badge
-                                    variant="outline"
-                                    className="bg-purple-50 text-purple-600 border-purple-200"
-                                  >
-                                    <Clock className="h-3 w-3 mr-1" />
-                                    {SURVEY_STATUS_LABELS[survey.status as keyof typeof SURVEY_STATUS_LABELS] || survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
-                                  </Badge>
-                                ) : (
-                                  <Badge
-                                    variant="outline"
-                                    className={`
-                                      ${survey.status === "completed" ? "bg-blue-50 text-blue-600 border-blue-200" : ""}
-                                      ${survey.status === "inactive" ? "bg-red-50 text-red-600 border-red-200" : ""}
-                                    `}
-                                  >
-                                    {survey.status === "completed" && <CheckCircle className="h-3 w-3 mr-1" />}
-                                    {survey.status === "inactive" && <AlertCircle className="h-3 w-3 mr-1" />}
-                                    {SURVEY_STATUS_LABELS[survey.status as keyof typeof SURVEY_STATUS_LABELS] || survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
-                                  </Badge>
-                                )}
-                              </div>
-                              <div className="py-3 px-4 text-left flex items-center">{formattedDates[survey.surveyId]?.createdAt || "-"}</div>
-                              <div className="py-3 px-4 text-left flex items-center">{formattedDates[survey.surveyId]?.expiresAt || "-"}</div>
-                              <div className="py-3 px-4 text-left flex items-center">
-                                <div>
-                                  <div className="font-medium">{survey.currentParticipants} / {survey.requiredParticipants}</div>
-                                  <div className="mt-1 w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                    <div 
-                                      className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-300 ease-out"
-                                      style={{ 
-                                        width: `${survey.requiredParticipants ? (survey.currentParticipants / survey.requiredParticipants) * 100 : 0}%` 
-                                      }}
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="py-3 px-4 text-left flex items-center">{
-                                TARGET_GENDER_SELECT.find(g => g.value.toLowerCase() === String(survey.targetGender).toLowerCase())?.label || survey.targetGender
-                              }</div>
-                              <div className="py-3 px-4 text-left flex items-center">{
-                                Array.isArray(survey.targetAcademicYears)
-                                  ? survey.targetAcademicYears.map((year: number) => {
+                            </div>
+                          </td>
+                          
+                          {/* Target Gender Column */}
+                          <td className="py-3 px-4 text-left text-sm">
+                            {TARGET_GENDER_SELECT.find(g => g.value.toLowerCase() === String(survey.targetGender).toLowerCase())?.label || survey.targetGender}
+                          </td>
+                          
+                          {/* Academic Years Column */}
+                          <td className="py-3 px-4 text-left text-sm">
+                            {(() => {
+                              const academicYearsText = Array.isArray(survey.targetAcademicYears) && survey.targetAcademicYears.length > 0
+                                ? survey.targetAcademicYears.length === ACADEMIC_YEARS.length
+                                  ? "All"
+                                  : survey.targetAcademicYears.map((year: number) => {
                                       const found = ACADEMIC_YEARS.find(y => y.value === year);
                                       return found ? found.label : year;
                                     }).join(", ")
-                                  : "-"
-                              }</div>
-                              <div className="py-3 px-4 text-left flex items-center">{
-                                Array.isArray(survey.targetDepartmentIds)
-                                  ? survey.targetDepartmentIds.map((id: number) => {
-                                      const found = departments.find(dep => dep.id === id);
-                                      return found ? found.name : id;
-                                    }).join(", ")
-                                  : "-"
-                              }</div>
-                              <div className="py-3 px-4 text-left flex items-center justify-center">
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <Button variant="ghost" size="icon">
-                                      <MoreVertical className="h-4 w-4" />
-                                    </Button>
-                                  </PopoverTrigger>
-                                  <PopoverContent align="end" className="w-48 p-2">
-                                    <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/view`} className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded">
-                                      <FileText className="h-4 w-4 mr-2" /> View
-                                    </Link>
-                                    {survey.currentParticipants > 0 ? (
-                                      <div className="flex items-center w-full px-2 py-2 text-gray-400 cursor-not-allowed">
-                                        <Edit className="h-4 w-4 mr-2" /> Edit (Not available)
-                                      </div>
-                                    ) : (
-                                      <Link 
-                                        href={`/dashboard/teacher/create-survey?edit=${survey.surveyId}`}
-                                        className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded text-left"
-                                      >
-                                        <Edit className="h-4 w-4 mr-2" /> Edit
-                                      </Link>
-                                    )}
-                                    <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/statistics`} className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded">
-                                  <BarChart2 className="h-4 w-4 mr-2" /> View Statistics
-                                </Link>
-                                  {survey.status === 'draft' && (
-                                    <button 
-                                      className="flex items-center w-full px-2 py-2 hover:bg-green-100 text-green-600 rounded text-left"
-                                      onClick={() => handlePublishSurvey(survey.surveyId)}
-                                      disabled={publishingSurveyId === survey.surveyId}
-                                    >
-                                      <Play className="h-4 w-4 mr-2" /> 
-                                      {publishingSurveyId === survey.surveyId ? "Publishing..." : "Publish"}
-                                    </button>
-                                  )}
-                                  {survey.status === 'active' && (
-                                    <button 
-                                      className="flex items-center w-full px-2 py-2 hover:bg-orange-100 text-orange-600 rounded text-left"
-                                      onClick={() => handleUnpublishSurvey(survey.surveyId)}
-                                      disabled={unpublishingSurveyId === survey.surveyId}
-                                    >
-                                      <Pause className="h-4 w-4 mr-2" /> 
-                                      {unpublishingSurveyId === survey.surveyId ? "Unpublishing..." : "Unpublish"}
-                                    </button>
-                                  )}
-                                  <button 
-                                    className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded text-left"
-                                    onClick={() => handleDuplicateSurvey(survey.surveyId)}
-                                    disabled={duplicatingSurveyId === survey.surveyId}
-                                  >
-                                    <Copy className="h-4 w-4 mr-2" /> 
-                                    {duplicatingSurveyId === survey.surveyId ? "Duplicating..." : "Duplicate"}
-                                  </button>
-                                  <button className="flex items-center w-full px-2 py-2 hover:bg-red-100 text-red-600 rounded text-left">
-                                    <Trash2 className="h-4 w-4 mr-2" /> Delete
-                                  </button>
-                                </PopoverContent>
-                              </Popover>
-                            </div>
-                          </div>
-                          
-                          {/* Action Buttons Row - Shows on hover */}
-                          <div className="opacity-100 transition-opacity duration-200 hover:bg-gray-50 px-4 py-2 -mt-6">
-                            <div className="flex gap-2">
-                              {survey.currentParticipants === 0 || survey.status === 'active' || survey.status === 'expired' || survey.status === 'inactive' || survey.status === 'completed' ? (
-                                <>
-                                  <button
-                                    onClick={() => handleStartEdit(survey)}
-                                    className="h-7 px-3 text-xs text-gray-700 hover:text-blue-600 hover:bg-gray-100 rounded border border-gray-200 transition-colors"
-                                  >
-                                    <Edit className="h-3 w-3 mr-1 inline" />
-                                    Quick Edit
-                                  </button>
-                                  <Link href={`/dashboard/teacher/create-survey?edit=${survey.surveyId}`}>
-                                    <button className="h-7 px-3 text-xs text-gray-700 hover:text-blue-600 hover:bg-gray-100 rounded border border-gray-200 transition-colors">
-                                      <Settings className="h-3 w-3 mr-1 inline" />
-                                      Edit
-                                    </button>
-                                  </Link>
-                                  {survey.status === 'draft' && (
-                                    <button
-                                      onClick={() => handlePublishSurvey(survey.surveyId)}
-                                      disabled={publishingSurveyId === survey.surveyId}
-                                      className="h-7 px-3 text-xs text-gray-700 hover:text-blue-600 hover:bg-gray-100 rounded border border-gray-200 transition-colors disabled:opacity-50"
-                                    >
-                                      <Play className="h-3 w-3 mr-1 inline" />
-                                      {publishingSurveyId === survey.surveyId ? "Publishing..." : "Publish"}
-                                    </button>
-                                  )}
-                                  {survey.status === 'active' && (
-                                    <button
-                                      onClick={() => handleUnpublishSurvey(survey.surveyId)}
-                                      disabled={unpublishingSurveyId === survey.surveyId}
-                                      className="h-7 px-3 text-xs text-gray-700 hover:text-blue-600 hover:bg-gray-100 rounded border border-gray-200 transition-colors disabled:opacity-50"
-                                    >
-                                      <Pause className="h-3 w-3 mr-1 inline" />
-                                      {unpublishingSurveyId === survey.surveyId ? "Unpublishing..." : "Unpublish"}
-                                    </button>
-                                  )}
-                                </>
-                              ) : (
+                                : "-";
+                              const fullText = Array.isArray(survey.targetAcademicYears) && survey.targetAcademicYears.length > 0
+                                ? survey.targetAcademicYears.map((year: number) => {
+                                    const found = ACADEMIC_YEARS.find(y => y.value === year);
+                                    return found ? found.label : year;
+                                  }).join(", ")
+                                : "-";
+                              
+                              return academicYearsText !== fullText ? (
                                 <TooltipProvider>
                                   <Tooltip>
                                     <TooltipTrigger asChild>
-                                      <div className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
-                                        Cannot edit - has participants
-                                      </div>
+                                      <span className="cursor-help hover:bg-gray-100 hover:text-gray-900 px-1 py-0.5 rounded transition-colors duration-200">
+                                        {academicYearsText}
+                                      </span>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                      <p>Cannot edit survey with existing participants</p>
+                                      <p>{fullText}</p>
                                     </TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
+                              ) : (
+                                <span>{academicYearsText}</span>
+                              );
+                            })()}
+                          </td>
+                          
+                          {/* Departments Column */}
+                          <td className="py-3 px-4 text-left text-sm">
+                            {(() => {
+                              const departmentsText = Array.isArray(survey.targetDepartmentIds) && survey.targetDepartmentIds.length > 0
+                                ? survey.targetDepartmentIds.length === departments.length
+                                  ? "All"
+                                  : survey.targetDepartmentIds.map((id: number) => {
+                                      const found = departments.find(department => department.id === id);
+                                      return found ? found.name : id;
+                                    }).join(", ")
+                                : "-";
+                              const fullText = Array.isArray(survey.targetDepartmentIds) && survey.targetDepartmentIds.length > 0
+                                ? survey.targetDepartmentIds.map((id: number) => {
+                                    const found = departments.find(department => department.id === id);
+                                    return found ? found.name : id;
+                                  }).join(", ")
+                                : "-";
+                              
+                              return departmentsText !== fullText ? (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span className="cursor-help hover:bg-gray-100 hover:text-gray-900 px-1 py-0.5 rounded transition-colors duration-200">
+                                        {departmentsText}
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>{fullText}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              ) : (
+                                <span>{departmentsText}</span>
+                              );
+                            })()}
+                          </td>
+                          
+                          {/* Actions Column */}
+                          <td className="py-3 px-4 text-right">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent align="end" className="w-48 p-2">
+                                <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/view`} className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded">
+                                  <FileText className="h-4 w-4 mr-2" /> View
+                                </Link>
+                                {survey.currentParticipants > 0 ? (
+                                  <div className="flex items-center w-full px-2 py-2 text-gray-400 cursor-not-allowed">
+                                    <Edit className="h-4 w-4 mr-2" /> Edit (Not available)
+                                  </div>
+                                ) : (
+                                  <Link 
+                                    href={`/dashboard/teacher/create-survey?edit=${survey.surveyId}`}
+                                    className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded text-left"
+                                  >
+                                    <Edit className="h-4 w-4 mr-2" /> Edit
+                                  </Link>
+                                )}
+                                <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/statistics`} className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded">
+                                  <BarChart2 className="h-4 w-4 mr-2" /> View Statistics
+                                </Link>
+                                {survey.status === 'draft' && (
+                                  <button 
+                                    className="flex items-center w-full px-2 py-2 hover:bg-green-100 text-green-600 rounded text-left"
+                                    onClick={() => handlePublishSurvey(survey.surveyId)}
+                                    disabled={publishingSurveyId === survey.surveyId}
+                                  >
+                                    <Play className="h-4 w-4 mr-2" /> 
+                                    {publishingSurveyId === survey.surveyId ? "Publishing..." : "Publish"}
+                                  </button>
+                                )}
+                                {survey.status === 'active' && (
+                                  <button 
+                                    className="flex items-center w-full px-2 py-2 hover:bg-orange-100 text-orange-600 rounded text-left"
+                                    onClick={() => handleUnpublishSurvey(survey.surveyId)}
+                                    disabled={unpublishingSurveyId === survey.surveyId}
+                                  >
+                                    <Pause className="h-4 w-4 mr-2" /> 
+                                    {unpublishingSurveyId === survey.surveyId ? "Unpublishing..." : "Unpublish"}
+                                  </button>
+                                )}
+                                <button 
+                                  className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded text-left"
+                                  onClick={() => handleDuplicateSurvey(survey.surveyId)}
+                                  disabled={duplicatingSurveyId === survey.surveyId}
+                                >
+                                  <Copy className="h-4 w-4 mr-2" /> 
+                                  {duplicatingSurveyId === survey.surveyId ? "Duplicating..." : "Duplicate"}
+                                </button>
+                                <button className="flex items-center w-full px-2 py-2 hover:bg-red-100 text-red-600 rounded text-left">
+                                  <Trash2 className="h-4 w-4 mr-2" /> Delete
+                                </button>
+                              </PopoverContent>
+                            </Popover>
+                          </td>
+                        </tr>
                       ))}
                     </tbody>
                   </table>
@@ -1073,7 +1200,7 @@ export default function TeacherDashboard() {
               )}
             </CardContent>
           </Card>
-        )}
+        ) : null}
       </main>
 
       {/* Quick Edit Dialog */}
