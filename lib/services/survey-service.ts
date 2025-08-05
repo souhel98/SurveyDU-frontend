@@ -211,7 +211,9 @@ export class SurveyService {
   // Get teacher survey by ID
   static async getTeacherSurveyById(id: number): Promise<any> {
     try {
+      console.log('Fetching teacher survey with ID:', id);
       const response = await api.get(`/Teacher/surveys/${id}`);
+      console.log('API response for getTeacherSurveyById:', response);
       if (response.data && response.data.success) {
         return response.data.data;
       } else {
@@ -477,4 +479,70 @@ export class SurveyService {
       }
     }
   }
+
+  // Teacher: Update survey dates and participants
+  static async updateTeacherSurveyDates(surveyId: number, updateData: {
+    startDate?: string;
+    endDate?: string;
+    requiredParticipants?: number;
+  }): Promise<any> {
+    try {
+      const response = await api.put(`/Teacher/surveys/${surveyId}/dates`, updateData);
+      if (response.data && response.data.success) {
+        return response.data;
+      } else {
+        throw new Error(response.data?.message || 'Failed to update survey dates.');
+      }
+    } catch (error: any) {
+      console.error('Error updating teacher survey dates:', error);
+      
+      if (error.response?.status === 404) {
+        throw new Error('Survey not found.');
+      } else if (error.response?.status === 400) {
+        throw new Error(error.response.data?.message || 'Invalid data. Please check your input.');
+      } else if (error.response?.status === 401) {
+        throw new Error('You are not authorized to update this survey. Please log in.');
+      } else if (error.response?.status >= 500) {
+        throw new Error('Server error. Please try again later.');
+      } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        throw new Error('Request timeout. Please check your internet connection and try again.');
+      } else if (!error.response) {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      } else {
+        throw new Error(error.response.data?.message || 'Failed to update survey dates. Please try again.');
+      }
+    }
+  }
+
+  // Teacher: Update survey with questions
+  static async updateTeacherSurveyWithQuestions(surveyId: number, surveyData: any): Promise<any> {
+    try {
+      const response = await api.put(`/Teacher/surveys/${surveyId}/with-questions`, surveyData);
+      if (response.data && response.data.success) {
+        return response.data;
+      } else {
+        throw new Error(response.data?.message || 'Failed to update survey.');
+      }
+    } catch (error: any) {
+      console.error('Error updating teacher survey with questions:', error);
+      
+      if (error.response?.status === 404) {
+        throw new Error('Survey not found.');
+      } else if (error.response?.status === 400) {
+        throw new Error(error.response.data?.message || 'Invalid survey data. Please check your input.');
+      } else if (error.response?.status === 401) {
+        throw new Error('You are not authorized to update this survey. Please log in.');
+      } else if (error.response?.status >= 500) {
+        throw new Error('Server error. Please try again later.');
+      } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        throw new Error('Request timeout. Please check your internet connection and try again.');
+      } else if (!error.response) {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      } else {
+        throw new Error(error.response.data?.message || 'Failed to update survey. Please try again.');
+      }
+    }
+  }
+
+
 } 

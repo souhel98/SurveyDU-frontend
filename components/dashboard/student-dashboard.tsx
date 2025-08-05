@@ -6,7 +6,7 @@ import { Search, Clock, MessageSquare, Calendar, BookOpen, User, History } from 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
 import { Badge } from "@/components/ui/badge"
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -29,7 +29,6 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
-  const [activeTab, setActiveTab] = useState("available")
 
   // Fetch all data in parallel
   useEffect(() => {
@@ -70,33 +69,20 @@ export default function StudentDashboard() {
     return map
   }, [departments])
 
-  // Filter and search logic
+  // Filter and search logic - only show active surveys for students
   const filteredSurveys = useMemo(() => {
-    let filtered = surveys
+    let filtered = surveys.filter(
+      (s) =>
+        s.isEligible &&
+        !s.hasParticipated &&
+        s.status === 'active'
+    )
+    
     if (searchQuery.trim()) {
       filtered = filtered.filter(
         (s) =>
           s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           (s.ownerName?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
-      )
-    }
-    // Tab logic
-    const now = new Date()
-    if (activeTab === "available") {
-      filtered = filtered.filter(
-        (s) =>
-          s.isEligible &&
-          !s.hasParticipated &&
-          (!s.endDate || new Date(s.endDate) > now)
-      )
-    } else if (activeTab === "completed") {
-      filtered = filtered.filter((s) => s.hasParticipated)
-    } else if (activeTab === "expired") {
-      filtered = filtered.filter(
-        (s) =>
-          s.isEligible &&
-          !s.hasParticipated &&
-          s.endDate && new Date(s.endDate) <= now
       )
     }
     
@@ -108,7 +94,7 @@ export default function StudentDashboard() {
     })
     
     return filtered
-  }, [surveys, searchQuery, activeTab])
+  }, [surveys, searchQuery])
 
   // Profile summary fields
   const profileFields = [
@@ -160,15 +146,14 @@ export default function StudentDashboard() {
 
 
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-          <TabsList>
-            <TabsTrigger value="available">Available Surveys</TabsTrigger>
-            <TabsTrigger value="completed">Completed Surveys</TabsTrigger>
-            <TabsTrigger value="expired">Expired Surveys</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value={activeTab} className="mt-4">
+        {/* Available Surveys Section */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Available Surveys</h2>
+              <p className="text-gray-600">Surveys you can participate in to earn points</p>
+            </div>
+          </div>
             {loading ? (
               <div className="text-center py-12 text-gray-500">Loading...</div>
             ) : error ? (
@@ -238,24 +223,7 @@ export default function StudentDashboard() {
                           </div>
                         </div>
 
-                        {/* Status Badge */}
-                        <div className="flex justify-center">
-                          <Badge 
-                            variant="secondary" 
-                            className={`px-4 py-2 text-sm font-medium ${
-                              survey.status === 'active' 
-                                ? 'bg-green-100 text-green-700 border-green-200' 
-                                : 'bg-gray-100 text-gray-700 border-gray-200'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <div className={`w-2 h-2 rounded-full ${
-                                survey.status === 'active' ? 'bg-green-500' : 'bg-gray-500'
-                              }`}></div>
-                              {survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
-                            </div>
-                          </Badge>
-                        </div>
+
                       </div>
                     </CardContent>
                     
@@ -282,8 +250,7 @@ export default function StudentDashboard() {
                 <p className="text-gray-500">Try adjusting your search or filter criteria</p>
               </div>
             )}
-          </TabsContent>
-        </Tabs>
+        </div>
       </main>
     </div>
   )

@@ -109,7 +109,8 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
       active: { color: "bg-green-50 text-green-600 border-green-200", label: "Active", icon: <Play className="h-3 w-3 mr-1" /> },
       draft: { color: "bg-orange-50 text-orange-600 border-orange-200", label: "Draft", icon: <Clock className="h-3 w-3 mr-1" /> },
       completed: { color: "bg-blue-50 text-blue-600 border-blue-200", label: "Completed", icon: <CheckCircle className="h-3 w-3 mr-1" /> },
-      inactive: { color: "bg-red-50 text-red-600 border-red-200", label: "Inactive", icon: <AlertCircle className="h-3 w-3 mr-1" /> }
+      inactive: { color: "bg-red-50 text-red-600 border-red-200", label: "Inactive", icon: <AlertCircle className="h-3 w-3 mr-1" /> },
+      expired: { color: "bg-purple-50 text-purple-600 border-purple-200", label: "Expired", icon: <Clock className="h-3 w-3 mr-1" /> }
     }
     
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft

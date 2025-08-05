@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef, createRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { FileText } from "lucide-react";
 import {
   Search,
@@ -308,9 +309,14 @@ function DropZoneWithHook({ index, dropZoneIds, draggedType }: { index: number, 
 }
 
 export default function SurveyCreator() {
+  const searchParams = useSearchParams();
+  const editSurveyId = searchParams.get('edit');
+  
   const [activeTab, setActiveTab] = useState("designer");
   const [questions, setQuestions] = useState<QuestionData[]>([]);
   const [lastSelectedType, setLastSelectedType] = useState<QuestionType | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isLoadingSurvey, setIsLoadingSurvey] = useState(false);
   const [metadata, setMetadata] = useState<{
     title: string;
     description: string;
@@ -407,6 +413,70 @@ export default function SurveyCreator() {
 
     fetchData();
   }, [toast]);
+
+  // Load survey data for editing
+  useEffect(() => {
+    const loadSurveyForEdit = async () => {
+      if (!editSurveyId) return;
+      
+      try {
+        console.log('Loading survey for edit, ID:', editSurveyId);
+        setIsLoadingSurvey(true);
+        setIsEditMode(true);
+        
+        const surveyData = await SurveyService.getTeacherSurveyById(parseInt(editSurveyId));
+        console.log('Survey data received:', surveyData);
+        console.log('Survey questions:', surveyData.questions);
+        
+        // Update metadata
+        setMetadata({
+          title: surveyData.title || "",
+          description: surveyData.description || "",
+          pointsReward: surveyData.pointsReward || 100,
+          startDate: surveyData.startDate ? format(new Date(surveyData.startDate), "yyyy-MM-dd'T'HH:mm:ss") : format(new Date(), "yyyy-MM-dd'T'HH:mm:ss"),
+          endDate: surveyData.endDate ? format(new Date(surveyData.endDate), "yyyy-MM-dd'T'HH:mm:ss") : format(new Date().setMonth(new Date().getMonth() + 1), "yyyy-MM-dd'T'HH:mm:ss"),
+          requiredParticipants: surveyData.requiredParticipants || 50,
+          targetAcademicYears: surveyData.targetAcademicYears ? surveyData.targetAcademicYears.map(String) : ["all"],
+          targetDepartmentIds: surveyData.targetDepartmentIds ? surveyData.targetDepartmentIds.map(String) : ["all"],
+          targetGender: surveyData.targetGender ? String(surveyData.targetGender) : "all",
+          publishImmediately: false // Always false for editing
+        });
+        
+        // Update questions
+        if (surveyData.questions && Array.isArray(surveyData.questions)) {
+          console.log('Processing questions array:', surveyData.questions);
+          const formattedQuestions = surveyData.questions.map((q: any, index: number) => ({
+            id: q.id || index + 1,
+            typeId: q.typeId || 1,
+            typeName: q.questionType || 'multiple_choice',
+            questionText: q.questionText || "",
+            isRequired: q.isRequired || false,
+            questionOrder: q.questionOrder || index,
+            options: q.options ? q.options.map((opt: any, optIndex: number) => ({
+              id: opt.id || optIndex + 1,
+              text: opt.optionText || "",
+              order: opt.optionOrder || optIndex
+            })) : []
+          }));
+          console.log('Formatted questions:', formattedQuestions);
+          setQuestions(formattedQuestions);
+        } else {
+          console.log('No questions found or questions is not an array:', surveyData.questions);
+        }
+        
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to load survey for editing",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoadingSurvey(false);
+      }
+    };
+
+    loadSurveyForEdit();
+  }, [editSurveyId, toast]);
 
   const handleAddQuestion = (typeId: number, insertAt?: number) => {
     const type = questionTypes.find(qt => qt.typeId === typeId);
@@ -576,26 +646,40 @@ export default function SurveyCreator() {
       setIsSaving(true);
       const surveyData = formatSurveyData();
       try {
-        const response = await SurveyService.createSurveyWithQuestions(surveyData);
+        let response;
+        if (isEditMode && editSurveyId) {
+          // Update existing survey
+          response = await SurveyService.updateTeacherSurveyWithQuestions(parseInt(editSurveyId), surveyData);
+        } else {
+          // Create new survey
+          response = await SurveyService.createSurveyWithQuestions(surveyData);
+        }
+        
         setIsSaving(false);
         if (response.success) {
-          let message = response.message || "Survey created successfully!";
+          let message = isEditMode 
+            ? (response.message || "Survey updated successfully!")
+            : (response.message || "Survey created successfully!");
+          
           if (response.data && response.data.surveyId) {
-            message = `Survey submitted successfully! Survey ID: ${response.data.surveyId}`;
+            message = isEditMode
+              ? `Survey updated successfully! Survey ID: ${response.data.surveyId}`
+              : `Survey submitted successfully! Survey ID: ${response.data.surveyId}`;
           }
+          
           toast({
             title: message,
           });
         } else {
           toast({
-            title: response.message || "Failed to create survey",
+            title: response.message || (isEditMode ? "Failed to update survey" : "Failed to create survey"),
             variant: "destructive",
           });
         }
       } catch (error: any) {
         setIsSaving(false);
         toast({
-          title: error.message || "An error occurred while saving the survey",
+          title: error.message || (isEditMode ? "An error occurred while updating the survey" : "An error occurred while saving the survey"),
           variant: "destructive",
         });
       }
@@ -652,6 +736,18 @@ export default function SurveyCreator() {
         setQuestions(arrayMove(questions, oldIndex, newIndex).map((q, i) => ({ ...q, questionOrder: i })));
       }
     }
+  }
+
+  // Show loading state when loading survey for edit
+  if (isLoadingSurvey) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading survey for editing...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -1161,8 +1257,11 @@ export default function SurveyCreator() {
                       <Checkbox
                         checked={!!metadata.publishImmediately}
                         onCheckedChange={(checked) => setMetadata((prev) => ({ ...prev, publishImmediately: !!checked }))}
+                        disabled={isEditMode}
                       />
-                      <span>Publish Immediately</span>
+                      <span className={isEditMode ? "text-gray-400" : ""}>
+                        {isEditMode ? "Publish Immediately (disabled in edit mode)" : "Publish Immediately"}
+                      </span>
                     </label>
                   </div>
                 </div>
@@ -1181,12 +1280,12 @@ export default function SurveyCreator() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
                       </svg>
-                      Saving...
+                      {isEditMode ? 'Updating...' : 'Saving...'}
                     </span>
                   ) : (
                     <>
                       <Save className="h-5 w-5 mr-2" />
-                      Save Survey
+                      {isEditMode ? 'Update Survey' : 'Save Survey'}
                     </>
                   )}
                 </Button>

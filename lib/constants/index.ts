@@ -34,6 +34,7 @@ export const SURVEY_STATUS = {
   Active: 1,
   Completed: 2,
   Inactive: 3,
+  Expired: 4,
 } as const;
 
 // Survey Status Labels (for display)
@@ -42,6 +43,7 @@ export const SURVEY_STATUS_LABELS = {
   active: 'Active',
   completed: 'Completed',
   inactive: 'Inactive',
+  expired: 'Expired',
 } as const;
 
 // Comment Status
