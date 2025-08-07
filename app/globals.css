@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-cairo), Cairo, sans-serif;
 }
 
 @layer utilities {
@@ -137,7 +137,12 @@ body {
 
 @layer base {
   * {
+    font-family: var(--font-cairo), Cairo, sans-serif;
   }
   body {
+    font-family: var(--font-cairo), Cairo, sans-serif;
+  }
+  html {
+    font-family: var(--font-cairo), Cairo, sans-serif;
   }
 }

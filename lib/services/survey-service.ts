@@ -1,4 +1,5 @@
 import api from '@/lib/api/axios';
+import axios from 'axios';
 import { Survey, Question, SurveyResponse, SurveyListResponse } from '@/lib/types';
 
 export class SurveyService {
@@ -544,5 +545,47 @@ export class SurveyService {
     }
   }
 
+  // Generate questions with AI
+  static async generateQuestionsWithAI(requestData: {
+    surveyTitle: string;
+    surveyDescription: string;
+    questionTypes: Array<{ typeId: number; count: number }>;
+    additionalDetails?: string;
+    defaultOptions?: number;
+  }): Promise<any> {
+    try {
+      // Create a custom axios instance with extended timeout for AI generation
+      const aiApi = axios.create({
+        baseURL: 'https://mhhmd6g-001-site1.rtempurl.com/api',
+        timeout: 180000, // 3 minutes for AI generation
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
+      // Add token to request
+      const token = localStorage.getItem('token');
+      if (token) {
+        aiApi.defaults.headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await aiApi.post('/Teacher/generate-questions', requestData);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error generating questions with AI:', error);
+      if (error.response?.status === 400) {
+        throw new Error(error.response.data?.message || 'Invalid request data. Please check your input.');
+      } else if (error.response?.status === 401) {
+        throw new Error('You are not authorized to generate questions. Please log in.');
+      } else if (error.response?.status >= 500) {
+        throw new Error('Server error. Please try again later.');
+      } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        throw new Error('AI generation is taking longer than expected. Please wait and try again.');
+      } else if (!error.response) {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      } else {
+        throw new Error(error.response.data?.message || 'Failed to generate questions. Please try again.');
+      }
+    }
+  }
 } 

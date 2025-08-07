@@ -54,7 +54,7 @@ export default function TeacherDashboard() {
   const [publishingSurveyId, setPublishingSurveyId] = useState<number | null>(null);
   const [unpublishingSurveyId, setUnpublishingSurveyId] = useState<number | null>(null);
   const [showSurveysWithResponses, setShowSurveysWithResponses] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<string | null>("all");
   
   // Quick edit states
   const [editingSurveyId, setEditingSurveyId] = useState<number | null>(null);
@@ -70,7 +70,19 @@ export default function TeacherDashboard() {
   const [updatingSurveyId, setUpdatingSurveyId] = useState<number | null>(null);
   const [refreshingSurveys, setRefreshingSurveys] = useState(false);
   const [quickEditDialogOpen, setQuickEditDialogOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      return 'cards';
+    }
+    return 'table';
+  });
+
+  useEffect(() => {
+    // On mount, check if mobile and set to cards if needed
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setViewMode('cards');
+    }
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -93,7 +105,7 @@ export default function TeacherDashboard() {
       const matchesSearch =
         survey.title.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus =
-        statusFilter === "all" || survey.status === statusFilter;
+        statusFilter === "all" || statusFilter === "responses" || survey.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
 
@@ -336,9 +348,62 @@ export default function TeacherDashboard() {
       <main className="container mx-auto px-4 py-6">
         {/* Stats Cards */}
         <div className="grid gap-4 mb-6">
-          {/* First Row - Total Responses and Total Surveys */}
+          {/* First Row - Total Surveys and Total Responses */}
           <div className="grid gap-4 md:grid-cols-2">
-            <Card>
+            <Card 
+              className={`${activeFilter === "all" ? "bg-blue-50 border-blue-200" : ""} hover:bg-blue-50/50 transition-colors duration-200 cursor-pointer`}
+              onClick={() => {
+                if (activeFilter !== "all") {
+                  const newFilter = activeFilter === "all" ? null : "all";
+                  setActiveFilter(newFilter);
+                  setStatusFilter(newFilter || "all");
+                }
+              }}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <div className="bg-blue-100 p-3 rounded-full mr-4">
+                      <FileText className="h-6 w-6 text-blue-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Total Surveys</p>
+                      <h3 className="text-2xl font-bold">{surveys.length}</h3>
+                    </div>
+                  </div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className={`w-full flex items-center justify-center gap-2 ${
+                    activeFilter === "all" 
+                      ? "bg-blue-100 border-blue-300 text-blue-800 cursor-not-allowed" 
+                      : "bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700"
+                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (activeFilter !== "all") {
+                      const newFilter = activeFilter === "all" ? null : "all";
+                      setActiveFilter(newFilter);
+                      setStatusFilter(newFilter || "all");
+                    }
+                  }}
+                  disabled={activeFilter === "all"}
+                >
+                  <FileText className="h-4 w-4" />
+                  {activeFilter === "all" ? "Viewing All Surveys" : "View All Surveys"}
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className={`${activeFilter === "responses" ? "bg-emerald-50 border-emerald-200" : ""} hover:bg-emerald-50/50 transition-colors duration-200 cursor-pointer`}
+              onClick={() => {
+                const newFilter = activeFilter === "responses" ? null : "responses";
+                setActiveFilter(newFilter);
+                setStatusFilter(newFilter || "all");
+              }}
+            >
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center">
@@ -355,35 +420,15 @@ export default function TeacherDashboard() {
                   variant="outline" 
                   size="sm" 
                   className="w-full flex items-center justify-center gap-2 bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700"
-                  onClick={() => setActiveFilter(activeFilter === "responses" ? null : "responses")}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const newFilter = activeFilter === "responses" ? null : "responses";
+                    setActiveFilter(newFilter);
+                    setStatusFilter(newFilter || "all");
+                  }}
                 >
                   <BarChart3 className="h-4 w-4" />
                   {activeFilter === "responses" ? "Show All" : "View Responses"}
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <div className="bg-blue-100 p-3 rounded-full mr-4">
-                      <FileText className="h-6 w-6 text-blue-500" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Total Surveys</p>
-                      <h3 className="text-2xl font-bold">{surveys.length}</h3>
-                    </div>
-                  </div>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700"
-                  onClick={() => setActiveFilter(activeFilter === "all" ? null : "all")}
-                >
-                  <FileText className="h-4 w-4" />
-                  {activeFilter === "all" ? "Show All Surveys" : "View All Surveys"}
                 </Button>
               </CardContent>
             </Card>
@@ -392,7 +437,14 @@ export default function TeacherDashboard() {
           {/* Second Row - Status Cards */}
           <div className="grid gap-4 md:grid-cols-5">
 
-          <Card>
+          <Card 
+            className={`${activeFilter === "active" ? "bg-green-50 border-green-200" : ""} hover:bg-green-50/50 transition-colors duration-200 cursor-pointer`}
+            onClick={() => {
+              const newFilter = activeFilter === "active" ? null : "active";
+              setActiveFilter(newFilter);
+              setStatusFilter(newFilter || "all");
+            }}
+          >
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
@@ -409,7 +461,12 @@ export default function TeacherDashboard() {
                 variant="outline" 
                 size="sm" 
                 className="w-full flex items-center justify-center gap-2 bg-green-50 hover:bg-green-100 border-green-200 text-green-700"
-                onClick={() => setActiveFilter(activeFilter === "active" ? null : "active")}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const newFilter = activeFilter === "active" ? null : "active";
+                  setActiveFilter(newFilter);
+                  setStatusFilter(newFilter || "all");
+                }}
               >
                 <Play className="h-4 w-4" />
                 {activeFilter === "active" ? "Show All Surveys" : "View Active Surveys"}
@@ -417,7 +474,14 @@ export default function TeacherDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card 
+            className={`${activeFilter === "draft" ? "bg-orange-50 border-orange-200" : ""} hover:bg-orange-50/50 transition-colors duration-200 cursor-pointer`}
+            onClick={() => {
+              const newFilter = activeFilter === "draft" ? null : "draft";
+              setActiveFilter(newFilter);
+              setStatusFilter(newFilter || "all");
+            }}
+          >
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
@@ -434,7 +498,12 @@ export default function TeacherDashboard() {
                 variant="outline" 
                 size="sm" 
                 className="w-full flex items-center justify-center gap-2 bg-orange-50 hover:bg-orange-100 border-orange-200 text-orange-700"
-                onClick={() => setActiveFilter(activeFilter === "draft" ? null : "draft")}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const newFilter = activeFilter === "draft" ? null : "draft";
+                  setActiveFilter(newFilter);
+                  setStatusFilter(newFilter || "all");
+                }}
               >
                 <Clock className="h-4 w-4" />
                 {activeFilter === "draft" ? "Show All Surveys" : "View Draft Surveys"}
@@ -442,7 +511,14 @@ export default function TeacherDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card 
+            className={`${activeFilter === "inactive" ? "bg-red-50 border-red-200" : ""} hover:bg-red-50/50 transition-colors duration-200 cursor-pointer`}
+            onClick={() => {
+              const newFilter = activeFilter === "inactive" ? null : "inactive";
+              setActiveFilter(newFilter);
+              setStatusFilter(newFilter || "all");
+            }}
+          >
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
@@ -459,7 +535,12 @@ export default function TeacherDashboard() {
                 variant="outline" 
                 size="sm" 
                 className="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 border-red-200 text-red-700"
-                onClick={() => setActiveFilter(activeFilter === "inactive" ? null : "inactive")}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const newFilter = activeFilter === "inactive" ? null : "inactive";
+                  setActiveFilter(newFilter);
+                  setStatusFilter(newFilter || "all");
+                }}
               >
                 <AlertCircle className="h-4 w-4" />
                 {activeFilter === "inactive" ? "Show All Surveys" : "View Inactive Surveys"}
@@ -467,7 +548,14 @@ export default function TeacherDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card 
+            className={`${activeFilter === "expired" ? "bg-purple-50 border-purple-200" : ""} hover:bg-purple-50/50 transition-colors duration-200 cursor-pointer`}
+            onClick={() => {
+              const newFilter = activeFilter === "expired" ? null : "expired";
+              setActiveFilter(newFilter);
+              setStatusFilter(newFilter || "all");
+            }}
+          >
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
@@ -484,7 +572,12 @@ export default function TeacherDashboard() {
                 variant="outline" 
                 size="sm" 
                 className="w-full flex items-center justify-center gap-2 bg-purple-50 hover:bg-purple-100 border-purple-200 text-purple-700"
-                onClick={() => setActiveFilter(activeFilter === "expired" ? null : "expired")}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const newFilter = activeFilter === "expired" ? null : "expired";
+                  setActiveFilter(newFilter);
+                  setStatusFilter(newFilter || "all");
+                }}
               >
                 <Clock className="h-4 w-4" />
                 {activeFilter === "expired" ? "Show All Surveys" : "View Expired Surveys"}
@@ -492,7 +585,14 @@ export default function TeacherDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card 
+            className={`${activeFilter === "completed" ? "bg-indigo-50 border-indigo-200" : ""} hover:bg-indigo-50/50 transition-colors duration-200 cursor-pointer`}
+            onClick={() => {
+              const newFilter = activeFilter === "completed" ? null : "completed";
+              setActiveFilter(newFilter);
+              setStatusFilter(newFilter || "all");
+            }}
+          >
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
@@ -509,7 +609,12 @@ export default function TeacherDashboard() {
                 variant="outline" 
                 size="sm" 
                 className="w-full flex items-center justify-center gap-2 bg-indigo-50 hover:bg-indigo-100 border-indigo-200 text-indigo-700"
-                onClick={() => setActiveFilter(activeFilter === "completed" ? null : "completed")}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const newFilter = activeFilter === "completed" ? null : "completed";
+                  setActiveFilter(newFilter);
+                  setStatusFilter(newFilter || "all");
+                }}
               >
                 <CheckCircle className="h-4 w-4" />
                 {activeFilter === "completed" ? "Show All Surveys" : "View Completed Surveys"}
@@ -546,12 +651,20 @@ export default function TeacherDashboard() {
               />
             </div>
             <div className="w-full md:w-64">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={activeFilter || statusFilter} onValueChange={(value) => {
+                setStatusFilter(value);
+                if (value === 'all') {
+                  setActiveFilter("all");
+                } else {
+                  setActiveFilter(value);
+                }
+              }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="all">All Surveys</SelectItem>
+                  <SelectItem value="responses">Surveys with Responses</SelectItem>
                   <SelectItem value="draft">Draft</SelectItem>
                   <SelectItem value="inactive">Inactive</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
@@ -562,14 +675,11 @@ export default function TeacherDashboard() {
             </div>
             <div className="flex gap-2">
               <Button
-                variant={(viewMode === 'table' && !activeFilter) ? 'default' : 'outline'}
+                variant={viewMode === 'table' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => {
-                  setViewMode('table');
-                  setActiveFilter(null);
-                }}
+                onClick={() => setViewMode('table')}
                 className={`flex items-center gap-2 ${
-                  (viewMode === 'table' && !activeFilter)
+                  viewMode === 'table'
                     ? 'bg-emerald-500 hover:bg-emerald-600 text-white' 
                     : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-300 hover:border-gray-400'
                 }`}
@@ -578,14 +688,11 @@ export default function TeacherDashboard() {
                 Table
               </Button>
               <Button
-                variant={(viewMode === 'cards' || activeFilter) ? 'default' : 'outline'}
+                variant={viewMode === 'cards' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => {
-                  setViewMode('cards');
-                  setActiveFilter(null);
-                }}
+                onClick={() => setViewMode('cards')}
                 className={`flex items-center gap-2 ${
-                  (viewMode === 'cards' || activeFilter)
+                  viewMode === 'cards'
                     ? 'bg-emerald-500 hover:bg-emerald-600 text-white' 
                     : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-300 hover:border-gray-400'
                 }`}
@@ -598,7 +705,7 @@ export default function TeacherDashboard() {
         </div>
 
         {/* Surveys List */}
-        {activeFilter || viewMode === 'cards' ? (
+        {viewMode === 'cards' ? (
           <div className="space-y-6">
                           <div>
                 <h2 className="text-2xl font-bold text-gray-900">
@@ -842,13 +949,36 @@ export default function TeacherDashboard() {
                               View
                             </Button>
                           </Link>
+                          {(survey.currentParticipants > 0 || survey.status === 'expired') ? (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              disabled
+                              className="flex-1 border-gray-200 text-gray-400 cursor-not-allowed"
+                              title={survey.currentParticipants > 0 ? "Edit not available when survey has responses" : "Edit not available for expired surveys"}
+                            >
+                              <Edit className="h-3 w-3 mr-1" />
+                              Edit
+                            </Button>
+                          ) : (
+                            <Link href={`/dashboard/teacher/create-survey?edit=${survey.surveyId}`} className="flex-1">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="w-full border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200"
+                              >
+                                <Edit className="h-3 w-3 mr-1" />
+                                Edit
+                              </Button>
+                            </Link>
+                          )}
                           <Button 
                             variant="outline" 
                             size="sm"
                             onClick={() => handleStartEdit(survey)}
-                            className="flex-1 border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200"
+                            className="flex-1 border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all duration-200"
                           >
-                            <Edit className="h-3 w-3 mr-1" />
+                            <Settings className="h-3 w-3 mr-1" />
                             Quick Edit
                           </Button>
                           <Popover>
@@ -858,7 +988,10 @@ export default function TeacherDashboard() {
                               </Button>
                             </PopoverTrigger>
                             <PopoverContent align="end" className="w-48 p-2">
-                              {survey.currentParticipants > 0 ? (
+                              <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/view`} className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded">
+                                <FileText className="h-4 w-4 mr-2" /> View
+                              </Link>
+                              {(survey.currentParticipants > 0 || survey.status === 'expired') ? (
                                 <div className="flex items-center w-full px-2 py-2 text-gray-400 cursor-not-allowed">
                                   <Edit className="h-4 w-4 mr-2" /> Edit (Not available)
                                 </div>
@@ -870,7 +1003,9 @@ export default function TeacherDashboard() {
                                   <Edit className="h-4 w-4 mr-2" /> Edit
                                 </Link>
                               )}
- 
+                              <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/statistics`} className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded">
+                                <BarChart2 className="h-4 w-4 mr-2" /> View Statistics
+                              </Link>
                               {survey.status === 'draft' && (
                                 <button 
                                   className="flex items-center w-full px-2 py-2 hover:bg-green-100 text-green-600 rounded text-left"
@@ -883,12 +1018,17 @@ export default function TeacherDashboard() {
                               )}
                               {survey.status === 'active' && (
                                 <button 
-                                  className="flex items-center w-full px-2 py-2 hover:bg-orange-100 text-orange-600 rounded text-left"
+                                  className={`flex items-center w-full px-2 py-2 rounded text-left ${
+                                    survey.currentParticipants > 0 
+                                      ? 'text-gray-400 cursor-not-allowed' 
+                                      : 'hover:bg-orange-100 text-orange-600'
+                                  }`}
                                   onClick={() => handleUnpublishSurvey(survey.surveyId)}
-                                  disabled={unpublishingSurveyId === survey.surveyId}
+                                  disabled={unpublishingSurveyId === survey.surveyId || survey.currentParticipants > 0}
                                 >
                                   <Pause className="h-4 w-4 mr-2" /> 
-                                  {unpublishingSurveyId === survey.surveyId ? "Unpublishing..." : "Unpublish"}
+                                  {unpublishingSurveyId === survey.surveyId ? "Unpublishing..." : 
+                                   survey.currentParticipants > 0 ? "Unpublish (Not available)" : "Unpublish"}
                                 </button>
                               )}
                               <button 
@@ -943,7 +1083,16 @@ export default function TeacherDashboard() {
           // Table layout for all surveys
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle>Your Surveys</CardTitle>
+              <CardTitle>
+                {activeFilter === "responses" && "Surveys with Responses"}
+                {activeFilter === "all" && "All Surveys"}
+                {activeFilter === "active" && "Active Surveys"}
+                {activeFilter === "draft" && "Draft Surveys"}
+                {activeFilter === "inactive" && "Inactive Surveys"}
+                {activeFilter === "expired" && "Expired Surveys"}
+                {activeFilter === "completed" && "Completed Surveys"}
+                {!activeFilter && "Your Surveys"}
+              </CardTitle>
               <CardDescription>Manage and analyze your created surveys</CardDescription>
             </CardHeader>
             <CardContent>
@@ -953,11 +1102,11 @@ export default function TeacherDashboard() {
                   {refreshingSurveys ? "Refreshing surveys..." : "Loading surveys..."}
                 </div>
               ) : filteredSurveys.length > 0 ? (
-                <div className="">
-                  <table className="w-full">
+                <div className="overflow-x-auto md:overflow-x-hidden">
+                  <table className="w-full min-w-[900px]">
                     <thead>
                       <tr className="border-b">
-                        <th className="text-left py-3 px-4 font-medium text-gray-500 w-40">Title</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-500 w-40 max-w-xs">Title</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-500">Status</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-500">Created</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-500">Expires</th>
@@ -974,9 +1123,15 @@ export default function TeacherDashboard() {
                           {/* Title Column */}
                           <td className="py-3 px-4 text-left">
                             <div>
-                              <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/view`} className="hover:bg-gray-50 -m-2 p-2 rounded transition-colors">
-                                <div className="font-medium text-emerald-600 hover:text-emerald-700 cursor-pointer truncate text-sm" title={survey.title}>{survey.title}</div>
-                                <div className="text-xs text-gray-500 truncate" title={survey.description}>{survey.description}</div>
+                              <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/view`} className=" -m-2 p-2 rounded transition-colors">
+                                <div className="font-bold text-lg text-emerald-600 hover:text-emerald-700 cursor-pointer break-words max-w-xs" title={survey.title}>
+                                  {survey.title}
+                                  </div>
+                                <div className="text-base text-gray-500 truncate max-w-xs" title={survey.description}>
+                                  {survey.description && survey.description.length > 30 
+                                    ? `${survey.description.substring(0, 30)}...` 
+                                    : survey.description}
+                                </div>
                               </Link>
                             </div>
                           </td>
@@ -1023,15 +1178,20 @@ export default function TeacherDashboard() {
                           </td>
                           
                           {/* Created Date Column */}
-                          <td className="py-3 px-4 text-left text-sm">{formattedDates[survey.surveyId]?.createdAt || "-"}</td>
+                          <td className="py-3 px-4 text-left text-base">{formattedDates[survey.surveyId]?.createdAt || "-"}</td>
                           
                           {/* Expires Date Column */}
-                          <td className="py-3 px-4 text-left text-sm">{formattedDates[survey.surveyId]?.expiresAt || "-"}</td>
+                          <td className="py-3 px-4 text-left text-base">{formattedDates[survey.surveyId]?.expiresAt || "-"}</td>
                           
                           {/* Participants Column */}
                           <td className="py-3 px-4 text-left">
                             <div>
-                              <div className="font-medium text-sm">{survey.currentParticipants} / {survey.requiredParticipants}</div>
+                              <div className="font-medium text-base flex items-center gap-2">
+                                {survey.currentParticipants} / {survey.requiredParticipants}
+                                {survey.currentParticipants >= survey.requiredParticipants && (
+                                  <CheckCircle className="h-4 w-4 text-blue-600" />
+                                )}
+                              </div>
                               <div className="mt-1 w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
                                 <div 
                                   className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-300 ease-out"
@@ -1044,12 +1204,12 @@ export default function TeacherDashboard() {
                           </td>
                           
                           {/* Target Gender Column */}
-                          <td className="py-3 px-4 text-left text-sm">
+                          <td className="py-3 px-4 text-left text-base">
                             {TARGET_GENDER_SELECT.find(g => g.value.toLowerCase() === String(survey.targetGender).toLowerCase())?.label || survey.targetGender}
                           </td>
                           
                           {/* Academic Years Column */}
-                          <td className="py-3 px-4 text-left text-sm">
+                          <td className="py-3 px-4 text-left text-base">
                             {(() => {
                               const academicYearsText = Array.isArray(survey.targetAcademicYears) && survey.targetAcademicYears.length > 0
                                 ? survey.targetAcademicYears.length === ACADEMIC_YEARS.length
@@ -1086,7 +1246,7 @@ export default function TeacherDashboard() {
                           </td>
                           
                           {/* Departments Column */}
-                          <td className="py-3 px-4 text-left text-sm">
+                          <td className="py-3 px-4 text-left text-base">
                             {(() => {
                               const departmentsText = Array.isArray(survey.targetDepartmentIds) && survey.targetDepartmentIds.length > 0
                                 ? survey.targetDepartmentIds.length === departments.length
@@ -1124,64 +1284,105 @@ export default function TeacherDashboard() {
                           
                           {/* Actions Column */}
                           <td className="py-3 px-4 text-right">
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent align="end" className="w-48 p-2">
-                                <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/view`} className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded">
-                                  <FileText className="h-4 w-4 mr-2" /> View
-                                </Link>
-                                {survey.currentParticipants > 0 ? (
-                                  <div className="flex items-center w-full px-2 py-2 text-gray-400 cursor-not-allowed">
-                                    <Edit className="h-4 w-4 mr-2" /> Edit (Not available)
-                                  </div>
-                                ) : (
-                                  <Link 
-                                    href={`/dashboard/teacher/create-survey?edit=${survey.surveyId}`}
-                                    className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded text-left"
-                                  >
-                                    <Edit className="h-4 w-4 mr-2" /> Edit
-                                  </Link>
-                                )}
-                                <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/statistics`} className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded">
-                                  <BarChart2 className="h-4 w-4 mr-2" /> View Statistics
-                                </Link>
-                                {survey.status === 'draft' && (
-                                  <button 
-                                    className="flex items-center w-full px-2 py-2 hover:bg-green-100 text-green-600 rounded text-left"
-                                    onClick={() => handlePublishSurvey(survey.surveyId)}
-                                    disabled={publishingSurveyId === survey.surveyId}
-                                  >
-                                    <Play className="h-4 w-4 mr-2" /> 
-                                    {publishingSurveyId === survey.surveyId ? "Publishing..." : "Publish"}
-                                  </button>
-                                )}
-                                {survey.status === 'active' && (
-                                  <button 
-                                    className="flex items-center w-full px-2 py-2 hover:bg-orange-100 text-orange-600 rounded text-left"
-                                    onClick={() => handleUnpublishSurvey(survey.surveyId)}
-                                    disabled={unpublishingSurveyId === survey.surveyId}
-                                  >
-                                    <Pause className="h-4 w-4 mr-2" /> 
-                                    {unpublishingSurveyId === survey.surveyId ? "Unpublishing..." : "Unpublish"}
-                                  </button>
-                                )}
-                                <button 
-                                  className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded text-left"
-                                  onClick={() => handleDuplicateSurvey(survey.surveyId)}
-                                  disabled={duplicatingSurveyId === survey.surveyId}
+                            <div className="flex gap-2 justify-end">
+                              {(survey.currentParticipants > 0 || survey.status === 'expired') ? (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  disabled 
+                                  className="text-gray-400 cursor-not-allowed"
+                                  title={survey.currentParticipants > 0 ? "Edit not available when survey has responses" : "Edit not available for expired surveys"}
                                 >
-                                  <Copy className="h-4 w-4 mr-2" /> 
-                                  {duplicatingSurveyId === survey.surveyId ? "Duplicating..." : "Duplicate"}
-                                </button>
-                                <button className="flex items-center w-full px-2 py-2 hover:bg-red-100 text-red-600 rounded text-left">
-                                  <Trash2 className="h-4 w-4 mr-2" /> Delete
-                                </button>
-                              </PopoverContent>
-                            </Popover>
+                                  <Edit className="h-3 w-3 mr-1" />
+                                  Edit
+                                </Button>
+                              ) : (
+                                <Link href={`/dashboard/teacher/create-survey?edit=${survey.surveyId}`}>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                    title="Edit Survey"
+                                  >
+                                    <Edit className="h-3 w-3 mr-1" />
+                                    Edit
+                                  </Button>
+                                </Link>
+                              )}
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleStartEdit(survey)}
+                                className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                title="Quick Edit"
+                              >
+                                <Settings className="h-3 w-3 mr-1" />
+                                Quick Edit
+                              </Button>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent align="end" className="w-48 p-2">
+                                  <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/view`} className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded">
+                                    <FileText className="h-4 w-4 mr-2" /> View
+                                  </Link>
+                                  {(survey.currentParticipants > 0 || survey.status === 'expired') ? (
+                                    <div className="flex items-center w-full px-2 py-2 text-gray-400 cursor-not-allowed">
+                                      <Edit className="h-4 w-4 mr-2" /> Edit (Not available)
+                                    </div>
+                                  ) : (
+                                    <Link 
+                                      href={`/dashboard/teacher/create-survey?edit=${survey.surveyId}`}
+                                      className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded text-left"
+                                    >
+                                      <Edit className="h-4 w-4 mr-2" /> Edit
+                                    </Link>
+                                  )}
+                                  <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/statistics`} className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded">
+                                    <BarChart2 className="h-4 w-4 mr-2" /> View Statistics
+                                  </Link>
+                                  {survey.status === 'draft' && (
+                                    <button 
+                                      className="flex items-center w-full px-2 py-2 hover:bg-green-100 text-green-600 rounded text-left"
+                                      onClick={() => handlePublishSurvey(survey.surveyId)}
+                                      disabled={publishingSurveyId === survey.surveyId}
+                                    >
+                                      <Play className="h-4 w-4 mr-2" /> 
+                                      {publishingSurveyId === survey.surveyId ? "Publishing..." : "Publish"}
+                                    </button>
+                                  )}
+                                  {survey.status === 'active' && (
+                                    <button 
+                                      className={`flex items-center w-full px-2 py-2 rounded text-left ${
+                                        survey.currentParticipants > 0 
+                                          ? 'text-gray-400 cursor-not-allowed' 
+                                          : 'hover:bg-orange-100 text-orange-600'
+                                      }`}
+                                      onClick={() => handleUnpublishSurvey(survey.surveyId)}
+                                      disabled={unpublishingSurveyId === survey.surveyId || survey.currentParticipants > 0}
+                                    >
+                                      <Pause className="h-4 w-4 mr-2" /> 
+                                      {unpublishingSurveyId === survey.surveyId ? "Unpublishing..." : 
+                                       survey.currentParticipants > 0 ? "Unpublish (Not available)" : "Unpublish"}
+                                    </button>
+                                  )}
+                                  <button 
+                                    className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded text-left"
+                                    onClick={() => handleDuplicateSurvey(survey.surveyId)}
+                                    disabled={duplicatingSurveyId === survey.surveyId}
+                                  >
+                                    <Copy className="h-4 w-4 mr-2" /> 
+                                    {duplicatingSurveyId === survey.surveyId ? "Duplicating..." : "Duplicate"}
+                                  </button>
+                                  <button className="flex items-center w-full px-2 py-2 hover:bg-red-100 text-red-600 rounded text-left">
+                                    <Trash2 className="h-4 w-4 mr-2" /> Delete
+                                  </button>
+                                </PopoverContent>
+                              </Popover>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -1257,6 +1458,40 @@ export default function TeacherDashboard() {
                           : 'text-indigo-800'
                       }`}>
                         Start date is locked because this {surveys.find(s => s.surveyId === editingSurveyId)?.status} survey has participants. Only end date and participant count can be modified.
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                    <Input
+                      type="date"
+                      value={editingData.endDate}
+                      onChange={(e) => handleInputChange('endDate', e.target.value)}
+                      className="h-10"
+                      placeholder="YYYY-MM-DD"
+                    />
+                    {surveys.find(s => s.surveyId === editingSurveyId)?.endDate && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Current: {new Date(surveys.find(s => s.surveyId === editingSurveyId)?.endDate).toLocaleString('en-GB', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: false
+                        }).replace(',', ' -')}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : editingSurveyId && surveys.find(s => s.surveyId === editingSurveyId)?.status === 'expired' ? (
+                // For expired surveys - only show end date and participants
+                <div className="space-y-4">
+                  <div className="p-3 border rounded-lg bg-purple-50 border-purple-200">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 text-purple-600" />
+                      <p className="text-sm text-purple-800">
+                        This survey has expired. Only end date and participant count can be modified.
                       </p>
                     </div>
                   </div>

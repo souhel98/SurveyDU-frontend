@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef, createRef } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { FileText } from "lucide-react";
 import {
   Search,
@@ -42,10 +42,12 @@ import { DepartmentService } from "@/lib/services/department-service";
 import { Switch } from "@/components/ui/switch";
 import { Popover } from "@/components/ui/popover";
 import { PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragOverlay, useDroppable, useDraggable } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogHeader, DialogFooter, DialogClose, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 // Import question type components
 import MultipleChoice from "@/components/question-types/MultipleChoice";
@@ -310,6 +312,7 @@ function DropZoneWithHook({ index, dropZoneIds, draggedType }: { index: number, 
 
 export default function SurveyCreator() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const editSurveyId = searchParams.get('edit');
   
   const [activeTab, setActiveTab] = useState("designer");
@@ -338,7 +341,7 @@ export default function SurveyCreator() {
     targetAcademicYears: ["all"],
     targetDepartmentIds: ["all"],
     targetGender: "all",
-    publishImmediately: true
+    publishImmediately: false
   });
   const [departments, setDepartments] = useState<{ id: number; name: string }[]>([]);
   const [questionTypes, setQuestionTypes] = useState<QuestionType[]>([]);
@@ -353,6 +356,16 @@ export default function SurveyCreator() {
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const [showJsonDialog, setShowJsonDialog] = useState(false);
+  const [showAIGenerationDialog, setShowAIGenerationDialog] = useState(false);
+  const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false);
+  const [aiGenerationConfig, setAIGenerationConfig] = useState({
+    additionalDetails: "",
+    defaultOptions: 4,
+    questionTypes: [] as Array<{ typeId: number; count: number }>
+  });
+  const [jsonEditValue, setJsonEditValue] = useState<string>("");
+  const [jsonError, setJsonError] = useState<string | null>(null);
+  const [jsonDirty, setJsonDirty] = useState<boolean>(false);
 
   useEffect(() => {
     if (activeQuestionId && questionRefs.current[activeQuestionId]) {
@@ -363,7 +376,13 @@ export default function SurveyCreator() {
     }
   }, [activeQuestionId]);
 
-
+  // Auto-update the JSON textarea with the latest survey state while dialog is open and not dirty
+  useEffect(() => {
+    if (showJsonDialog && !jsonDirty) {
+      setJsonEditValue(JSON.stringify(formatSurveyData(), null, 2));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showJsonDialog, metadata, questions]);
 
   // Add a mapping for question type display names and icons
   const QUESTION_TYPE_LABELS: Record<string, string> = {
@@ -444,10 +463,22 @@ export default function SurveyCreator() {
         
         // Update questions
         if (surveyData.questions && Array.isArray(surveyData.questions)) {
-          console.log('Processing questions array:', surveyData.questions);
+          const getTypeId = (qt: any) => {
+            if (typeof qt.typeId === 'number' && qt.typeId > 0) return qt.typeId;
+            if (typeof qt.questionType === 'string') {
+              switch (qt.questionType) {
+                case 'multiple_choice': return 1;
+                case 'single_answer': return 2;
+                case 'open_text': return 3;
+                case 'percentage': return 4;
+                default: return 1;
+              }
+            }
+            return 1;
+          };
           const formattedQuestions = surveyData.questions.map((q: any, index: number) => ({
             id: q.id || index + 1,
-            typeId: q.typeId || 1,
+            typeId: getTypeId(q),
             typeName: q.questionType || 'multiple_choice',
             questionText: q.questionText || "",
             isRequired: q.isRequired || false,
@@ -458,7 +489,6 @@ export default function SurveyCreator() {
               order: opt.optionOrder || optIndex
             })) : []
           }));
-          console.log('Formatted questions:', formattedQuestions);
           setQuestions(formattedQuestions);
         } else {
           console.log('No questions found or questions is not an array:', surveyData.questions);
@@ -554,7 +584,6 @@ export default function SurveyCreator() {
       pointsReward: Number(metadata.pointsReward),
       startDate: metadata.startDate,
       endDate: metadata.endDate,
-      publishImmediately: Boolean(metadata.publishImmediately),
       questions: questions.map((q: any, idx: number) => ({
         questionText: q.questionText,
         typeId: q.typeId,
@@ -645,6 +674,7 @@ export default function SurveyCreator() {
       }
       setIsSaving(true);
       const surveyData = formatSurveyData();
+      console.log('Submitting survey request body:', surveyData);
       try {
         let response;
         if (isEditMode && editSurveyId) {
@@ -670,6 +700,11 @@ export default function SurveyCreator() {
           toast({
             title: message,
           });
+          
+          // Redirect to dashboard after successful save
+          setTimeout(() => {
+            router.push('/dashboard/teacher');
+          }, 1500);
         } else {
           toast({
             title: response.message || (isEditMode ? "Failed to update survey" : "Failed to create survey"),
@@ -699,6 +734,88 @@ export default function SurveyCreator() {
 
   // Fix add question button handler
   const handleAddQuestionClick = (typeId: number) => () => handleAddQuestion(typeId);
+
+  // AI Question Generation Handler
+  const handleGenerateQuestionsWithAI = async () => {
+    if (!metadata.title.trim() || !metadata.description.trim()) {
+      toast({
+        title: "Survey title and description are required",
+        description: "Please fill in the survey title and description before generating questions.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (aiGenerationConfig.questionTypes.length === 0) {
+      toast({
+        title: "No question types selected",
+        description: "Please select at least one question type to generate.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setIsGeneratingQuestions(true);
+      
+      const requestData = {
+        surveyTitle: metadata.title,
+        surveyDescription: metadata.description,
+        questionTypes: aiGenerationConfig.questionTypes,
+        additionalDetails: aiGenerationConfig.additionalDetails || undefined,
+        defaultOptions: aiGenerationConfig.defaultOptions
+      };
+
+      const response = await SurveyService.generateQuestionsWithAI(requestData);
+      
+      if (response.success && response.data) {
+        // Convert AI-generated questions to our format
+        const generatedQuestions = response.data.map((q: any, index: number) => ({
+          id: Date.now() + index,
+          typeId: q.typeId,
+          typeName: questionTypes.find(qt => qt.typeId === q.typeId)?.typeName || 'multiple_choice',
+          questionText: q.questionText,
+          isRequired: q.isRequired,
+          questionOrder: index,
+          options: q.options ? q.options.map((opt: any, optIndex: number) => ({
+            id: optIndex + 1,
+            text: opt.optionText,
+            order: opt.optionOrder
+          })) : []
+        }));
+
+        // Add generated questions to existing questions
+        setQuestions(prev => [...prev, ...generatedQuestions]);
+        
+        toast({
+          title: "Questions generated successfully!",
+          description: `${generatedQuestions.length} questions have been added to your survey.`,
+        });
+        
+        setShowAIGenerationDialog(false);
+      } else {
+        throw new Error(response.message || 'Failed to generate questions');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error generating questions",
+        description: error.message || "Failed to generate questions. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingQuestions(false);
+    }
+  };
+
+  // Initialize AI generation config when question types are loaded
+  useEffect(() => {
+    if (questionTypes.length > 0 && aiGenerationConfig.questionTypes.length === 0) {
+      setAIGenerationConfig(prev => ({
+        ...prev,
+        questionTypes: questionTypes.map(qt => ({ typeId: qt.typeId, count: 1 }))
+      }));
+    }
+  }, [questionTypes]);
 
   // DnD-kit setup
   const sensors = useSensors(useSensor(PointerSensor));
@@ -751,20 +868,21 @@ export default function SurveyCreator() {
   }
 
   return (
-    <DndContext
-      sensors={sidebarSensors}
-      collisionDetection={closestCenter}
-      onDragStart={({ active }) => {
-        setDraggedType(active.data?.current?.type || null);
-        if (typeof active.id === 'number') setActiveDragId(active.id as number);
-      }}
-      onDragEnd={handleUnifiedDragEnd}
-      onDragCancel={() => {
-        // Just reset drag state, do NOT add a question
-        setDraggedType(null);
-        setActiveDragId(null);
-      }}
-    >
+    <TooltipProvider>
+      <DndContext
+        sensors={sidebarSensors}
+        collisionDetection={closestCenter}
+        onDragStart={({ active }) => {
+          setDraggedType(active.data?.current?.type || null);
+          if (typeof active.id === 'number') setActiveDragId(active.id as number);
+        }}
+        onDragEnd={handleUnifiedDragEnd}
+        onDragCancel={() => {
+          // Just reset drag state, do NOT add a question
+          setDraggedType(null);
+          setActiveDragId(null);
+        }}
+      >
       <div className="flex relative overflow-hidden">
         {/* Left Sidebar - Question Types - Fixed */}
         <div className="w-72 bg-white border-r border-gray-200 overflow-y-auto fixed left-0 top-16 pt-8 bottom-0 shadow-sm z-20">
@@ -1007,41 +1125,131 @@ export default function SurveyCreator() {
                       <h2 className="text-2xl font-bold text-gray-900 mb-3">
                         Your survey is empty
                       </h2>
-                      <p className="text-gray-600 mb-8 text-lg leading-relaxed">
-                        Start building your questionnaire by adding your first question. Choose from various question types like multiple choice, open text, and more.
-                      </p>
-                      <Popover open={showTypePicker} onOpenChange={setShowTypePicker}>
-                        <PopoverTrigger asChild>
-                          <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 text-white" onClick={() => setShowTypePicker(true)}>
-                            <Plus className="h-5 w-5 mr-2" />
-                            Add Your First Question
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent align="center" className="w-64 p-2">
-                          <div className="flex flex-col gap-1">
-                            {loadingQuestionTypes ? (
-                              <div className="flex items-center justify-center py-4">
-                                <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent"></div>
-                                <span className="ml-2 text-sm text-gray-500">Loading question types...</span>
+                      <div className="flex gap-4">
+                        <Popover open={showTypePicker} onOpenChange={setShowTypePicker}>
+                          <PopoverTrigger asChild>
+                            <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 text-white" onClick={() => setShowTypePicker(true)}>
+                              <Plus className="h-5 w-5 mr-2" />
+                              Add Your First Question
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent align="center" className="w-64 p-2">
+                            <div className="flex flex-col gap-1">
+                              {loadingQuestionTypes ? (
+                                <div className="flex items-center justify-center py-4">
+                                  <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent"></div>
+                                  <span className="ml-2 text-sm text-gray-500">Loading question types...</span>
+                                </div>
+                              ) : (
+                                questionTypes.map((type) => (
+                                  <button
+                                    key={type.typeId}
+                                    className="flex items-center w-full px-3 py-2 text-sm rounded-lg hover:bg-emerald-50 transition-colors"
+                                    onClick={() => {
+                                      handleAddQuestion(type.typeId);
+                                      setShowTypePicker(false);
+                                    }}
+                                  >
+                                    <span className="mr-2">{QUESTION_TYPE_ICONS[type.typeName]}</span>
+                                    <span>{QUESTION_TYPE_LABELS[type.typeName] || type.typeName}</span>
+                                  </button>
+                                ))
+                              )}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                        
+                        {/* AI Generation Button for Empty State */}
+                        {(!metadata.title.trim() || !metadata.description.trim()) ? (
+                          <div className="relative group">
+                            <Button 
+                              size="lg" 
+                              className="bg-gray-300 text-gray-500 cursor-not-allowed hover:bg-gray-300"
+                              onClick={() => {
+                                // Focus on the survey title field
+                                const titleInput = document.getElementById('title') as HTMLInputElement;
+                                if (titleInput) {
+                                  titleInput.focus();
+                                  titleInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }
+                              }}
+                              disabled={false}
+                              title="Survey title and description required"
+                            >
+                              <BarChart2 className="h-5 w-5 mr-2" />
+                              Generate with AI
+                            </Button>
+                            {/* Custom Tooltip */}
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                              <div className="bg-white border border-gray-200 shadow-lg rounded-lg p-3 w-80">
+                                <div className="space-y-2">
+                                  <p className="font-medium text-gray-900">Survey title and description required</p>
+                                  <div className="text-sm space-y-1">
+                                    {!metadata.title.trim() && (
+                                      <p className="flex items-center gap-1 text-red-600">
+                                        <span className="w-2 h-2 bg-red-400 rounded-full"></span>
+                                        Add survey title
+                                      </p>
+                                    )}
+                                    {!metadata.description.trim() && (
+                                      <p className="flex items-center gap-1 text-red-600">
+                                        <span className="w-2 h-2 bg-red-400 rounded-full"></span>
+                                        Add survey description
+                                      </p>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-gray-500">
+                                    Fill in the survey details in the right sidebar first
+                                  </p>
+                                </div>
+                                {/* Arrow */}
+                                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white"></div>
                               </div>
-                            ) : (
-                              questionTypes.map((type) => (
-                                <button
-                                  key={type.typeId}
-                                  className="flex items-center w-full px-3 py-2 text-sm rounded-lg hover:bg-emerald-50 transition-colors"
-                                  onClick={() => {
-                                    handleAddQuestion(type.typeId);
-                                    setShowTypePicker(false);
-                                  }}
-                                >
-                                  <span className="mr-2">{QUESTION_TYPE_ICONS[type.typeName]}</span>
-                                  <span>{QUESTION_TYPE_LABELS[type.typeName] || type.typeName}</span>
-                                </button>
-                              ))
-                            )}
+                            </div>
                           </div>
-                        </PopoverContent>
-                      </Popover>
+                        ) : (
+                          <Button 
+                            size="lg" 
+                            className="bg-purple-500 hover:bg-purple-600 text-white"
+                            onClick={() => setShowAIGenerationDialog(true)}
+                            disabled={false}
+                          >
+                            <BarChart2 className="h-5 w-5 mr-2" />
+                            Generate with AI
+                          </Button>
+                        )}
+                      </div>
+                      
+                      {/* Hint text below empty state buttons */}
+                      <div className="text-center mt-6">
+                        {(!metadata.title.trim() || !metadata.description.trim()) ? (
+                          <div className="text-sm text-gray-500 bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md mx-auto">
+                            <div className="flex items-center justify-center gap-2 mb-2">
+                              <span className="text-yellow-600">💡</span>
+                              <span className="font-medium text-yellow-800">Get Started with AI</span>
+                            </div>
+                            <p className="text-yellow-700 mb-2">
+                              To use AI question generation, first add a survey title and description in the right sidebar.
+                            </p>
+                            <p className="text-xs text-yellow-600">
+                              The AI will create relevant questions based on your survey topic and description.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="text-sm text-gray-500 bg-purple-50 border border-purple-200 rounded-lg p-4 max-w-md mx-auto">
+                            <div className="flex items-center justify-center gap-2 mb-2">
+                              <span className="text-purple-600">🚀</span>
+                              <span className="font-medium text-purple-800">Ready for AI Generation!</span>
+                            </div>
+                            <p className="text-purple-700 mb-2">
+                              Your survey is ready! Use AI to quickly generate relevant questions based on your topic.
+                            </p>
+                            <p className="text-xs text-purple-600">
+                              Choose question types and counts, then let AI create your questions automatically.
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </motion.div>
                 )}
@@ -1051,7 +1259,7 @@ export default function SurveyCreator() {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="flex justify-center mt-4"
+                  className="flex justify-center gap-4 mt-4"
                 >
                   <Popover open={showTypePicker} onOpenChange={setShowTypePicker}>
                     <PopoverTrigger asChild>
@@ -1085,6 +1293,68 @@ export default function SurveyCreator() {
                       </div>
                     </PopoverContent>
                   </Popover>
+                  
+                  {/* AI Generation Button */}
+                  {(!metadata.title.trim() || !metadata.description.trim()) ? (
+                    <div className="relative group">
+                      <Button 
+                        size="lg" 
+                        className="bg-gray-300 text-gray-500 cursor-not-allowed hover:bg-gray-300"
+                        onClick={() => {
+                          // Focus on the survey title field
+                          const titleInput = document.getElementById('title') as HTMLInputElement;
+                          if (titleInput) {
+                            titleInput.focus();
+                            titleInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          }
+                        }}
+                        disabled={false}
+                        title="Survey title and description required"
+                      >
+                        <BarChart2 className="h-5 w-5 mr-2" />
+                        Generate with AI
+                      </Button>
+                      {/* Custom Tooltip */}
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+                        <div className="bg-white border border-gray-200 shadow-lg rounded-lg p-3 w-80">
+                          <div className="space-y-2">
+                            <p className="font-medium text-gray-900">Survey title and description required</p>
+                            <div className="text-sm space-y-1">
+                              {!metadata.title.trim() && (
+                                <p className="flex items-center gap-1 text-red-600">
+                                  <span className="w-2 h-2 bg-red-400 rounded-full"></span>
+                                  Add survey title
+                                </p>
+                              )}
+                              {!metadata.description.trim() && (
+                                <p className="flex items-center gap-1 text-red-600">
+                                  <span className="w-2 h-2 bg-red-400 rounded-full"></span>
+                                  Add survey description
+                                </p>
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-500">
+                              Fill in the survey details in the right sidebar first
+                            </p>
+                          </div>
+                          {/* Arrow */}
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white"></div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button 
+                      size="lg" 
+                      className="bg-purple-500 hover:bg-purple-600 text-white"
+                      onClick={() => setShowAIGenerationDialog(true)}
+                      disabled={false}
+                    >
+                      <BarChart2 className="h-5 w-5 mr-2" />
+                      Generate with AI
+                    </Button>
+                  )}
+                  
+
                 </motion.div>
               )}
             </div>
@@ -1120,26 +1390,52 @@ export default function SurveyCreator() {
               <div className="p-6">
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label htmlFor="title" className="text-sm font-medium text-gray-700">
+                    <label htmlFor="title" className="text-sm font-medium text-gray-700 flex items-center gap-2">
                       Survey Title
+                      <span className="text-red-500">*</span>
+                      {!metadata.title.trim() && (
+                        <span className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded">
+                          Required for AI
+                        </span>
+                      )}
                     </label>
                     <Input
                       id="title"
                       placeholder="Enter survey title"
                       value={metadata.title}
                       onChange={(e) => handleMetadataChange("title", e.target.value)}
+                      className={!metadata.title.trim() ? "border-red-300 focus:border-red-500" : ""}
                     />
+                    {!metadata.title.trim() && (
+                      <p className="text-xs text-red-500">
+                        Survey title is required to generate AI questions
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
-                    <label htmlFor="description" className="text-sm font-medium text-gray-700">
+                    <label htmlFor="description" className="text-sm font-medium text-gray-700 flex items-center gap-2">
                       Description
+                      <span className="text-red-500">*</span>
+                      {!metadata.description.trim() && (
+                        <span className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded">
+                          Required for AI
+                        </span>
+                      )}
                     </label>
-                    <Input
+                    <Textarea
                       id="description"
                       placeholder="Enter survey description"
                       value={metadata.description}
                       onChange={(e) => handleMetadataChange("description", e.target.value)}
+                      className={`min-h-[100px] resize-none break-words ${
+                        !metadata.description.trim() ? "border-red-300 focus:border-red-500" : ""
+                      }`}
                     />
+                    {!metadata.description.trim() && (
+                      <p className="text-xs text-red-500">
+                        Survey description is required to generate AI questions
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <label htmlFor="pointsReward" className="text-sm font-medium text-gray-700">
@@ -1252,18 +1548,22 @@ export default function SurveyCreator() {
                       ))}
                     </CustomSelect>
                   </div>
-                  <div className="space-y-2 flex items-end justify-center">
-                    <label className="text-sm font-medium text-gray-700 flex items-center space-x-2">
-                      <Checkbox
-                        checked={!!metadata.publishImmediately}
-                        onCheckedChange={(checked) => setMetadata((prev) => ({ ...prev, publishImmediately: !!checked }))}
-                        disabled={isEditMode}
-                      />
-                      <span className={isEditMode ? "text-gray-400" : ""}>
-                        {isEditMode ? "Publish Immediately (disabled in edit mode)" : "Publish Immediately"}
-                      </span>
+                  <div className="space-y-2 flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-700">
+                      Publish Immediately
                     </label>
+                    <Switch
+                      checked={!!metadata.publishImmediately}
+                      onCheckedChange={(checked) => setMetadata((prev) => ({ ...prev, publishImmediately: !!checked }))}
+                      disabled={isEditMode}
+                      className="data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500 focus-visible:ring-emerald-400"
+                    />
                   </div>
+                  {isEditMode && (
+                    <p className="text-xs text-gray-500 text-center">
+                      Publish Immediately is disabled in edit mode
+                    </p>
+                  )}
                 </div>
               </div>
               {/* Save Button (moved here) */}
@@ -1297,18 +1597,92 @@ export default function SurveyCreator() {
                 >
                   Show JSON
                 </Button>
-                <Dialog open={showJsonDialog} onOpenChange={setShowJsonDialog}>
+                <Dialog open={showJsonDialog} onOpenChange={(open) => {
+                  setShowJsonDialog(open);
+                  if (open) {
+                    setJsonEditValue(JSON.stringify(formatSurveyData(), null, 2));
+                    setJsonError(null);
+                    setJsonDirty(false);
+                  }
+                }}>
                   <DialogContent className="max-w-2xl">
                     <DialogHeader>
-                      <DialogTitle>Survey JSON Payload</DialogTitle>
-                      <DialogDescription>This is the JSON that will be sent to the API.</DialogDescription>
+                      <DialogTitle>Edit Survey JSON</DialogTitle>
+                      <DialogDescription>
+                        You can edit the JSON directly. Changes will update the survey details and questions.
+                      </DialogDescription>
                     </DialogHeader>
-                    <pre className="bg-gray-100 rounded p-4 text-xs max-h-[60vh] overflow-auto">
-                      {JSON.stringify(formatSurveyData(), null, 2)}
-                    </pre>
+                    <Textarea
+                      className="bg-gray-100 rounded p-4 text-xs max-h-[60vh] overflow-auto font-mono"
+                      value={jsonEditValue}
+                      onChange={e => {
+                        setJsonEditValue(e.target.value);
+                        setJsonError(null);
+                        setJsonDirty(true);
+                      }}
+                      rows={20}
+                      spellCheck={false}
+                    />
+                    {jsonError && (
+                      <div className="text-red-600 text-xs mt-2">{jsonError}</div>
+                    )}
                     <DialogFooter>
+                      <Button
+                        variant="secondary"
+                        onClick={() => {
+                          setJsonEditValue(JSON.stringify(formatSurveyData(), null, 2));
+                          setJsonError(null);
+                          setJsonDirty(false);
+                        }}
+                        disabled={!jsonDirty}
+                      >
+                        Refresh
+                      </Button>
+                      <Button
+                        className="bg-emerald-500 hover:bg-emerald-600 text-white"
+                        variant="default"
+                        onClick={() => {
+                          try {
+                            const parsed = JSON.parse(jsonEditValue);
+                            setMetadata(prev => ({
+                              ...prev,
+                              title: parsed.title || "",
+                              description: parsed.description || "",
+                              pointsReward: parsed.pointsReward ?? 100,
+                              startDate: parsed.startDate || prev.startDate,
+                              endDate: parsed.endDate || prev.endDate,
+                              requiredParticipants: parsed.requiredParticipants ?? 50,
+                              targetAcademicYears: Array.isArray(parsed.targetAcademicYears) ? parsed.targetAcademicYears.map(String) : ["all"],
+                              targetDepartmentIds: Array.isArray(parsed.targetDepartmentIds) ? parsed.targetDepartmentIds.map(String) : ["all"],
+                              targetGender: parsed.targetGender || "all",
+                            }));
+                            setQuestions(Array.isArray(parsed.questions) ? parsed.questions.map((q: any, idx: number) => ({
+                              id: Date.now() + idx,
+                              typeId: q.typeId,
+                              typeName: questionTypes.find(qt => qt.typeId === q.typeId)?.typeName,
+                              questionText: q.questionText,
+                              isRequired: q.isRequired,
+                              questionOrder: q.questionOrder ?? idx,
+                              options: Array.isArray(q.options) ? q.options.map((opt: any, oidx: number) => ({
+                                id: oidx + 1,
+                                text: opt.optionText,
+                                order: opt.optionOrder ?? oidx
+                              })) : []
+                            })) : []);
+                            setShowJsonDialog(false);
+                            setJsonError(null);
+                            setJsonDirty(false);
+                            toast({ title: "Survey updated from JSON!" });
+                          } catch (err: any) {
+                            setJsonError(err.message);
+                            toast({ title: "Invalid JSON", description: err.message, variant: "destructive" });
+                          }
+                        }}
+                      >
+                        Save
+                      </Button>
                       <DialogClose asChild>
-                        <Button variant="outline">Close</Button>
+                        <Button variant="outline">Cancel</Button>
                       </DialogClose>
                     </DialogFooter>
                   </DialogContent>
@@ -1327,6 +1701,152 @@ export default function SurveyCreator() {
           </div>
         </div>
       </div> {/* Close main flex container */}
-    </DndContext>
+
+      {/* AI Generation Dialog */}
+      <Dialog open={showAIGenerationDialog} onOpenChange={setShowAIGenerationDialog}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BarChart2 className="h-5 w-5 text-purple-500" />
+              Generate Questions with AI
+            </DialogTitle>
+            <DialogDescription>
+              Configure AI to generate questions based on your survey title and description. 
+              The AI will create relevant questions for each selected question type.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Survey Info Display */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h4 className="font-semibold text-gray-900 mb-2">Survey Information</h4>
+              <div className="space-y-2 text-sm">
+                <div>
+                  <span className="font-medium text-gray-700">Title:</span> {metadata.title || "Not set"}
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Description:</span> {metadata.description || "Not set"}
+                </div>
+              </div>
+            </div>
+
+            {/* Question Types Configuration */}
+            <div className="space-y-4">
+              <h4 className="font-semibold text-gray-900">Question Types & Counts</h4>
+              <div className="space-y-3">
+                {questionTypes.map((type) => {
+                  const config = aiGenerationConfig.questionTypes.find(qt => qt.typeId === type.typeId);
+                  const count = config?.count || 0;
+                  
+                  return (
+                    <div key={type.typeId} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        {QUESTION_TYPE_ICONS[type.typeName]}
+                        <span className="font-medium text-gray-700">
+                          {QUESTION_TYPE_LABELS[type.typeName] || type.typeName}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            if (count > 0) {
+                              setAIGenerationConfig(prev => ({
+                                ...prev,
+                                questionTypes: prev.questionTypes.map(qt => 
+                                  qt.typeId === type.typeId ? { ...qt, count: qt.count - 1 } : qt
+                                ).filter(qt => qt.count > 0)
+                              }));
+                            }
+                          }}
+                          disabled={count === 0}
+                        >
+                          -
+                        </Button>
+                        <span className="w-8 text-center font-medium">{count}</span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setAIGenerationConfig(prev => ({
+                              ...prev,
+                              questionTypes: [
+                                ...prev.questionTypes.filter(qt => qt.typeId !== type.typeId),
+                                { typeId: type.typeId, count: count + 1 }
+                              ]
+                            }));
+                          }}
+                        >
+                          +
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Additional Details */}
+            <div className="space-y-2">
+              <label htmlFor="additionalDetails" className="text-sm font-medium text-gray-700">
+                Additional Details (Optional)
+              </label>
+              <Textarea
+                id="additionalDetails"
+                placeholder="Provide additional context or specific requirements for the AI to generate more relevant questions..."
+                value={aiGenerationConfig.additionalDetails}
+                onChange={(e) => setAIGenerationConfig(prev => ({ ...prev, additionalDetails: e.target.value }))}
+                rows={3}
+                className="resize-none"
+              />
+            </div>
+
+            {/* Default Options */}
+            <div className="space-y-2">
+              <label htmlFor="defaultOptions" className="text-sm font-medium text-gray-700">
+                Default Options Count
+              </label>
+              <Input
+                id="defaultOptions"
+                type="number"
+                min="2"
+                max="10"
+                value={aiGenerationConfig.defaultOptions}
+                onChange={(e) => setAIGenerationConfig(prev => ({ ...prev, defaultOptions: parseInt(e.target.value) || 4 }))}
+                className="w-32"
+              />
+              <p className="text-xs text-gray-500">
+                Number of options to generate for multiple choice and single answer questions (2-10)
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button
+              onClick={handleGenerateQuestionsWithAI}
+              disabled={isGeneratingQuestions || aiGenerationConfig.questionTypes.length === 0}
+              className="bg-purple-500 hover:bg-purple-600 text-white"
+            >
+              {isGeneratingQuestions ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <BarChart2 className="h-4 w-4 mr-2" />
+                  Generate Questions
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      </DndContext>
+    </TooltipProvider>
   );
 }

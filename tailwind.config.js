@@ -23,6 +23,10 @@ module.exports = {
       },
     },
     extend: {
+      fontFamily: {
+        cairo: ['var(--font-cairo)', 'Cairo', 'sans-serif'],
+        sans: ['var(--font-cairo)', 'Cairo', 'sans-serif'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

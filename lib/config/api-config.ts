@@ -3,8 +3,8 @@ export const API_CONFIG = {
   // Base URL for the ASP.NET Core backend
   BASE_URL: 'https://mhhmd6g-001-site1.rtempurl.com/api',
   
-  // Request timeout in milliseconds
-  TIMEOUT: 10000,
+  // Request timeout in milliseconds (2 minutes for longer operations like AI generation)
+  TIMEOUT: 120000,
   
   // API Endpoints
   ENDPOINTS: {
@@ -62,7 +62,7 @@ export const API_CONFIG = {
   // Error Messages
   ERROR_MESSAGES: {
     NETWORK_ERROR: 'Network error. Please check your internet connection and try again.',
-    TIMEOUT_ERROR: 'Request timeout. Please check your internet connection and try again.',
+    TIMEOUT_ERROR: 'Request timeout. The operation is taking longer than expected. Please try again.',
     SERVER_ERROR: 'Server error. Please try again later.',
     UNAUTHORIZED: 'You are not authorized. Please log in.',
     NOT_FOUND: 'Resource not found.',
