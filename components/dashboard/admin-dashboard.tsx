@@ -5,6 +5,7 @@ import { AdminService } from "@/lib/services/admin-service";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { Building, Users, BarChart3, Settings } from "lucide-react";
 
 export default function AdminDashboard() {
   const [dashboard, setDashboard] = useState<any>(null);
@@ -101,6 +102,55 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
+        
+        {/* Management Section */}
+        <div className="grid gap-4 md:grid-cols-3 mb-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Users className="h-5 w-5 mr-2" />
+                User Management
+              </CardTitle>
+              <CardDescription>Manage system users and roles</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="bg-emerald-500 hover:bg-emerald-600 w-full">
+                <Link href="/dashboard/admin/users">Manage Users</Link>
+              </Button>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Building className="h-5 w-5 mr-2" />
+                Departments
+              </CardTitle>
+              <CardDescription>Manage university departments</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="bg-blue-500 hover:bg-blue-600 w-full">
+                <Link href="/dashboard/admin/departments">Manage Departments</Link>
+              </Button>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <BarChart3 className="h-5 w-5 mr-2" />
+                System Analytics
+              </CardTitle>
+              <CardDescription>View system-wide statistics</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="bg-purple-500 hover:bg-purple-600 w-full">
+                <Link href="/dashboard/admin">View Analytics</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+        
         {/* You can add more sections for surveysByStatus, topSurveys, etc. */}
       </main>
     </div>

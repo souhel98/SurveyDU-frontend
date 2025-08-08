@@ -189,12 +189,54 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
     try {
       setUpdatingSurveyId(survey.surveyId)
       
-      const updateData = {
-        startDate: editingData.startDate,
-        endDate: editingData.endDate,
+      // Validate required participants
+      if (editingData.requiredParticipants <= 0) {
+        toast({
+          title: "Error",
+          description: "Required participants must be greater than 0",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Validate dates
+      if (editingData.startDate && editingData.endDate) {
+        const startDate = new Date(editingData.startDate);
+        const endDate = new Date(editingData.endDate);
+        
+        if (startDate >= endDate) {
+          toast({
+            title: "Error",
+            description: "End date must be after start date",
+            variant: "destructive"
+          });
+          return;
+        }
+      }
+
+      // Prepare the update data with proper formatting
+      const updateData: any = {
         requiredParticipants: editingData.requiredParticipants
+      };
+
+      // Check if survey has participants
+      const hasParticipants = currentParticipants > 0;
+      const isActiveWithParticipants = survey?.status === 'active' && hasParticipants;
+      const isExpiredWithParticipants = survey?.status === 'expired' && hasParticipants;
+      const isCompletedWithParticipants = survey?.status === 'completed' && hasParticipants;
+      const isInactive = survey?.status === 'inactive';
+      const hasParticipantsForEdit = isActiveWithParticipants || isExpiredWithParticipants || isCompletedWithParticipants;
+
+      // Only include dates if they are provided and allowed
+      if (editingData.endDate) {
+        updateData.endDate = editingData.endDate;
       }
       
+      // Include start date if survey doesn't have participants OR is inactive
+      if (editingData.startDate && (!hasParticipantsForEdit || isInactive)) {
+        updateData.startDate = editingData.startDate;
+      }
+
       await SurveyService.updateTeacherSurveyDates(survey.surveyId, updateData)
       
       // Refresh survey data
@@ -277,9 +319,13 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
     )
   }
 
-  const completionRate = survey.requiredParticipants > 0 
-    ? (survey.currentParticipants / survey.requiredParticipants) * 100 
+  // Normalize participants fields in case API uses different names
+  const currentParticipants = Number((survey as any)?.currentParticipants ?? (survey as any)?.totalResponses ?? (survey as any)?.participantsCount ?? 0)
+  const requiredParticipants = Number((survey as any)?.requiredParticipants ?? 0)
+  const completionRate = requiredParticipants > 0 
+    ? (currentParticipants / requiredParticipants) * 100 
     : 0
+  const hasParticipants = currentParticipants > 0
 
   const isExpired = new Date(survey.endDate) < new Date()
   const isActive = survey.status === 'active' && !isExpired
@@ -434,7 +480,7 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-500">Participants</span>
                   <span className="font-medium">
-                    {survey.currentParticipants} / {survey.requiredParticipants}
+                    {currentParticipants} / {requiredParticipants}
                   </span>
                 </div>
                 
@@ -595,11 +641,11 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
               )}
             </DialogTitle>
             <DialogDescription>
-              {survey?.status === 'active' && survey?.currentParticipants > 0
+              {survey?.status === 'active' && hasParticipants
                 ? "Update the end date and participant requirements for this active survey. Start date cannot be changed once survey has participants."
-                : survey?.status === 'expired' && survey?.currentParticipants > 0
+                : survey?.status === 'expired' && hasParticipants
                 ? "Update the end date and participant requirements for this expired survey. Start date cannot be changed once survey has participants."
-                : survey?.status === 'completed' && survey?.currentParticipants > 0
+                : survey?.status === 'completed' && hasParticipants
                 ? "Update the end date and participant requirements for this completed survey. Start date cannot be changed once survey has participants."
                 : survey?.status === 'inactive'
                 ? "Update the survey dates and participant requirements for this scheduled survey. All fields can be modified."
@@ -607,24 +653,50 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
-            {survey?.status === 'active' && survey?.currentParticipants > 0 || 
-             survey?.status === 'expired' && survey?.currentParticipants > 0 ||
-             survey?.status === 'completed' && survey?.currentParticipants > 0 ? (
+          <div className="space-y-6">
+            {(survey?.status === 'active' && hasParticipants) || 
+             (survey?.status === 'expired' && hasParticipants) ||
+             (survey?.status === 'completed' && hasParticipants) ? (
               // For active/expired/completed surveys with participants - only end date and participants
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <div className={`p-3 border rounded-lg ${
+                  survey?.status === 'active'
+                    ? 'bg-orange-50 border-orange-200'
+                    : survey?.status === 'expired'
+                    ? 'bg-purple-50 border-purple-200'
+                    : 'bg-indigo-50 border-indigo-200'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className={`h-4 w-4 ${
+                      survey?.status === 'active'
+                        ? 'text-orange-600'
+                        : survey?.status === 'expired'
+                        ? 'text-purple-600'
+                        : 'text-indigo-600'
+                    }`} />
+                    <p className={`text-sm ${
+                      survey?.status === 'active'
+                        ? 'text-orange-800'
+                        : survey?.status === 'expired'
+                        ? 'text-purple-800'
+                        : 'text-indigo-800'
+                    }`}>
+                      Start date is locked because this {survey?.status} survey has participants. Only end date and participant count can be modified.
+                    </p>
+                  </div>
+                </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
                   <Input
                     type="date"
-                    value={editingData.startDate}
-                    disabled
-                    className="h-10 bg-gray-50"
-                    placeholder="Cannot be changed"
+                    value={editingData.endDate}
+                    onChange={(e) => handleInputChange('endDate', e.target.value)}
+                    className="h-10"
+                    placeholder="YYYY-MM-DD"
                   />
-                  {survey?.startDate && (
+                  {survey?.endDate && (
                     <p className="text-xs text-gray-500 mt-1">
-                      Current: {new Date(survey.startDate).toLocaleString('en-GB', {
+                      Current: {new Date(survey.endDate).toLocaleString('en-GB', {
                         day: '2-digit',
                         month: '2-digit',
                         year: 'numeric',
@@ -634,6 +706,18 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                       }).replace(',', ' -')}
                     </p>
                   )}
+                </div>
+              </div>
+            ) : survey?.status === 'expired' ? (
+              // For expired surveys - only show end date and participants
+              <div className="space-y-4">
+                <div className="p-3 border rounded-lg bg-purple-50 border-purple-200">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-purple-600" />
+                    <p className="text-sm text-purple-800">
+                      This survey has expired. Only end date and participant count can be modified.
+                    </p>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>

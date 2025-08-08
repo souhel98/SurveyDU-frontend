@@ -29,6 +29,7 @@ import {
   Save,
   X,
   Award,
+  Grid3X3,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -36,6 +37,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { CustomSelect, CustomSelectOption } from "@/components/ui/custom-select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ACADEMIC_YEARS, TARGET_GENDER_SELECT, SURVEY_STATUS_LABELS } from "@/lib/constants"
 
@@ -49,6 +51,9 @@ export default function TeacherDashboard() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [departmentFilter, setDepartmentFilter] = useState<string>("all");
+  const [yearFilter, setYearFilter] = useState<string>("all");
+  const [genderFilter, setGenderFilter] = useState<string>("all");
   const [departments, setDepartments] = useState<{ id: number; name: string }[]>([]);
   const [duplicatingSurveyId, setDuplicatingSurveyId] = useState<number | null>(null);
   const [publishingSurveyId, setPublishingSurveyId] = useState<number | null>(null);
@@ -88,6 +93,8 @@ export default function TeacherDashboard() {
     setLoading(true);
     SurveyService.getTeacherSurveys()
       .then((data) => {
+        console.log("Loaded surveys:", data);
+        console.log("Sample survey academic years:", data[0]?.targetAcademicYears);
         setSurveys(data);
         setLoading(false);
       })
@@ -124,8 +131,53 @@ export default function TeacherDashboard() {
       filtered = filtered.filter((survey: any) => survey.status === "completed");
     }
 
+    // Apply gender filter
+    if (genderFilter && genderFilter !== "all") {
+      filtered = filtered.filter((survey: any) => String(survey.targetGender).toLowerCase() === String(genderFilter).toLowerCase());
+    }
+
+    // Apply academic years filter (any intersection)
+    if (yearFilter && yearFilter !== "all") {
+      const selectedYears = yearFilter.split(",").filter(Boolean);
+      if (!selectedYears.includes("all") && selectedYears.length > 0) {
+        const selectedYearsNums = selectedYears
+          .map((y) => Number(y))
+          .filter((n) => Number.isFinite(n));
+        console.log("Selected years:", selectedYearsNums);
+        filtered = filtered.filter((survey: any) => {
+          const surveyYears = Array.isArray(survey.targetAcademicYears)
+            ? survey.targetAcademicYears
+                .map((y: any) => Number(y))
+                .filter((n: any) => Number.isFinite(n))
+            : [];
+          console.log("Survey years for", survey.title, ":", surveyYears);
+          const hasMatch = surveyYears.some((y: number) => selectedYearsNums.includes(y));
+          console.log("Has match:", hasMatch);
+          return surveyYears.some((y: number) => selectedYearsNums.includes(y));
+        });
+      }
+    }
+
+    // Apply departments filter (any intersection)
+    if (departmentFilter && departmentFilter !== "all") {
+      const selectedDeps = departmentFilter.split(",").filter(Boolean);
+      if (!selectedDeps.includes("all") && selectedDeps.length > 0) {
+        const selectedDepIds = selectedDeps
+          .map((d) => Number(d))
+          .filter((n) => Number.isFinite(n));
+        filtered = filtered.filter((survey: any) => {
+          const surveyDepIds = Array.isArray(survey.targetDepartmentIds)
+            ? survey.targetDepartmentIds
+                .map((id: any) => Number(id))
+                .filter((n: any) => Number.isFinite(n))
+            : [];
+          return surveyDepIds.some((id: number) => selectedDepIds.includes(id));
+        });
+      }
+    }
+
     return filtered;
-  }, [surveys, searchQuery, statusFilter, activeFilter]);
+  }, [surveys, searchQuery, statusFilter, activeFilter, genderFilter, yearFilter, departmentFilter]);
 
   const [formattedDates, setFormattedDates] = useState<{[id: string]: {createdAt: string, expiresAt: string}}>({})
 
@@ -639,39 +691,89 @@ export default function TeacherDashboard() {
         </div>
 
         {/* Filters and Search */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search surveys..."
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-              />
+        <div className="bg-white rounded-lg shadow-sm p-4 mb-6 space-y-4">
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search surveys..."
+              className="pl-10"
+              value={searchQuery}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          
+          {/* Filters */}
+          <div className="flex flex-col md:flex-row md:flex-wrap gap-4 justify-between">
+            <div className="w-full md:w-56">
+              <CustomSelect
+                value={activeFilter || statusFilter}
+                onChange={(value) => {
+                  setStatusFilter(value);
+                  if (value === 'all') {
+                    setActiveFilter("all");
+                  } else {
+                    setActiveFilter(value);
+                  }
+                }}
+                placeholder="Filter by status"
+              >
+                <CustomSelectOption value="all">All Surveys</CustomSelectOption>
+                <CustomSelectOption value="responses">Surveys with Responses</CustomSelectOption>
+                <CustomSelectOption value="draft">Draft</CustomSelectOption>
+                <CustomSelectOption value="inactive">Inactive</CustomSelectOption>
+                <CustomSelectOption value="active">Active</CustomSelectOption>
+                <CustomSelectOption value="completed">Completed</CustomSelectOption>
+                <CustomSelectOption value="expired">Expired</CustomSelectOption>
+              </CustomSelect>
             </div>
             <div className="w-full md:w-64">
-              <Select value={activeFilter || statusFilter} onValueChange={(value) => {
-                setStatusFilter(value);
-                if (value === 'all') {
-                  setActiveFilter("all");
-                } else {
-                  setActiveFilter(value);
-                }
-              }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Surveys</SelectItem>
-                  <SelectItem value="responses">Surveys with Responses</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="expired">Expired</SelectItem>
-                </SelectContent>
-              </Select>
+              <CustomSelect
+                value={departmentFilter}
+                onChange={setDepartmentFilter}
+                placeholder="Filter by departments"
+                multiple
+              >
+                <CustomSelectOption value="all" multiple>
+                  All Departments
+                </CustomSelectOption>
+                {departments.map((dep) => (
+                  <CustomSelectOption key={dep.id} value={String(dep.id)} multiple>
+                    {dep.name}
+                  </CustomSelectOption>
+                ))}
+              </CustomSelect>
+            </div>
+            <div className="w-full md:w-64">
+              <CustomSelect
+                value={yearFilter}
+                onChange={setYearFilter}
+                placeholder="Filter by academic years"
+                multiple
+              >
+                <CustomSelectOption value="all" multiple>
+                  All Academic Years
+                </CustomSelectOption>
+                {ACADEMIC_YEARS.map((y) => (
+                  <CustomSelectOption key={y.value} value={String(y.value)} multiple>
+                    {y.label}
+                  </CustomSelectOption>
+                ))}
+              </CustomSelect>
+            </div>
+            <div className="w-full md:w-56">
+              <CustomSelect
+                value={genderFilter}
+                onChange={setGenderFilter}
+                placeholder="Filter by gender"
+              >
+                <CustomSelectOption value="all">All</CustomSelectOption>
+                {TARGET_GENDER_SELECT.filter(g => g.value !== 'all').map((g) => (
+                  <CustomSelectOption key={g.value} value={String(g.value)}>
+                    {g.label}
+                  </CustomSelectOption>
+                ))}
+              </CustomSelect>
             </div>
             <div className="flex gap-2">
               <Button
@@ -697,8 +799,8 @@ export default function TeacherDashboard() {
                     : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-300 hover:border-gray-400'
                 }`}
               >
-                <BarChart3 className="h-4 w-4" />
-                Cards
+                <Grid3X3 className="h-4 w-4" />
+                Grid
               </Button>
             </div>
           </div>
@@ -1113,7 +1215,6 @@ export default function TeacherDashboard() {
                         <th className="text-left py-3 px-4 font-medium text-gray-500">Participants</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-500">Target Gender</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-500">Academic Years</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-500">Departments</th>
                         <th className="text-right py-3 px-4 font-medium text-gray-500">Actions</th>
                       </tr>
                     </thead>
@@ -1245,70 +1346,31 @@ export default function TeacherDashboard() {
                             })()}
                           </td>
                           
-                          {/* Departments Column */}
-                          <td className="py-3 px-4 text-left text-base">
-                            {(() => {
-                              const departmentsText = Array.isArray(survey.targetDepartmentIds) && survey.targetDepartmentIds.length > 0
-                                ? survey.targetDepartmentIds.length === departments.length
-                                  ? "All"
-                                  : survey.targetDepartmentIds.map((id: number) => {
-                                      const found = departments.find(department => department.id === id);
-                                      return found ? found.name : id;
-                                    }).join(", ")
-                                : "-";
-                              const fullText = Array.isArray(survey.targetDepartmentIds) && survey.targetDepartmentIds.length > 0
-                                ? survey.targetDepartmentIds.map((id: number) => {
-                                    const found = departments.find(department => department.id === id);
-                                    return found ? found.name : id;
-                                  }).join(", ")
-                                : "-";
-                              
-                              return departmentsText !== fullText ? (
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <span className="cursor-help hover:bg-gray-100 hover:text-gray-900 px-1 py-0.5 rounded transition-colors duration-200">
-                                        {departmentsText}
-                                      </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>{fullText}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              ) : (
-                                <span>{departmentsText}</span>
-                              );
-                            })()}
-                          </td>
-                          
                           {/* Actions Column */}
                           <td className="py-3 px-4 text-right">
                             <div className="flex gap-2 justify-end">
-                              {(survey.currentParticipants > 0 || survey.status === 'expired') ? (
+                              <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/view`}>
                                 <Button 
                                   variant="ghost" 
-                                  size="sm" 
-                                  disabled 
-                                  className="text-gray-400 cursor-not-allowed"
-                                  title={survey.currentParticipants > 0 ? "Edit not available when survey has responses" : "Edit not available for expired surveys"}
+                                  size="sm"
+                                  className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                  title="View Survey"
                                 >
-                                  <Edit className="h-3 w-3 mr-1" />
-                                  Edit
+                                  <FileText className="h-3 w-3 mr-1" />
+                                  View
                                 </Button>
-                              ) : (
-                                <Link href={`/dashboard/teacher/create-survey?edit=${survey.surveyId}`}>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm"
-                                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                    title="Edit Survey"
-                                  >
-                                    <Edit className="h-3 w-3 mr-1" />
-                                    Edit
-                                  </Button>
-                                </Link>
-                              )}
+                              </Link>
+                              <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/statistics`}>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                                  title="View Statistics"
+                                >
+                                  <BarChart2 className="h-3 w-3 mr-1" />
+                                  Statistics
+                                </Button>
+                              </Link>
                               <Button 
                                 variant="ghost" 
                                 size="sm"

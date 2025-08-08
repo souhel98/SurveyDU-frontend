@@ -136,6 +136,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (href === '/dashboard/student/profile') return pathname === '/dashboard/student/profile' || pathname === '/dashboard/student/profile/';
     if (href === '/dashboard/student/participation-history') return pathname === '/dashboard/student/participation-history' || pathname === '/dashboard/student/participation-history/';
     if (href === '/dashboard/admin/users') return pathname.startsWith('/dashboard/admin/users');
+    if (href === '/dashboard/admin/departments') return pathname.startsWith('/dashboard/admin/departments');
     return pathname === href;
   };
 
@@ -247,6 +248,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   asChild
                 >
                   <Link href={userManagementLink}>User Management</Link>
+                </Button>
+                <Button 
+                  variant={isActive('/dashboard/admin/departments') ? undefined : "outline"} 
+                  className={isActive('/dashboard/admin/departments') 
+                    ? "gap-2 bg-emerald-100 text-emerald-700 font-bold shadow-sm" 
+                    : "gap-2 bg-gradient-to-r from-purple-50 to-violet-50 hover:from-purple-100 hover:to-violet-100 border-purple-200 text-purple-800 font-semibold shadow-sm hover:shadow-md transition-all duration-200"
+                  } 
+                  asChild
+                >
+                  <Link href="/dashboard/admin/departments">Departments</Link>
                 </Button>
                 {/* User Profile Dropdown (Custom) */}
                 <div
