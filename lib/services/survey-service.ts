@@ -557,7 +557,7 @@ export class SurveyService {
       // Create a custom axios instance with extended timeout for AI generation
       const aiApi = axios.create({
         baseURL: 'https://mhhmd6g0-001-site1.rtempurl.com/api',
-        timeout: 180000, // 3 minutes for AI generation
+        timeout: 180000, // 3 minutes for AI generation 
         headers: {
           'Content-Type': 'application/json',
         },
