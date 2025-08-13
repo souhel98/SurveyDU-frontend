@@ -1,7 +1,9 @@
 // API Configuration
 export const API_CONFIG = {
   // Base URL for the ASP.NET Core backend
-  BASE_URL: 'https://mhhmd6g-001-site1.rtempurl.com/api',
+  // BASE_URL: 'https://mhhmd6g-001-site1.rtempurl.com/api',
+  BASE_URL: 'https://mhhmd6g0-001-site1.rtempurl.com/index.html',
+
   
   // Request timeout in milliseconds (2 minutes for longer operations like AI generation)
   TIMEOUT: 120000,
