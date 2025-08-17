@@ -692,7 +692,7 @@ export default function SurveyCreator() {
           response = await SurveyService.updateAdminSurveyWithQuestions(parseInt(editSurveyId), surveyData);
         } else {
           // Create new survey
-          response = await SurveyService.teacherCreateSurveyWithQuestions(surveyData);
+          response = await SurveyService.adminCreateSurveyWithQuestions(surveyData);
         }
         
         setIsSaving(false);

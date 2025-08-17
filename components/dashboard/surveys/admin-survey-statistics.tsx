@@ -68,7 +68,7 @@ interface StatisticsData {
   comments: string[]
 }
 
-export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
+export default function AdminSurveyStatistics({ surveyId }: SurveyStatisticsProps) {
   const [statistics, setStatistics] = useState<StatisticsData | null>(null)
   const [departments, setDepartments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -83,7 +83,7 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
         setError(null)
         
         const [statisticsData, departmentsData] = await Promise.all([
-          SurveyService.getTeacherSurveyStatistics(surveyId),
+          SurveyService.getAdminSurveyStatistics(surveyId),
           DepartmentService.getDepartments()
         ])
         

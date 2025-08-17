@@ -6,7 +6,7 @@ import { DepartmentService } from "@/lib/services/department-service";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Building, Users, BarChart3, Settings, TrendingUp, Award, FileText, Activity } from "lucide-react";
+import { Building, Users, BarChart3, Settings, TrendingUp, Award, FileText, Activity, PlusCircle } from "lucide-react";
 import axios from "@/lib/api/axios";
 
 export default function AdminDashboard() {
@@ -255,10 +255,25 @@ export default function AdminDashboard() {
                   Manage Users
                 </Link>
               </Button>
+              
               <Button asChild className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200">
                 <Link href="/dashboard/admin/departments" className="flex items-center justify-center">
                   <Building className="h-4 w-4 mr-2" />
                   Manage Departments
+                </Link>
+              </Button>
+
+              <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200">
+                <Link href="/dashboard/admin/all-surveys" className="flex items-center justify-center">
+                  <FileText className="h-4 w-4 mr-2" />
+                  View All Surveys
+                </Link>
+              </Button>
+
+              <Button asChild className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200">
+                <Link href="/dashboard/admin/create-survey" className="flex items-center justify-center">
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Create Survey
                 </Link>
               </Button>
             </CardContent>
@@ -295,13 +310,31 @@ export default function AdminDashboard() {
               <CardDescription>Manage university departments</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button asChild className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200">
+              <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200">
                 <Link href="/dashboard/admin/departments">Manage Departments</Link>
               </Button>
             </CardContent>
           </Card>
-          
-          
+
+          <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-500 bg-gradient-to-br from-white via-gray-50 to-white">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center">
+                <div className="bg-purple-100 p-3 rounded-xl mr-3">
+                  <FileText className="h-6 w-6 text-purple-600" />
+                </div>
+                Survey Management
+              </CardTitle>
+              <CardDescription>Manage all surveys in the system</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button asChild className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200">
+                <Link href="/dashboard/admin/all-surveys">View All Surveys</Link>
+              </Button>
+              <Button asChild className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200">
+                <Link href="/dashboard/admin/create-survey">Create New Survey</Link>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </main>
     </div>

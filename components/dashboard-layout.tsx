@@ -116,9 +116,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   let profileLink = '/dashboard/student/profile';
   let createSurveyLink = '';
   let userManagementLink = '';
+  let allSurveysLink = '';
   if (role === 'Admin') {
     profileLink = '/dashboard/admin/profile';
     userManagementLink = '/dashboard/admin/users';
+    createSurveyLink = '/dashboard/admin/create-survey';
+    allSurveysLink = '/dashboard/admin/all-surveys';
   } else if (role === 'Teacher') {
     profileLink = '/dashboard/teacher/profile';
     createSurveyLink = '/dashboard/teacher/create-survey';
@@ -137,6 +140,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (href === '/dashboard/student/participation-history') return pathname === '/dashboard/student/participation-history' || pathname === '/dashboard/student/participation-history/';
     if (href === '/dashboard/admin/users') return pathname.startsWith('/dashboard/admin/users');
     if (href === '/dashboard/admin/departments') return pathname.startsWith('/dashboard/admin/departments');
+    if (href === '/dashboard/admin/create-survey') return pathname === '/dashboard/admin/create-survey' || pathname === '/dashboard/admin/create-survey/';
+    if (href === '/dashboard/admin/all-surveys') return pathname === '/dashboard/admin/all-surveys' || pathname === '/dashboard/admin/all-surveys/';
     return pathname === href;
   };
 
@@ -239,6 +244,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Admin Buttons */}
             {role === 'Admin' && (
               <>
+                {/* <Button 
+                  variant={isActive(createSurveyLink) ? undefined : "outline"} 
+                  className={isActive(createSurveyLink) 
+                    ? "gap-2 bg-emerald-100 text-emerald-700 font-bold shadow-sm" 
+                    : "gap-2 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border-green-200 text-green-800 font-semibold shadow-sm hover:shadow-md transition-all duration-200"
+                  } 
+                  asChild
+                >
+                  <Link href={createSurveyLink}><PlusCircle className="h-4 w-4" /> Create Survey</Link>
+                </Button> */}
+                <Button 
+                  variant={isActive(allSurveysLink) ? undefined : "outline"} 
+                  className={isActive(allSurveysLink) 
+                    ? "gap-2 bg-emerald-100 text-emerald-700 font-bold shadow-sm" 
+                    : "gap-2 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border-green-200 text-green-800 font-semibold shadow-sm hover:shadow-md transition-all duration-200"
+                  } 
+                  asChild
+                >
+                  <Link href={allSurveysLink}> All Surveys</Link>
+                </Button>
                 <Button 
                   variant={isActive(userManagementLink) ? undefined : "outline"} 
                   className={isActive(userManagementLink) 
