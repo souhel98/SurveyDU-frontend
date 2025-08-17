@@ -104,7 +104,7 @@ export default function StudentDashboard() {
   ].filter((f) => f.value)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="bg-gray-50">
       <main className="container mx-auto px-4 py-6">
         {/* Profile summary */}
         {profile && (
@@ -247,7 +247,7 @@ export default function StudentDashboard() {
                   <Search className="h-8 w-8 text-gray-400" />
                 </div>
                 <h3 className="text-lg font-medium text-gray-900 mb-1">No surveys found</h3>
-                <p className="text-gray-500">Try adjusting your search or filter criteria</p>
+                <p className="text-gray-500">There is currently no survey directed to you.</p>
               </div>
             )}
         </div>

@@ -5,7 +5,7 @@ import { FileText } from "lucide-react";
 import {
   Search,
   Radio,
-  Star,
+
   CheckSquare,
   List,
   FileUp,
@@ -389,13 +389,15 @@ export default function SurveyCreator() {
     multiple_choice: "Multiple Choice",
     single_answer: "Single Answer",
     open_text: "Open Text",
-    percentage: "Percentage",
+    percentage: "Rating Scale (1-5)",
   };
   const QUESTION_TYPE_ICONS: Record<string, React.ReactNode> = {
     multiple_choice: <CheckSquare className="h-5 w-5 text-emerald-500 mr-2" />,
     single_answer: <Radio className="h-5 w-5 text-blue-500 mr-2" />,
     open_text: <Type className="h-5 w-5 text-gray-500 mr-2" />,
-    percentage: <Star className="h-5 w-5 text-yellow-500 mr-2" />,
+    percentage: <div className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center mr-2">
+      <span className="text-xs font-medium text-white">5</span>
+    </div>,
   };
 
   // Map typeName to component

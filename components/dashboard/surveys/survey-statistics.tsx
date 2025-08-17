@@ -21,7 +21,7 @@ import {
   CheckCircle,
   Clock,
   FileText,
-  Star,
+
   Radio,
   CheckSquare,
   Type
@@ -114,7 +114,7 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
       case 'open_text':
         return <Type className="h-4 w-4" />
       case 'percentage':
-        return <Star className="h-4 w-4" />
+        return <BarChart3 className="h-4 w-4" />
       default:
         return <FileText className="h-4 w-4" />
     }
@@ -129,7 +129,7 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
       case 'open_text':
         return 'Open Text'
       case 'percentage':
-        return 'Rating'
+        return 'Rating Scale (1-5)'
       default:
         return type
     }
@@ -445,9 +445,8 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
                             const percentage = question.totalAnswers > 0 ? (count / question.totalAnswers) * 100 : 0
                             return (
                               <div key={rating} className="text-center">
-                                <div className="flex items-center justify-center mb-1">
-                                  <Star className="h-4 w-4 text-yellow-500" />
-                                  <span className="text-xs ml-1">{rating}</span>
+                                <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center mb-1 mx-auto">
+                                  <span className="text-sm font-medium text-emerald-700">{rating}</span>
                                 </div>
                                 <div className="text-sm font-semibold">{count}</div>
                                 <div className="text-xs text-gray-500">{percentage.toFixed(1)}%</div>

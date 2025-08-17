@@ -16,7 +16,7 @@ import {
   Zap,
   ArrowRight,
   CheckCircle,
-  Star,
+
   Play
 } from "lucide-react"
 import { Button } from "@/components/ui/button"

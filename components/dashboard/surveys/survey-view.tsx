@@ -157,7 +157,7 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
       case 'open_text':
         return 'Open Text'
       case 'percentage':
-        return 'Percentage'
+        return 'Rating Scale (1-5)'
       default:
         return type
     }
@@ -489,7 +489,12 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                     <span className="text-sm text-gray-500">Completion Rate</span>
                     <span className="text-sm font-medium">{completionRate.toFixed(1)}%</span>
                   </div>
-                  <Progress value={completionRate} className="h-2" />
+                  <div className="relative h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                    <div 
+                      className="h-full bg-emerald-500 transition-all duration-300"
+                      style={{ width: `${completionRate}%` }}
+                    />
+                  </div>
                 </div>
                 
                 <div className="flex items-center justify-between">
@@ -611,16 +616,16 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                   className="w-full justify-start" 
                   variant="outline"
                   onClick={() => {
-                    // Copy survey URL to clipboard
-                                         navigator.clipboard.writeText(`${window.location.origin}/dashboard/teacher/surveys/${survey.surveyId}/view`)
+                    // Copy student survey URL to clipboard
+                    navigator.clipboard.writeText(`${window.location.origin}/dashboard/student/surveys/${survey.surveyId}/`)
                     toast({
-                      title: "Link copied",
-                      description: "Survey link has been copied to clipboard",
+                      title: "Student link copied",
+                      description: "Survey link for students has been copied to clipboard",
                     })
                   }}
                 >
                   <Copy className="h-4 w-4 mr-2" />
-                  Copy Link
+                  Copy Link For Students
                 </Button>
               </CardContent>
             </Card>

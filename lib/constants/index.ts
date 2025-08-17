@@ -25,7 +25,7 @@ export const QUESTION_TYPE_LABELS = {
   [QUESTION_TYPES.MULTIPLE_CHOICE]: 'Multiple Choice',
   [QUESTION_TYPES.SINGLE_ANSWER]: 'Single Answer',
   [QUESTION_TYPES.OPEN_TEXT]: 'Open Text',
-  [QUESTION_TYPES.PERCENTAGE]: 'Percentage',
+  [QUESTION_TYPES.PERCENTAGE]: 'Rating Scale (1-5)',
 } as const;
 
 // Survey Status

@@ -13,7 +13,7 @@ import {
   Filter,
   Edit,
   Copy,
-  Trash2,
+
   MoreVertical,
   User,
   FileText,
@@ -1141,9 +1141,7 @@ export default function TeacherDashboard() {
                                 <Copy className="h-4 w-4 mr-2" /> 
                                 {duplicatingSurveyId === survey.surveyId ? "Duplicating..." : "Duplicate"}
                               </button>
-                              <button className="flex items-center w-full px-2 py-2 hover:bg-red-100 text-red-600 rounded text-left">
-                                <Trash2 className="h-4 w-4 mr-2" /> Delete
-                              </button>
+
                             </PopoverContent>
                           </Popover>
                         </div>
@@ -1176,7 +1174,10 @@ export default function TeacherDashboard() {
                   {activeFilter === "completed" && "No surveys have been completed yet"}
                 </p>
                 <Link href="/dashboard/teacher/create-survey">
-                  <Button className="bg-emerald-500 hover:bg-emerald-600">Create New Survey</Button>
+                  <Button className="bg-emerald-500 hover:bg-emerald-600">
+                    <PlusCircle className="h-4 w-4 mr-2" />
+                    Create New Survey
+                  </Button>
                 </Link>
               </div>
             )}
@@ -1439,9 +1440,7 @@ export default function TeacherDashboard() {
                                     <Copy className="h-4 w-4 mr-2" /> 
                                     {duplicatingSurveyId === survey.surveyId ? "Duplicating..." : "Duplicate"}
                                   </button>
-                                  <button className="flex items-center w-full px-2 py-2 hover:bg-red-100 text-red-600 rounded text-left">
-                                    <Trash2 className="h-4 w-4 mr-2" /> Delete
-                                  </button>
+
                                 </PopoverContent>
                               </Popover>
                             </div>
@@ -1458,7 +1457,12 @@ export default function TeacherDashboard() {
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-1">No surveys found</h3>
                   <p className="text-gray-500 mb-4">Try adjusting your search or filter criteria</p>
-                  <Button className="bg-emerald-500 hover:bg-emerald-600">Create New Survey</Button>
+                  <Link href="/dashboard/teacher/create-survey">
+                    <Button className="bg-emerald-500 hover:bg-emerald-600">
+                      <PlusCircle className="h-4 w-4 mr-2" />
+                      Create New Survey
+                    </Button>
+                  </Link>
                 </div>
               )}
             </CardContent>
