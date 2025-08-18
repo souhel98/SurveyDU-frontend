@@ -257,8 +257,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <Button 
                   variant={isActive(allSurveysLink) ? undefined : "outline"} 
                   className={isActive(allSurveysLink) 
-                    ? "gap-2 bg-emerald-100 text-emerald-700 font-bold shadow-sm" 
-                    : "gap-2 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border-green-200 text-green-800 font-semibold shadow-sm hover:shadow-md transition-all duration-200"
+                    ? "gap-2 btn-emerald-active" 
+                    : "gap-2 btn-emerald"
                   } 
                   asChild
                 >
@@ -267,8 +267,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <Button 
                   variant={isActive(userManagementLink) ? undefined : "outline"} 
                   className={isActive(userManagementLink) 
-                    ? "gap-2 bg-emerald-100 text-emerald-700 font-bold shadow-sm" 
-                    : "gap-2 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 text-blue-800 font-semibold shadow-sm hover:shadow-md transition-all duration-200"
+                    ? "gap-2 btn-blue-active" 
+                    : "gap-2 btn-blue"
                   } 
                   asChild
                 >
@@ -277,8 +277,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <Button 
                   variant={isActive('/dashboard/admin/departments') ? undefined : "outline"} 
                   className={isActive('/dashboard/admin/departments') 
-                    ? "gap-2 bg-emerald-100 text-emerald-700 font-bold shadow-sm" 
-                    : "gap-2 bg-gradient-to-r from-purple-50 to-violet-50 hover:from-purple-100 hover:to-violet-100 border-purple-200 text-purple-800 font-semibold shadow-sm hover:shadow-md transition-all duration-200"
+                    ? "gap-2 btn-purple-active" 
+                    : "gap-2 btn-purple"
                   } 
                   asChild
                 >
@@ -293,7 +293,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 >
                   <Button
                     variant="outline"
-                    className="gap-2 min-w-[120px] justify-between bg-gradient-to-r from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100 border-orange-200 hover:border-orange-300 text-orange-800 hover:text-orange-900 font-semibold shadow-sm hover:shadow-md transition-all duration-200"
+                    className="gap-2 min-w-[120px] justify-between btn-orange"
                     asChild
                   >
                     <Link href={profileLink}>
@@ -338,8 +338,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <Button 
                   variant={isActive(createSurveyLink) ? undefined : "outline"} 
                   className={isActive(createSurveyLink) 
-                    ? "gap-2 bg-emerald-100 text-emerald-700 font-bold shadow-sm" 
-                    : "gap-2 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border-green-200 text-green-800 font-semibold shadow-sm hover:shadow-md transition-all duration-200"
+                    ? "gap-2 btn-emerald-active" 
+                    : "gap-2 btn-emerald"
                   } 
                   asChild
                 >
@@ -354,7 +354,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 >
                   <Button
                     variant="outline"
-                    className="gap-2 min-w-[120px] justify-between bg-gradient-to-r from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100 border-orange-200 hover:border-orange-300 text-orange-800 hover:text-orange-900 font-semibold shadow-sm hover:shadow-md transition-all duration-200"
+                    className="gap-2 min-w-[120px] justify-between btn-orange"
                     asChild
                   >
                     <Link href={profileLink}>
@@ -464,7 +464,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 >
                   <Button
                     variant="outline"
-                    className="gap-2 min-w-[120px] justify-between bg-gradient-to-r from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100 border-orange-200 hover:border-orange-300 text-orange-800 hover:text-orange-900 font-semibold shadow-sm hover:shadow-md transition-all duration-200"
+                    className="gap-2 min-w-[120px] justify-between btn-orange"
                     asChild
                   >
                     <Link href={profileLink}>

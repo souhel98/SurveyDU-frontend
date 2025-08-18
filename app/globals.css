@@ -6,6 +6,50 @@ body {
   font-family: var(--font-cairo), Cairo, sans-serif;
 }
 
+@layer components {
+  /* Global Button Color Classes */
+  .btn-emerald {
+    @apply bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border-green-200 font-semibold shadow-sm hover:shadow-md transition-all duration-200;
+    color: rgb(22 163 74) !important; /* text-green-800 */
+  }
+  
+  .btn-blue {
+    @apply bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 font-semibold shadow-sm hover:shadow-md transition-all duration-200;
+    color: rgb(30 64 175) !important; /* text-blue-800 */
+  }
+  
+  .btn-purple {
+    @apply bg-gradient-to-r from-purple-50 to-violet-50 hover:from-purple-100 hover:to-violet-100 border-purple-200 font-semibold shadow-sm hover:shadow-md transition-all duration-200;
+    color: rgb(107 33 168) !important; /* text-purple-800 */
+  }
+  
+  .btn-orange {
+    @apply bg-gradient-to-r from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100 border-orange-200 font-semibold shadow-sm hover:shadow-md transition-all duration-200;
+    color: rgb(154 52 18) !important; /* text-orange-800 */
+  }
+  
+  /* Active state button classes */
+  .btn-emerald-active {
+    @apply bg-emerald-100 font-bold shadow-sm;
+    color: rgb(21 128 61) !important; /* text-emerald-700 */
+  }
+  
+  .btn-blue-active {
+    @apply bg-blue-100 font-bold shadow-sm;
+    color: rgb(29 78 216) !important; /* text-blue-700 */
+  }
+  
+  .btn-purple-active {
+    @apply bg-purple-100 font-bold shadow-sm;
+    color: rgb(126 34 206) !important; /* text-purple-700 */
+  }
+  
+  .btn-orange-active {
+    @apply bg-orange-100 font-bold shadow-sm;
+    color: rgb(194 65 12) !important; /* text-orange-700 */
+  }
+}
+
 @layer utilities {
   @reference bg-background {
     background-color: hsl(var(--background));

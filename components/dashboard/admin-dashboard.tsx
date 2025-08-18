@@ -6,8 +6,9 @@ import { DepartmentService } from "@/lib/services/department-service";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Building, Users, BarChart3, Settings, TrendingUp, Award, FileText, Activity, PlusCircle } from "lucide-react";
+import { Building, Users, BarChart3, Settings, TrendingUp, Award, FileText, Activity, PlusCircle, Calendar } from "lucide-react";
 import axios from "@/lib/api/axios";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
 export default function AdminDashboard() {
   const [dashboard, setDashboard] = useState<any>(null);
@@ -17,16 +18,19 @@ export default function AdminDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [adminCount, setAdminCount] = useState(0);
   const [mySurveysCount, setMySurveysCount] = useState(0);
+  const [surveyChartData, setSurveyChartData] = useState<any[]>([]);
+  const [chartTimeframe, setChartTimeframe] = useState<'week' | 'month'>('week');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch dashboard data, departments, users, and my surveys in parallel
-        const [dashboardData, departments, users, mySurveys] = await Promise.all([
+        // Fetch dashboard data, departments, users, my surveys, and survey chart data in parallel
+        const [dashboardData, departments, users, mySurveys, surveyData] = await Promise.all([
           AdminService.getDashboard(),
           DepartmentService.getDepartments(),
           AdminService.getUsers(),
-          axios.get("/Admin/my-surveys")
+          axios.get("/Admin/my-surveys"),
+          axios.get("/Admin/surveys") // Fetch all surveys for chart data
         ]);
         
         setDashboard(dashboardData.data);
@@ -34,6 +38,19 @@ export default function AdminDashboard() {
 
         // My Surveys count
         setMySurveysCount(Array.isArray(mySurveys.data.data) ? mySurveys.data.data.length : 0);
+
+        // Process survey chart data - always use all surveys
+        let surveyDataForChart = [];
+        if (surveyData.data && surveyData.data.data) {
+          surveyDataForChart = surveyData.data.data;
+        }
+
+        if (surveyDataForChart.length > 0) {
+          const processedData = processSurveyChartData(surveyDataForChart, chartTimeframe);
+          setSurveyChartData(processedData);
+        } else {
+          setSurveyChartData([]);
+        }
 
         // Process users by departmentName
         const usersData = users.data || users;
@@ -76,7 +93,90 @@ export default function AdminDashboard() {
     };
 
     fetchData();
-  }, []);
+  }, [chartTimeframe]);
+
+  const STATUS_KEYS = ['draft', 'active', 'completed', 'inactive', 'expired']; // match your status keys
+
+  const processSurveyChartData = (surveys: any[], timeframe: 'week' | 'month') => {
+    const now = new Date();
+    const data: any[] = [];
+
+    // Helper to get status in lowercase
+    const getStatus = (survey: any) => (survey.status || '').toLowerCase();
+
+    if (timeframe === 'week') {
+      for (let i = -7; i <= 6; i++) {
+        const date = new Date(now);
+        date.setDate(date.getDate() + i);
+        const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+        // Count surveys by status for this date
+        const statusCounts: Record<string, number> = {};
+        STATUS_KEYS.forEach(status => statusCounts[status] = 0);
+
+        surveys.forEach(survey => {
+          if (!survey.startDate) return;
+          let surveyStartDate = new Date(survey.startDate);
+          if (typeof survey.startDate === 'string' && survey.startDate.includes('/')) {
+            const parts = survey.startDate.split('/');
+            if (parts.length === 3) {
+              surveyStartDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+            }
+          }
+          if (surveyStartDate.toDateString() === date.toDateString()) {
+            const status = getStatus(survey);
+            if (STATUS_KEYS.includes(status)) {
+              statusCounts[status]++;
+            }
+          }
+        });
+
+        data.push({
+          name: dateStr,
+          ...statusCounts,
+        });
+      }
+    } else {
+      // month view
+      for (let i = -12; i <= 5; i++) {
+        const date = new Date(now.getFullYear(), now.getMonth() + i, 1);
+        const monthStr = date.toLocaleDateString('en-US', { month: 'short' });
+
+        const statusCounts: Record<string, number> = {};
+        STATUS_KEYS.forEach(status => statusCounts[status] = 0);
+
+        surveys.forEach(survey => {
+          if (!survey.startDate) return;
+          let surveyStartDate = new Date(survey.startDate);
+          if (typeof survey.startDate === 'string' && survey.startDate.includes('/')) {
+            const parts = survey.startDate.split('/');
+            if (parts.length === 3) {
+              surveyStartDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+            }
+          }
+          if (
+            surveyStartDate.getMonth() === date.getMonth() &&
+            surveyStartDate.getFullYear() === date.getFullYear()
+          ) {
+            const status = getStatus(survey);
+            if (STATUS_KEYS.includes(status)) {
+              statusCounts[status]++;
+            }
+          }
+        });
+
+        data.push({
+          name: monthStr,
+          ...statusCounts,
+        });
+      }
+    }
+    return data;
+  };
+
+  const handleTimeframeChange = (newTimeframe: 'week' | 'month') => {
+    setChartTimeframe(newTimeframe);
+  };
 
   if (loading) return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 flex items-center justify-center">
@@ -104,70 +204,172 @@ export default function AdminDashboard() {
       <main className="container mx-auto px-6 py-8">
                 {/* Stats Overview */}
         <div className="grid gap-6 mb-8 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-500 bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-transparent" />
+          <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-500 bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-800 border border-blue-200">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-100/20 to-transparent" />
             <CardHeader className="relative pb-3">
               <div className="flex items-center justify-between">
-                <div className="bg-blue-400/30 p-3 rounded-xl">
-                  <Users className="h-6 w-6" />
+                <div className="bg-blue-100 p-3 rounded-xl">
+                  <Users className="h-6 w-6 text-blue-600" />
                 </div>
               </div>
-              <CardTitle className="text-white text-lg">Total Users</CardTitle>
-              <CardDescription className="text-blue-100">All registered users</CardDescription>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-blue-800 text-lg">Total Users</CardTitle>
+                <div className="text-3xl font-bold text-blue-900">{dashboard.totalUsers}</div>
+              </div>
+              <CardDescription className="text-blue-600">All registered users</CardDescription>
             </CardHeader>
             <CardContent className="relative">
-              <div className="text-3xl font-bold">{dashboard.totalUsers}</div>
+              <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200">
+                <Link href="/dashboard/admin/users">View Users</Link>
+              </Button>
             </CardContent>
           </Card>
 
-          <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-500 bg-gradient-to-br from-purple-500 to-purple-600 text-white">
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-transparent" />
+          <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-500 bg-gradient-to-br from-purple-50 to-violet-50 text-purple-800 border border-purple-200">
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-100/20 to-transparent" />
             <CardHeader className="relative pb-3">
               <div className="flex items-center justify-between">
-                <div className="bg-purple-400/30 p-3 rounded-xl">
-                  <Building className="h-6 w-6" />
+                <div className="bg-purple-100 p-3 rounded-xl">
+                  <Building className="h-6 w-6 text-purple-600" />
                 </div>
               </div>
-              <CardTitle className="text-white text-lg">Total Departments</CardTitle>
-              <CardDescription className="text-purple-100">All university departments</CardDescription>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-purple-800 text-lg">Total Departments</CardTitle>
+                <div className="text-3xl font-bold text-purple-900">{totalDepartments}</div>
+              </div>
+              <CardDescription className="text-purple-600">All university departments</CardDescription>
             </CardHeader>
             <CardContent className="relative">
-              <div className="text-3xl font-bold">{totalDepartments}</div>
+              <Button asChild className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200">
+                <Link href="/dashboard/admin/departments">View Departments</Link>
+              </Button>
             </CardContent>
           </Card>
 
-          <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-500 bg-gradient-to-br from-indigo-500 to-indigo-600 text-white">
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/20 to-transparent" />
+          <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-500 bg-gradient-to-br from-green-50 to-emerald-50 text-green-800 border border-green-200">
+            <div className="absolute inset-0 bg-gradient-to-r from-green-100/20 to-transparent" />
             <CardHeader className="relative pb-3">
               <div className="flex items-center justify-between">
-                <div className="bg-indigo-400/30 p-3 rounded-xl">
-                  <FileText className="h-6 w-6" />
+                <div className="bg-green-100 p-3 rounded-xl">
+                  <FileText className="h-6 w-6 text-green-600" />
                 </div>
               </div>
-              <CardTitle className="text-white text-lg">Total Surveys</CardTitle>
-              <CardDescription className="text-indigo-100">All surveys in the system</CardDescription>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-green-800 text-lg">Total Surveys</CardTitle>
+                <div className="text-3xl font-bold text-green-900">{dashboard.totalSurveys}</div>
+              </div>
+              <CardDescription className="text-green-600">All surveys in the system</CardDescription>
             </CardHeader>
             <CardContent className="relative">
-              <div className="text-3xl font-bold">{dashboard.totalSurveys}</div>
+              <Button asChild className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200">
+                <Link href="/dashboard/admin/all-surveys">View All Surveys</Link>
+              </Button>
             </CardContent>
           </Card>
 
-          <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-500 bg-gradient-to-br from-green-500 to-green-600 text-white">
-            <div className="absolute inset-0 bg-gradient-to-r from-green-600/20 to-transparent" />
+          <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-200 bg-gradient-to-br from-green-50 to-emerald-50 text-green-800 border border-green-200">
+            <div className="absolute inset-0 bg-gradient-to-r from-green-100/20 to-transparent" />
             <CardHeader className="relative pb-3">
               <div className="flex items-center justify-between">
-                <div className="bg-green-400/30 p-3 rounded-xl">
-                  <Award className="h-6 w-6" />
+                <div className="bg-green-100 p-3 rounded-xl">
+                  <Award className="h-6 w-6 text-green-600" />
                 </div>
               </div>
-              <CardTitle className="text-white text-lg">My Surveys</CardTitle>
-              <CardDescription className="text-green-100">Surveys created by you</CardDescription>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-green-800 text-lg">My Surveys</CardTitle>
+                <div className="text-3xl font-bold text-green-900">{mySurveysCount}</div>
+              </div>
+              <CardDescription className="text-green-600">Surveys created by you</CardDescription>
             </CardHeader>
             <CardContent className="relative">
-              <div className="text-3xl font-bold">{mySurveysCount}</div>
+              <Button asChild className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200">
+                <Link href="/dashboard/admin/create-survey">Create Survey</Link>
+              </Button>
             </CardContent>
           </Card>
         </div>
+
+        {/* Survey Analytics Chart */}
+        <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-500 bg-gradient-to-br from-white via-gray-50 to-white mb-8">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="bg-emerald-100 p-2 rounded-lg mr-3">
+                  <BarChart3 className="h-5 w-5 text-emerald-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">Survey Timeline</CardTitle>
+                  <CardDescription>Surves Count by Status</CardDescription>
+                </div>
+              </div>
+              <div className="flex space-x-2">
+                <Button
+                  variant={chartTimeframe === 'week' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleTimeframeChange('week')}
+                  className={chartTimeframe === 'week' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}
+                >
+                  Week
+                </Button>
+                {/* <Button
+                  variant={chartTimeframe === 'month' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleTimeframeChange('month')}
+                  className={chartTimeframe === 'month' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}
+                >
+                  Month
+                </Button> */}
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {surveyChartData.length > 0 ? (
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={surveyChartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis 
+                      dataKey="name" 
+                      stroke="#6b7280"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis 
+                      stroke="#6b7280"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(value) => `${value}`}
+                    />
+                    <Tooltip 
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      }}
+                      labelStyle={{ color: '#374151', fontWeight: '600' }}
+                    />
+                    <Bar dataKey="active" stackId="a" fill="#10b981" name="Active" />
+                    <Bar dataKey="draft" stackId="a" fill="#f59e42" name="Draft" />
+                    <Bar dataKey="completed" stackId="a" fill="#6366f1" name="Completed" />
+                    <Bar dataKey="inactive" stackId="a" fill="#ef4444" name="Inactive" />
+                    <Bar dataKey="expired" stackId="a" fill="#a855f7" name="Expired" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-80 flex items-center justify-center text-gray-500">
+                <div className="text-center">
+                  <Calendar className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                  <p>No survey data available</p>
+                  <p className="text-sm">Surveys will appear here once they are created</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Analytics and Management */}
         <div className="grid gap-6 mb-8 lg:grid-cols-3">
@@ -249,28 +451,28 @@ export default function AdminDashboard() {
               <CardDescription>Manage system components</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button asChild className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200">
+              <Button asChild className="w-full btn-blue">
                 <Link href="/dashboard/admin/users" className="flex items-center justify-center">
                   <Users className="h-4 w-4 mr-2" />
-                  Manage Users
+                  User Management
                 </Link>
               </Button>
               
-              <Button asChild className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200">
+              <Button asChild className="w-full btn-purple">
                 <Link href="/dashboard/admin/departments" className="flex items-center justify-center">
                   <Building className="h-4 w-4 mr-2" />
-                  Manage Departments
+                  Departments
                 </Link>
               </Button>
 
-              <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200">
+              <Button asChild className="w-full btn-emerald">
                 <Link href="/dashboard/admin/all-surveys" className="flex items-center justify-center">
                   <FileText className="h-4 w-4 mr-2" />
-                  View All Surveys
+                  All Surveys
                 </Link>
               </Button>
 
-              <Button asChild className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200">
+              <Button asChild className="w-full btn-emerald">
                 <Link href="/dashboard/admin/create-survey" className="flex items-center justify-center">
                   <PlusCircle className="h-4 w-4 mr-2" />
                   Create Survey
@@ -285,16 +487,16 @@ export default function AdminDashboard() {
           <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-500 bg-gradient-to-br from-white via-gray-50 to-white">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center">
-                <div className="bg-emerald-100 p-3 rounded-xl mr-3">
-                  <Users className="h-6 w-6 text-emerald-600" />
+                <div className="bg-blue-100 p-3 rounded-xl mr-3">
+                  <Users className="h-6 w-6 text-blue-600" />
                 </div>
                 User Management
               </CardTitle>
               <CardDescription>Manage system users and roles</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button asChild className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200">
-                <Link href="/dashboard/admin/users">Manage Users</Link>
+              <Button asChild className="w-full btn-blue">
+                <Link href="/dashboard/admin/users">User Management</Link>
               </Button>
             </CardContent>
           </Card>
@@ -302,16 +504,16 @@ export default function AdminDashboard() {
           <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-500 bg-gradient-to-br from-white via-gray-50 to-white">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center">
-                <div className="bg-blue-100 p-3 rounded-xl mr-3">
-                  <Building className="h-6 w-6 text-blue-600" />
+                <div className="bg-purple-100 p-3 rounded-xl mr-3">
+                  <Building className="h-6 w-6 text-purple-600" />
                 </div>
                 Departments
               </CardTitle>
               <CardDescription>Manage university departments</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200">
-                <Link href="/dashboard/admin/departments">Manage Departments</Link>
+              <Button asChild className="w-full btn-purple">
+                <Link href="/dashboard/admin/departments">Departments</Link>
               </Button>
             </CardContent>
           </Card>
@@ -319,19 +521,19 @@ export default function AdminDashboard() {
           <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-500 bg-gradient-to-br from-white via-gray-50 to-white">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center">
-                <div className="bg-purple-100 p-3 rounded-xl mr-3">
-                  <FileText className="h-6 w-6 text-purple-600" />
+                <div className="bg-emerald-100 p-3 rounded-xl mr-3">
+                  <FileText className="h-6 w-6 text-emerald-600" />
                 </div>
                 Survey Management
               </CardTitle>
               <CardDescription>Manage all surveys in the system</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button asChild className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200">
-                <Link href="/dashboard/admin/all-surveys">View All Surveys</Link>
+              <Button asChild className="w-full btn-emerald">
+                <Link href="/dashboard/admin/all-surveys">All Surveys</Link>
               </Button>
-              <Button asChild className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200">
-                <Link href="/dashboard/admin/create-survey">Create New Survey</Link>
+              <Button asChild className="w-full btn-emerald">
+                <Link href="/dashboard/admin/create-survey">Create Survey</Link>
               </Button>
             </CardContent>
           </Card>
