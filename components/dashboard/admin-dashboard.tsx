@@ -311,14 +311,14 @@ export default function AdminDashboard() {
                 >
                   Week
                 </Button>
-                {/* <Button
+                <Button
                   variant={chartTimeframe === 'month' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => handleTimeframeChange('month')}
                   className={chartTimeframe === 'month' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}
                 >
                   Month
-                </Button> */}
+                </Button>
               </div>
             </div>
           </CardHeader>
