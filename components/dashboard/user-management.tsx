@@ -247,37 +247,73 @@ export default function UserManagement() {
           <Plus className="h-4 w-4" /> Register Admin
         </Button>
       </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Department</TableHead>
-            <TableHead>Role</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {users.map((user) => (
-            <TableRow key={user.id}>
-              <TableCell>{user.firstName} {user.lastName}</TableCell>
-              <TableCell>{user.email}</TableCell>
-              <TableCell>{user.departmentName || "N/A"}</TableCell>
-              <TableCell>
-                <Badge
-                  className={
-                    `px-3 py-1 rounded-full font-semibold ` +
-                    (user.userType === 'Admin'
-                      ? 'bg-red-100 text-red-700'
-                      : user.userType === 'Teacher'
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'bg-green-100 text-green-700')
-                  }
-                >
-                  {user.userType}
-                </Badge>
-              </TableCell>
-              <TableCell className="space-x-2">
+      {/* Responsive Table: Desktop only */}
+      <div className="hidden lg:block overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Department</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {users.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell>{user.firstName} {user.lastName}</TableCell>
+                <TableCell>{user.email}</TableCell>
+                <TableCell>{user.departmentName || "N/A"}</TableCell>
+                <TableCell>
+                  <Badge
+                    className={
+                      `px-3 py-1 rounded-full font-semibold ` +
+                      (user.userType === 'Admin'
+                        ? 'bg-red-100 text-red-700'
+                        : user.userType === 'Teacher'
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'bg-green-100 text-green-700')
+                    }
+                  >
+                    {user.userType}
+                  </Badge>
+                </TableCell>
+                <TableCell className="space-x-2">
+                  <Button size="icon" variant="outline" onClick={() => openUserDetails(user.id, 'view')} title="View">
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button size="icon" variant="outline" onClick={() => openUserDetails(user.id, 'edit')} title="Edit">
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button size="icon" variant="destructive" onClick={() => { setSelectedUser(user); setShowDeleteConfirm(true); }} title="Delete" disabled={user.id === currentUser?.userId}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      {/* Responsive Cards: Mobile/Tablet only */}
+      <div className="space-y-4 lg:hidden">
+        {users.map((user) => (
+          <div key={user.id} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="flex items-start justify-between">
+              <div>
+                <h4 className="font-semibold text-gray-900">{user.firstName} {user.lastName}</h4>
+                <p className="text-sm text-gray-600 mt-1">{user.email}</p>
+                <p className="text-sm text-gray-600 mt-1">Department: {user.departmentName || 'N/A'}</p>
+                <p className="text-sm text-gray-600 mt-1 flex items-center gap-2">Role: <Badge className={
+                  `px-2 py-0.5 rounded-full font-semibold text-xs ` +
+                  (user.userType === 'Admin'
+                    ? 'bg-red-100 text-red-700'
+                    : user.userType === 'Teacher'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-green-100 text-green-700')
+                }>{user.userType}</Badge></p>
+              </div>
+              <div className="flex flex-col gap-2 ml-4">
                 <Button size="icon" variant="outline" onClick={() => openUserDetails(user.id, 'view')} title="View">
                   <Eye className="h-4 w-4" />
                 </Button>
@@ -287,14 +323,14 @@ export default function UserManagement() {
                 <Button size="icon" variant="destructive" onClick={() => { setSelectedUser(user); setShowDeleteConfirm(true); }} title="Delete" disabled={user.id === currentUser?.userId}>
                   <Trash2 className="h-4 w-4" />
                 </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
       {/* User Details Modal */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent>
+        <DialogContent className="w-full !max-w-full p-4 max-h-[90vh] overflow-y-auto sm:max-w-lg sm:p-6">
           <DialogHeader>
             <DialogTitle>User Details</DialogTitle>
           </DialogHeader>
@@ -389,7 +425,7 @@ export default function UserManagement() {
       />
       {/* Register Teacher Modal */}
       <Dialog open={showRegisterModal} onOpenChange={setShowRegisterModal}>
-        <DialogContent>
+        <DialogContent className="w-full !max-w-full p-4 max-h-[90vh] overflow-y-auto sm:max-w-lg sm:p-6">
           <DialogHeader>
             <DialogTitle>Register New Teacher</DialogTitle>
           </DialogHeader>
@@ -429,7 +465,7 @@ export default function UserManagement() {
       </Dialog>
       {/* Register Admin Modal */}
       <Dialog open={showRegisterAdminModal} onOpenChange={setShowRegisterAdminModal}>
-        <DialogContent>
+        <DialogContent className="w-full !max-w-full p-4 max-h-[90vh] overflow-y-auto sm:max-w-lg sm:p-6">
           <DialogHeader>
             <DialogTitle>Register New Admin</DialogTitle>
           </DialogHeader>

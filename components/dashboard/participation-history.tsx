@@ -211,56 +211,92 @@ export default function ParticipationHistory() {
                 )}
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Survey</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Points Earned</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Completion Date</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Comment</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredHistory.map((item) => (
-                      <tr key={item.responseId} className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="py-4 px-4">
-                          <div>
-                            <h4 className="font-medium text-gray-900">{item.title}</h4>
-                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                              {item.description}
-                            </p>
-                          </div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 border-emerald-200">
-                            <Award className="h-3 w-3 mr-1" />
-                            {item.pointsEarned} points
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Calendar className="h-4 w-4 mr-2" />
-                            {formatDate(item.completionDate)}
-                          </div>
-                        </td>
-                        <td className="py-4 px-4">
+              <>
+                {/* Desktop table (lg and above) */}
+                <div className="hidden lg:block overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">Survey</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">Points Earned</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">Completion Date</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">Comment</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredHistory.map((item) => (
+                        <tr key={item.responseId} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-4 px-4">
+                            <div>
+                              <h4 className="font-medium text-gray-900">{item.title}</h4>
+                              <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                                {item.description}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="py-4 px-4">
+                            <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 border-emerald-200">
+                              <Award className="h-3 w-3 mr-1" />
+                              {item.pointsEarned} points
+                            </Badge>
+                          </td>
+                          <td className="py-4 px-4">
+                            <div className="flex items-center text-sm text-gray-600">
+                              <Calendar className="h-4 w-4 mr-2" />
+                              {formatDate(item.completionDate)}
+                            </div>
+                          </td>
+                          <td className="py-4 px-4">
+                            {item.hasComment ? (
+                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                <MessageSquare className="h-3 w-3 mr-1" />
+                                Yes
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200">
+                                No
+                              </Badge>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile/Tablet cards (below lg) */}
+                <div className="space-y-4 lg:hidden">
+                  {filteredHistory.map((item) => (
+                    <div key={item.responseId} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="font-semibold text-gray-900">{item.title}</h4>
+                          <p className="text-sm text-gray-600 mt-1 line-clamp-3">{item.description}</p>
+                        </div>
+                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 border-emerald-200 whitespace-nowrap ml-3">
+                          <Award className="h-3 w-3 mr-1" /> {item.pointsEarned}
+                        </Badge>
+                      </div>
+                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Calendar className="h-4 w-4 mr-2" /> {formatDate(item.completionDate)}
+                        </div>
+                        <div>
                           {item.hasComment ? (
                             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                              <MessageSquare className="h-3 w-3 mr-1" />
-                              Yes
+                              <MessageSquare className="h-3 w-3 mr-1" /> Commented
                             </Badge>
                           ) : (
                             <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200">
-                              No
+                              No Comment
                             </Badge>
                           )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

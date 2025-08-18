@@ -6,7 +6,7 @@ import { DepartmentService } from "@/lib/services/department-service";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Building, Users, BarChart3, Settings, TrendingUp, Award, FileText, Activity, PlusCircle, Calendar } from "lucide-react";
+import { Building, Users, BarChart3, Settings, TrendingUp, Award, FileText, Activity, PlusCircle, Calendar, ChevronRight } from "lucide-react";
 import axios from "@/lib/api/axios";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
@@ -141,6 +141,7 @@ export default function AdminDashboard() {
       for (let i = -12; i <= 5; i++) {
         const date = new Date(now.getFullYear(), now.getMonth() + i, 1);
         const monthStr = date.toLocaleDateString('en-US', { month: 'short' });
+        const label = `${monthStr} ${date.getFullYear()}`; // ensure uniqueness across years
 
         const statusCounts: Record<string, number> = {};
         STATUS_KEYS.forEach(status => statusCounts[status] = 0);
@@ -166,7 +167,7 @@ export default function AdminDashboard() {
         });
 
         data.push({
-          name: monthStr,
+          name: label,
           ...statusCounts,
         });
       }
@@ -298,8 +299,8 @@ export default function AdminDashboard() {
                   <BarChart3 className="h-5 w-5 text-emerald-600" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl">Survey Timeline</CardTitle>
-                  <CardDescription>Surves Count by Status</CardDescription>
+                  <CardTitle className="text-xl">Survey Start Timeline</CardTitle>
+                  <CardDescription>Number of surveys with status</CardDescription>
                 </div>
               </div>
               <div className="flex space-x-2">
@@ -323,9 +324,12 @@ export default function AdminDashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            {surveyChartData.length > 0 ? (
+            {(() => {
+              const hasAnyData = Array.isArray(surveyChartData) && surveyChartData.some((d: any) => STATUS_KEYS.some((k) => (d?.[k] ?? 0) > 0));
+              return hasAnyData;
+            })() ? (
               <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="88%">
                   <BarChart data={surveyChartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                     <XAxis 
@@ -334,6 +338,7 @@ export default function AdminDashboard() {
                       fontSize={12}
                       tickLine={false}
                       axisLine={false}
+                      allowDuplicatedCategory={false}
                     />
                     <YAxis 
                       stroke="#6b7280"
@@ -341,6 +346,22 @@ export default function AdminDashboard() {
                       tickLine={false}
                       axisLine={false}
                       tickFormatter={(value) => `${value}`}
+                      domain={[(dataMin: number) => (chartTimeframe === 'week' ? 0 : 2), (dataMax: number) => Math.max(2, dataMax)]}
+                      allowDecimals={false}
+                      ticks={(() => {
+                        const maxTotal = Array.isArray(surveyChartData)
+                          ? Math.max(
+                              0,
+                              ...surveyChartData.map((d: any) =>
+                                STATUS_KEYS.reduce((sum, k) => sum + (d?.[k] ?? 0), 0)
+                              )
+                            )
+                          : 0;
+                        const minTick = chartTimeframe === 'week' ? 0 : 2;
+                        const upper = Math.max(2, maxTotal);
+                        const start = Math.min(minTick, upper);
+                        return Array.from({ length: upper - start + 1 }, (_, i) => start + i);
+                      })()}
                     />
                     <Tooltip 
                       contentStyle={{
@@ -351,20 +372,27 @@ export default function AdminDashboard() {
                       }}
                       labelStyle={{ color: '#374151', fontWeight: '600' }}
                     />
-                    <Bar dataKey="active" stackId="a" fill="#10b981" name="Active" />
-                    <Bar dataKey="draft" stackId="a" fill="#f59e42" name="Draft" />
-                    <Bar dataKey="completed" stackId="a" fill="#6366f1" name="Completed" />
-                    <Bar dataKey="inactive" stackId="a" fill="#ef4444" name="Inactive" />
-                    <Bar dataKey="expired" stackId="a" fill="#a855f7" name="Expired" />
+                    <Bar dataKey="active" stackId="a" fill="#10b981" name="Active" isAnimationActive={false} minPointSize={2} />
+                    <Bar dataKey="draft" stackId="a" fill="#f59e42" name="Draft" isAnimationActive={false} minPointSize={2} />
+                    <Bar dataKey="completed" stackId="a" fill="#6366f1" name="Completed" isAnimationActive={false} minPointSize={2} />
+                    <Bar dataKey="inactive" stackId="a" fill="#ef4444" name="Inactive" isAnimationActive={false} minPointSize={2} />
+                    <Bar dataKey="expired" stackId="a" fill="#a855f7" name="Expired" isAnimationActive={false} minPointSize={2} />
                   </BarChart>
                 </ResponsiveContainer>
+                <div className="flex justify-center mt-4 space-x-6 text-sm">
+                  <div className="flex items-center"><div className="w-3 h-3 bg-emerald-500 rounded mr-2"></div><span className="text-gray-600">Active</span></div>
+                  <div className="flex items-center"><div className="w-3 h-3 bg-[#f59e42] rounded mr-2"></div><span className="text-gray-600">Draft</span></div>
+                  <div className="flex items-center"><div className="w-3 h-3 bg-[#6366f1] rounded mr-2"></div><span className="text-gray-600">Completed</span></div>
+                  <div className="flex items-center"><div className="w-3 h-3 bg-[#ef4444] rounded mr-2"></div><span className="text-gray-600">Inactive</span></div>
+                  <div className="flex items-center"><div className="w-3 h-3 bg-[#a855f7] rounded mr-2"></div><span className="text-gray-600">Expired</span></div>
+                </div>
               </div>
             ) : (
               <div className="h-80 flex items-center justify-center text-gray-500">
                 <div className="text-center">
                   <Calendar className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                  <p>No survey data available</p>
-                  <p className="text-sm">Surveys will appear here once they are created</p>
+                  <p>No survey starts found in the selected period</p>
+                  <p className="text-sm">Create or schedule surveys to see them here</p>
                 </div>
               </div>
             )}
@@ -451,93 +479,58 @@ export default function AdminDashboard() {
               <CardDescription>Manage system components</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button asChild className="w-full btn-blue">
-                <Link href="/dashboard/admin/users" className="flex items-center justify-center">
-                  <Users className="h-4 w-4 mr-2" />
-                  User Management
+              <Button asChild className="w-full py-7 mt-3 justify-between bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 group">
+                <Link href="/dashboard/admin/users" className="flex w-full items-center justify-between">
+                  <span className="flex items-center">
+                    <span className="mr-3 rounded-lg bg-white/20 p-2">
+                      <Users className="h-4 w-4" />
+                    </span>
+                    <span>User Management</span>
+                  </span>
+                  <ChevronRight className="h-4 w-4 opacity-90 transition-transform duration-200 group-hover:translate-x-0.5" />
                 </Link>
               </Button>
               
-              <Button asChild className="w-full btn-purple">
-                <Link href="/dashboard/admin/departments" className="flex items-center justify-center">
-                  <Building className="h-4 w-4 mr-2" />
-                  Departments
+              <Button asChild className="w-full py-7 justify-between bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 group">
+                <Link href="/dashboard/admin/departments" className="flex w-full items-center justify-between">
+                  <span className="flex items-center">
+                    <span className="mr-3 rounded-lg bg-white/20 p-2">
+                      <Building className="h-4 w-4" />
+                    </span>
+                    <span>Departments</span>
+                  </span>
+                  <ChevronRight className="h-4 w-4 opacity-90 transition-transform duration-200 group-hover:translate-x-0.5" />
                 </Link>
               </Button>
 
-              <Button asChild className="w-full btn-emerald">
-                <Link href="/dashboard/admin/all-surveys" className="flex items-center justify-center">
-                  <FileText className="h-4 w-4 mr-2" />
-                  All Surveys
+              <Button asChild className="w-full py-7 justify-between bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 group">
+                <Link href="/dashboard/admin/all-surveys" className="flex w-full items-center justify-between">
+                  <span className="flex items-center">
+                    <span className="mr-3 rounded-lg bg-white/20 p-2">
+                      <FileText className="h-4 w-4" />
+                    </span>
+                    <span>All Surveys</span>
+                  </span>
+                  <ChevronRight className="h-4 w-4 opacity-90 transition-transform duration-200 group-hover:translate-x-0.5" />
                 </Link>
               </Button>
 
-              <Button asChild className="w-full btn-emerald">
-                <Link href="/dashboard/admin/create-survey" className="flex items-center justify-center">
-                  <PlusCircle className="h-4 w-4 mr-2" />
-                  Create Survey
+              <Button asChild className="w-full py-7 justify-between bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 group">
+                <Link href="/dashboard/admin/create-survey" className="flex w-full items-center justify-between">
+                  <span className="flex items-center">
+                    <span className="mr-3 rounded-lg bg-white/20 p-2">
+                      <PlusCircle className="h-4 w-4" />
+                    </span>
+                    <span>Create Survey</span>
+                  </span>
+                  <ChevronRight className="h-4 w-4 opacity-90 transition-transform duration-200 group-hover:translate-x-0.5" />
                 </Link>
               </Button>
             </CardContent>
           </Card>
         </div>
 
-        {/* Management Cards */}
-        <div className="grid gap-6 md:grid-cols-3">
-          <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-500 bg-gradient-to-br from-white via-gray-50 to-white">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center">
-                <div className="bg-blue-100 p-3 rounded-xl mr-3">
-                  <Users className="h-6 w-6 text-blue-600" />
-                </div>
-                User Management
-              </CardTitle>
-              <CardDescription>Manage system users and roles</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild className="w-full btn-blue">
-                <Link href="/dashboard/admin/users">User Management</Link>
-              </Button>
-            </CardContent>
-          </Card>
-          
-          <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-500 bg-gradient-to-br from-white via-gray-50 to-white">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center">
-                <div className="bg-purple-100 p-3 rounded-xl mr-3">
-                  <Building className="h-6 w-6 text-purple-600" />
-                </div>
-                Departments
-              </CardTitle>
-              <CardDescription>Manage university departments</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild className="w-full btn-purple">
-                <Link href="/dashboard/admin/departments">Departments</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="group relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-500 bg-gradient-to-br from-white via-gray-50 to-white">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center">
-                <div className="bg-emerald-100 p-3 rounded-xl mr-3">
-                  <FileText className="h-6 w-6 text-emerald-600" />
-                </div>
-                Survey Management
-              </CardTitle>
-              <CardDescription>Manage all surveys in the system</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button asChild className="w-full btn-emerald">
-                <Link href="/dashboard/admin/all-surveys">All Surveys</Link>
-              </Button>
-              <Button asChild className="w-full btn-emerald">
-                <Link href="/dashboard/admin/create-survey">Create Survey</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+        
       </main>
     </div>
   );

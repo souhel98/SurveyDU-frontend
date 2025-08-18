@@ -4,7 +4,7 @@ import type React from "react"
 import { useRouter } from "next/navigation"
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
-import { ChevronDown, ShoppingCart, User, PlusCircle, Award, ArrowLeft, LogOut, History, TrendingUp } from "lucide-react"
+import { ChevronDown, ShoppingCart, User, PlusCircle, Award, ArrowLeft, LogOut, History, TrendingUp, Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { AuthService } from "@/lib/services/auth-service"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -17,6 +17,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [userName, setUserName] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [pointsDropdownOpen, setPointsDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     // Helper to get cookie value
@@ -241,287 +242,345 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <nav className="hidden md:flex ml-8 space-x-1"></nav>
           </div>
           <div className="flex items-center space-x-4">
-            {/* Admin Buttons */}
-            {role === 'Admin' && (
-              <>
-                {/* <Button 
-                  variant={isActive(createSurveyLink) ? undefined : "outline"} 
-                  className={isActive(createSurveyLink) 
-                    ? "gap-2 bg-emerald-100 text-emerald-700 font-bold shadow-sm" 
-                    : "gap-2 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border-green-200 text-green-800 font-semibold shadow-sm hover:shadow-md transition-all duration-200"
-                  } 
-                  asChild
-                >
-                  <Link href={createSurveyLink}><PlusCircle className="h-4 w-4" /> Create Survey</Link>
-                </Button> */}
-                <Button 
-                  variant={isActive(allSurveysLink) ? undefined : "outline"} 
-                  className={isActive(allSurveysLink) 
-                    ? "gap-2 btn-emerald-active" 
-                    : "gap-2 btn-emerald"
-                  } 
-                  asChild
-                >
-                  <Link href={allSurveysLink}> All Surveys</Link>
-                </Button>
-                <Button 
-                  variant={isActive(userManagementLink) ? undefined : "outline"} 
-                  className={isActive(userManagementLink) 
-                    ? "gap-2 btn-blue-active" 
-                    : "gap-2 btn-blue"
-                  } 
-                  asChild
-                >
-                  <Link href={userManagementLink}>User Management</Link>
-                </Button>
-                <Button 
-                  variant={isActive('/dashboard/admin/departments') ? undefined : "outline"} 
-                  className={isActive('/dashboard/admin/departments') 
-                    ? "gap-2 btn-purple-active" 
-                    : "gap-2 btn-purple"
-                  } 
-                  asChild
-                >
-                  <Link href="/dashboard/admin/departments">Departments</Link>
-                </Button>
-                {/* User Profile Dropdown (Custom) */}
-                <div
-                  className="relative"
-                  ref={dropdownRef}
-                  onMouseEnter={handleMouseEnter}
-                  onMouseLeave={handleMouseLeave}
-                >
-                  <Button
-                    variant="outline"
-                    className="gap-2 min-w-[120px] justify-between btn-orange"
+            {/* Desktop Actions */}
+            <div className="hidden md:flex items-center space-x-4">
+              {/* Admin Buttons */}
+              {role === 'Admin' && (
+                <>
+                  {/* <Button 
+                    variant={isActive(createSurveyLink) ? undefined : "outline"} 
+                    className={isActive(createSurveyLink) 
+                      ? "gap-2 bg-emerald-100 text-emerald-700 font-bold shadow-sm" 
+                      : "gap-2 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border-green-200 text-green-800 font-semibold shadow-sm hover:shadow-md transition-all duration-200"
+                    } 
                     asChild
                   >
-                    <Link href={profileLink}>
-                      <User className="h-4 w-4 text-orange-600 hover:text-orange-700" />
-                      {userName.trim() ? (
-                        <span>{userName.trim()}</span>
-                      ) : (
-                        <span className="animate-pulse text-gray-400">Loading...</span>
-                      )}
-                    </Link>
-                  </Button>
-                  {dropdownOpen && (
-                    <div
-                      className="absolute right-0 mt-2 w-36 rounded-lg shadow-xl bg-gradient-to-b from-orange-50 to-amber-50 border border-orange-200 z-50 max-h-[60vh] overflow-y-auto"
-                      onMouseEnter={handleMouseEnter}
-                      onMouseLeave={handleMouseLeave}
-                    >
-                      <button
-                        className="w-full text-left px-4 py-3 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 text-orange-800 hover:text-orange-900 flex items-center gap-2 font-semibold transition-all duration-200"
-                        onMouseDown={() => {
-                          window.location.href = profileLink;
-                        }}
-                      >
-                        <User className="h-4 w-4 text-orange-600" />
-                        Profile
-                      </button>
-                      <button
-                        className="w-full text-left px-4 py-3 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 text-orange-800 hover:text-orange-900 flex items-center gap-2 font-semibold transition-all duration-200"
-                        onMouseDown={handleLogout}
-                      >
-                        <LogOut className="h-4 w-4 text-orange-600" />
-                        Logout
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-            {/* Teacher Buttons */}
-            {role === 'Teacher' && (
-              <>
-                <Button 
-                  variant={isActive(createSurveyLink) ? undefined : "outline"} 
-                  className={isActive(createSurveyLink) 
-                    ? "gap-2 btn-emerald-active" 
-                    : "gap-2 btn-emerald"
-                  } 
-                  asChild
-                >
-                  <Link href={createSurveyLink}><PlusCircle className="h-4 w-4" /> Create Survey</Link>
-                </Button>
-                {/* User Profile Dropdown (Custom) - always last */}
-                <div
-                  className="relative"
-                  ref={dropdownRef}
-                  onMouseEnter={handleMouseEnter}
-                  onMouseLeave={handleMouseLeave}
-                >
-                  <Button
-                    variant="outline"
-                    className="gap-2 min-w-[120px] justify-between btn-orange"
-                    asChild
-                  >
-                    <Link href={profileLink}>
-                      <User className="h-4 w-4 text-orange-600 hover:text-orange-700" />
-                      {userName.trim() ? (
-                        <span>{userName.trim()}</span>
-                      ) : (
-                        <span className="animate-pulse text-gray-400">Loading...</span>
-                      )}
-                    </Link>
-                  </Button>
-                  {dropdownOpen && (
-                    <div
-                      className="absolute right-0 mt-2 w-36 rounded-lg shadow-xl bg-gradient-to-b from-orange-50 to-amber-50 border border-orange-200 z-50 max-h-[60vh] overflow-y-auto"
-                      onMouseEnter={handleMouseEnter}
-                      onMouseLeave={handleMouseLeave}
-                    >
-                      <button
-                        className="w-full text-left px-4 py-3 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 text-orange-800 hover:text-orange-900 flex items-center gap-2 font-semibold transition-all duration-200"
-                        onMouseDown={() => {
-                          window.location.href = profileLink;
-                        }}
-                      >
-                        <User className="h-4 w-4 text-orange-600" />
-                        Profile
-                      </button>
-                      <button
-                        className="w-full text-left px-4 py-3 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 text-orange-800 hover:text-orange-900 flex items-center gap-2 font-semibold transition-all duration-200"
-                        onMouseDown={handleLogout}
-                      >
-                        <LogOut className="h-4 w-4 text-orange-600" />
-                        Logout
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-            {/* Student Buttons and Points */}
-            {role === 'Student' && (
-              <>
-                <Button 
-                  variant={isActive('/dashboard/student/participation-history') ? undefined : "outline"} 
-                  className={isActive('/dashboard/student/participation-history') 
-                    ? "gap-2 bg-emerald-100 text-emerald-700 font-bold shadow-sm" 
-                    : "gap-2 bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 border-emerald-200 text-emerald-800 font-semibold shadow-sm hover:shadow-md transition-all duration-200"
-                  } 
-                  asChild
-                >
-                  <Link href="/dashboard/student/participation-history"><History className="h-4 w-4" /> Participation History</Link>
-                </Button>
-                <div 
-                  className="relative"
-                  ref={pointsDropdownRef}
-                  onMouseEnter={handlePointsMouseEnter}
-                  onMouseLeave={handlePointsMouseLeave}
-                >
+                    <Link href={createSurveyLink}><PlusCircle className="h-4 w-4" /> Create Survey</Link>
+                  </Button> */}
                   <Button 
-                    variant="outline" 
-                    className="gap-2 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 text-blue-800 font-semibold shadow-sm hover:shadow-md transition-all duration-200"
+                    variant={isActive(allSurveysLink) ? undefined : "outline"} 
+                    className={isActive(allSurveysLink) 
+                      ? "gap-2 btn-emerald-active" 
+                      : "gap-2 btn-emerald"
+                    } 
                     asChild
                   >
-                    <Link href="/dashboard/student/points-history">
-                      <Award className="h-4 w-4 text-blue-600" />
-                      {pointsLoading ? (
-                        <span className="animate-pulse">Loading...</span>
-                      ) : pointsError ? (
-                        <span className="text-red-500">{pointsError}</span>
-                      ) : (
-                        <span>{studentPoints} Points</span>
-                      )}
-                    </Link>
+                    <Link href={allSurveysLink}> All Surveys</Link>
                   </Button>
-                  {pointsDropdownOpen && (
-                    <div
-                      className="absolute right-0 mt-2 w-56 rounded-lg shadow-xl bg-white border border-blue-200 z-50 overflow-hidden"
-                      onMouseEnter={handlePointsMouseEnter}
-                      onMouseLeave={handlePointsMouseLeave}
+                  <Button 
+                    variant={isActive(userManagementLink) ? undefined : "outline"} 
+                    className={isActive(userManagementLink) 
+                      ? "gap-2 btn-blue-active" 
+                      : "gap-2 btn-blue"
+                    } 
+                    asChild
+                  >
+                    <Link href={userManagementLink}>User Management</Link>
+                  </Button>
+                  <Button 
+                    variant={isActive('/dashboard/admin/departments') ? undefined : "outline"} 
+                    className={isActive('/dashboard/admin/departments') 
+                      ? "gap-2 btn-purple-active" 
+                      : "gap-2 btn-purple"
+                    } 
+                    asChild
+                  >
+                    <Link href="/dashboard/admin/departments">Departments</Link>
+                  </Button>
+                  {/* User Profile Dropdown (Custom) */}
+                  <div
+                    className="relative"
+                    ref={dropdownRef}
+                    onMouseEnter={handleMouseEnter}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    <Button
+                      variant="outline"
+                      className="gap-2 min-w-[120px] justify-between btn-orange"
+                      asChild
                     >
-                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 border-b border-blue-100">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-blue-800">Current Balance</span>
-                          <span className="text-lg font-bold text-blue-900">{studentPoints} points</span>
-                        </div>
-                      </div>
-                      <Link 
-                        href="/dashboard/student/points-history"
-                        className="flex items-center w-full px-4 py-4 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-emerald-100 text-left transition-all duration-200 group"
-                      >
-                        <div className="p-2 bg-emerald-100 rounded-lg mr-3 group-hover:bg-emerald-200 transition-colors">
-                          <TrendingUp className="h-4 w-4 text-emerald-600" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-900 group-hover:text-emerald-700">Points History</p>
-                          <p className="text-sm text-gray-600">View transaction history</p>
-                        </div>
+                      <Link href={profileLink}>
+                        <User className="h-4 w-4 text-orange-600 hover:text-orange-700" />
+                        {userName.trim() ? (
+                          <span>{userName.trim()}</span>
+                        ) : (
+                          <span className="animate-pulse text-gray-400">Loading...</span>
+                        )}
                       </Link>
-                    </div>
-                  )}
-                </div>
-                {/* User Profile Dropdown (Custom) */}
-                <div
-                  className="relative"
-                  ref={dropdownRef}
-                  onMouseEnter={handleMouseEnter}
-                  onMouseLeave={handleMouseLeave}
-                >
-                  <Button
-                    variant="outline"
-                    className="gap-2 min-w-[120px] justify-between btn-orange"
+                    </Button>
+                    {dropdownOpen && (
+                      <div
+                        className="absolute right-0 mt-2 w-36 rounded-lg shadow-xl bg-gradient-to-b from-orange-50 to-amber-50 border border-orange-200 z-50 max-h-[60vh] overflow-y-auto"
+                        onMouseEnter={handleMouseEnter}
+                        onMouseLeave={handleMouseLeave}
+                      >
+                        <button
+                          className="w-full text-left px-4 py-3 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 text-orange-800 hover:text-orange-900 flex items-center gap-2 font-semibold transition-all duration-200"
+                          onMouseDown={() => {
+                            window.location.href = profileLink;
+                          }}
+                        >
+                          <User className="h-4 w-4 text-orange-600" />
+                          Profile
+                        </button>
+                        <button
+                          className="w-full text-left px-4 py-3 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 text-orange-800 hover:text-orange-900 flex items-center gap-2 font-semibold transition-all duration-200"
+                          onMouseDown={handleLogout}
+                        >
+                          <LogOut className="h-4 w-4 text-orange-600" />
+                          Logout
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+              {/* Teacher Buttons */}
+              {role === 'Teacher' && (
+                <>
+                  <Button 
+                    variant={isActive(createSurveyLink) ? undefined : "outline"} 
+                    className={isActive(createSurveyLink) 
+                      ? "gap-2 btn-emerald-active" 
+                      : "gap-2 btn-emerald"
+                    } 
                     asChild
                   >
-                    <Link href={profileLink}>
-                      <User className="h-4 w-4 text-orange-600 hover:text-orange-700" />
-                      {userName.trim() ? (
-                        <span>{userName.trim()}</span>
-                      ) : (
-                        <span className="animate-pulse text-gray-400">Loading...</span>
-                      )}
-                    </Link>
+                    <Link href={createSurveyLink}><PlusCircle className="h-4 w-4" /> Create Survey</Link>
                   </Button>
-                  {dropdownOpen && (
-                    <div
-                      className="absolute right-0 mt-2 w-36 rounded-lg shadow-xl bg-gradient-to-b from-orange-50 to-amber-50 border border-orange-200 z-50 max-h-[60vh] overflow-y-auto"
-                      onMouseEnter={handleMouseEnter}
-                      onMouseLeave={handleMouseLeave}
+                  {/* User Profile Dropdown (Custom) - always last */}
+                  <div
+                    className="relative"
+                    ref={dropdownRef}
+                    onMouseEnter={handleMouseEnter}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    <Button
+                      variant="outline"
+                      className="gap-2 min-w-[120px] justify-between btn-orange"
+                      asChild
                     >
-                      <button
-                        className="w-full text-left px-4 py-3 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 text-orange-800 hover:text-orange-900 flex items-center gap-2 font-semibold transition-all duration-200"
-                        onMouseDown={() => {
-                          window.location.href = profileLink;
-                        }}
+                      <Link href={profileLink}>
+                        <User className="h-4 w-4 text-orange-600 hover:text-orange-700" />
+                        {userName.trim() ? (
+                          <span>{userName.trim()}</span>
+                        ) : (
+                          <span className="animate-pulse text-gray-400">Loading...</span>
+                        )}
+                      </Link>
+                    </Button>
+                    {dropdownOpen && (
+                      <div
+                        className="absolute right-0 mt-2 w-36 rounded-lg shadow-xl bg-gradient-to-b from-orange-50 to-amber-50 border border-orange-200 z-50 max-h-[60vh] overflow-y-auto"
+                        onMouseEnter={handleMouseEnter}
+                        onMouseLeave={handleMouseLeave}
                       >
-                        <User className="h-4 w-4 text-orange-600" />
-                        Profile
-                      </button>
-                      <button
-                        className="w-full text-left px-4 py-3 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 text-orange-800 hover:text-orange-900 flex items-center gap-2 font-semibold transition-all duration-200"
-                        onMouseDown={handleLogout}
+                        <button
+                          className="w-full text-left px-4 py-3 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 text-orange-800 hover:text-orange-900 flex items-center gap-2 font-semibold transition-all duration-200"
+                          onMouseDown={() => {
+                            window.location.href = profileLink;
+                          }}
+                        >
+                          <User className="h-4 w-4 text-orange-600" />
+                          Profile
+                        </button>
+                        <button
+                          className="w-full text-left px-4 py-3 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 text-orange-800 hover:text-orange-900 flex items-center gap-2 font-semibold transition-all duration-200"
+                          onMouseDown={handleLogout}
+                        >
+                          <LogOut className="h-4 w-4 text-orange-600" />
+                          Logout
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+              {/* Student Buttons and Points */}
+              {role === 'Student' && (
+                <>
+                  <Button 
+                    variant={isActive('/dashboard/student/participation-history') ? undefined : "outline"} 
+                    className={isActive('/dashboard/student/participation-history') 
+                      ? "gap-2 bg-emerald-100 text-emerald-700 font-bold shadow-sm" 
+                      : "gap-2 bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 border-emerald-200 text-emerald-800 font-semibold shadow-sm hover:shadow-md transition-all duration-200"
+                    } 
+                    asChild
+                  >
+                    <Link href="/dashboard/student/participation-history"><History className="h-4 w-4" /> Participation History</Link>
+                  </Button>
+                  <div 
+                    className="relative"
+                    ref={pointsDropdownRef}
+                    onMouseEnter={handlePointsMouseEnter}
+                    onMouseLeave={handlePointsMouseLeave}
+                  >
+                    <Button 
+                      variant="outline" 
+                      className="gap-2 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-blue-200 text-blue-800 font-semibold shadow-sm hover:shadow-md transition-all duration-200"
+                      asChild
+                    >
+                      <Link href="/dashboard/student/points-history">
+                        <Award className="h-4 w-4 text-blue-600" />
+                        {pointsLoading ? (
+                          <span className="animate-pulse">Loading...</span>
+                        ) : pointsError ? (
+                          <span className="text-red-500">{pointsError}</span>
+                        ) : (
+                          <span>{studentPoints} Points</span>
+                        )}
+                      </Link>
+                    </Button>
+                    {pointsDropdownOpen && (
+                      <div
+                        className="absolute right-0 mt-2 w-56 rounded-lg shadow-xl bg-white border border-blue-200 z-50 overflow-hidden"
+                        onMouseEnter={handlePointsMouseEnter}
+                        onMouseLeave={handlePointsMouseLeave}
                       >
-                        <LogOut className="h-4 w-4 text-orange-600" />
-                        Logout
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-            {/* Back to Dashboard button in header, only on subpages */}
-            {!isDashboardMainPage && (
-              <Button 
-                variant="outline" 
-                className="gap-2 bg-gradient-to-r from-gray-50 to-slate-50 hover:from-blue-50 hover:to-indigo-50 border-gray-200 hover:border-blue-200 text-gray-800 hover:text-blue-800 font-semibold shadow-sm hover:shadow-md transition-all duration-200" 
-                asChild
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 border-b border-blue-100">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-blue-800">Current Balance</span>
+                            <span className="text-lg font-bold text-blue-900">{studentPoints} points</span>
+                          </div>
+                        </div>
+                        <Link 
+                          href="/dashboard/student/points-history"
+                          className="flex items-center w-full px-4 py-4 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-emerald-100 text-left transition-all duration-200 group"
+                        >
+                          <div className="p-2 bg-emerald-100 rounded-lg mr-3 group-hover:bg-emerald-200 transition-colors">
+                            <TrendingUp className="h-4 w-4 text-emerald-600" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900 group-hover:text-emerald-700">Points History</p>
+                            <p className="text-sm text-gray-600">View transaction history</p>
+                          </div>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                  {/* User Profile Dropdown (Custom) */}
+                  <div
+                    className="relative"
+                    ref={dropdownRef}
+                    onMouseEnter={handleMouseEnter}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    <Button
+                      variant="outline"
+                      className="gap-2 min-w-[120px] justify-between btn-orange"
+                      asChild
+                    >
+                      <Link href={profileLink}>
+                        <User className="h-4 w-4 text-orange-600 hover:text-orange-700" />
+                        {userName.trim() ? (
+                          <span>{userName.trim()}</span>
+                        ) : (
+                          <span className="animate-pulse text-gray-400">Loading...</span>
+                        )}
+                      </Link>
+                    </Button>
+                    {dropdownOpen && (
+                      <div
+                        className="absolute right-0 mt-2 w-36 rounded-lg shadow-xl bg-gradient-to-b from-orange-50 to-amber-50 border border-orange-200 z-50 max-h-[60vh] overflow-y-auto"
+                        onMouseEnter={handleMouseEnter}
+                        onMouseLeave={handleMouseLeave}
+                      >
+                        <button
+                          className="w-full text-left px-4 py-3 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 text-orange-800 hover:text-orange-900 flex items-center gap-2 font-semibold transition-all duration-200"
+                          onMouseDown={() => {
+                            window.location.href = profileLink;
+                          }}
+                        >
+                          <User className="h-4 w-4 text-orange-600" />
+                          Profile
+                        </button>
+                        <button
+                          className="w-full text-left px-4 py-3 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 text-orange-800 hover:text-orange-900 flex items-center gap-2 font-semibold transition-all duration-200"
+                          onMouseDown={handleLogout}
+                        >
+                          <LogOut className="h-4 w-4 text-orange-600" />
+                          Logout
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+              {/* Back to Dashboard button in header, only on subpages */}
+              {!isDashboardMainPage && (
+                <Button 
+                  variant="outline" 
+                  className="gap-2 bg-gradient-to-r from-gray-50 to-slate-50 hover:from-blue-50 hover:to-indigo-50 border-gray-200 hover:border-blue-200 text-gray-800 hover:text-blue-800 font-semibold shadow-sm hover:shadow-md transition-all duration-200" 
+                  asChild
+                >
+                  <Link href={
+                    role === 'Admin' ? '/dashboard/admin' :
+                    role === 'Teacher' ? '/dashboard/teacher' :
+                    '/dashboard/student'
+                  }>
+                    <ArrowLeft className="h-4 w-4" /> Back to Dashboard
+                  </Link>
+                </Button>
+              )}
+            </div>
+            {/* Mobile menu toggle */}
+            <div className="md:hidden">
+              <button
+                aria-label="Toggle menu"
+                aria-expanded={mobileMenuOpen}
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="inline-flex items-center justify-center rounded-md border border-gray-200 p-2 text-gray-700 hover:bg-gray-50 focus:outline-none"
               >
-                <Link href={
-                  role === 'Admin' ? '/dashboard/admin' :
-                  role === 'Teacher' ? '/dashboard/teacher' :
-                  '/dashboard/student'
-                }>
-                  <ArrowLeft className="h-4 w-4" /> Back to Dashboard
-                </Link>
-              </Button>
-            )}
+                {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
+            </div>
           </div>
         </div>
       </header>
+
+      {/* Mobile menu panel */}
+      {mobileMenuOpen && (
+        <div className="md:hidden fixed top-20 left-0 w-full bg-white border-b border-gray-200 z-40">
+          <div className="container mx-auto px-4 py-3 space-y-2">
+            {role === 'Admin' && (
+              <>
+                <Link href={allSurveysLink} onClick={() => setMobileMenuOpen(false)} className={`block px-3 py-3 rounded-md font-medium ${isActive(allSurveysLink) ? 'bg-emerald-100 text-emerald-800' : 'text-gray-700 hover:bg-gray-50'}`}>All Surveys</Link>
+                <Link href={userManagementLink} onClick={() => setMobileMenuOpen(false)} className={`block px-3 py-3 rounded-md font-medium ${isActive(userManagementLink) ? 'bg-blue-100 text-blue-800' : 'text-gray-700 hover:bg-gray-50'}`}>User Management</Link>
+                <Link href="/dashboard/admin/departments" onClick={() => setMobileMenuOpen(false)} className={`block px-3 py-3 rounded-md font-medium ${isActive('/dashboard/admin/departments') ? 'bg-purple-100 text-purple-800' : 'text-gray-700 hover:bg-gray-50'}`}>Departments</Link>
+                <div className="h-px bg-gray-200 my-2" />
+                <Link href={profileLink} onClick={() => setMobileMenuOpen(false)} className={`block px-3 py-3 rounded-md font-medium ${isActive(profileLink) ? 'bg-orange-100 text-orange-800' : 'text-gray-700 hover:bg-gray-50'}`}>Profile</Link>
+                <button onClick={() => { setMobileMenuOpen(false); handleLogout(); }} className="block w-full text-left px-3 py-3 rounded-md font-medium text-gray-700 hover:bg-gray-50">Logout</button>
+              </>
+            )}
+            {role === 'Teacher' && (
+              <>
+                <Link href={createSurveyLink} onClick={() => setMobileMenuOpen(false)} className={`block px-3 py-3 rounded-md font-medium ${isActive(createSurveyLink) ? 'bg-emerald-100 text-emerald-800' : 'text-gray-700 hover:bg-gray-50'}`}>Create Survey</Link>
+                <div className="h-px bg-gray-200 my-2" />
+                <Link href={profileLink} onClick={() => setMobileMenuOpen(false)} className={`block px-3 py-3 rounded-md font-medium ${isActive(profileLink) ? 'bg-orange-100 text-orange-800' : 'text-gray-700 hover:bg-gray-50'}`}>Profile</Link>
+                <button onClick={() => { setMobileMenuOpen(false); handleLogout(); }} className="block w-full text-left px-3 py-3 rounded-md font-medium text-gray-700 hover:bg-gray-50">Logout</button>
+              </>
+            )}
+            {role === 'Student' && (
+              <>
+                <Link href="/dashboard/student/participation-history" onClick={() => setMobileMenuOpen(false)} className={`block px-3 py-3 rounded-md font-medium ${isActive('/dashboard/student/participation-history') ? 'bg-emerald-100 text-emerald-800' : 'text-gray-700 hover:bg-gray-50'}`}>Participation History</Link>
+                <Link href="/dashboard/student/points-history" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-3 rounded-md font-medium text-gray-700 hover:bg-gray-50">
+                  Points History {pointsLoading ? '(...)' : pointsError ? '(Error)' : typeof studentPoints === 'number' ? `(${studentPoints})` : ''}
+                </Link>
+                <div className="h-px bg-gray-200 my-2" />
+                <Link href={profileLink} onClick={() => setMobileMenuOpen(false)} className={`block px-3 py-3 rounded-md font-medium ${isActive(profileLink) ? 'bg-orange-100 text-orange-800' : 'text-gray-700 hover:bg-gray-50'}`}>Profile</Link>
+                <button onClick={() => { setMobileMenuOpen(false); handleLogout(); }} className="block w-full text-left px-3 py-3 rounded-md font-medium text-gray-700 hover:bg-gray-50">Logout</button>
+              </>
+            )}
+            {!isDashboardMainPage && (
+              <Link href={
+                role === 'Admin' ? '/dashboard/admin' :
+                role === 'Teacher' ? '/dashboard/teacher' :
+                '/dashboard/student'
+              } onClick={() => setMobileMenuOpen(false)} className="block px-3 py-3 rounded-md font-medium text-gray-700 hover:bg-gray-50">Back to Dashboard</Link>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="flex-1 bg-gray-50 pt-20">{children}</main>

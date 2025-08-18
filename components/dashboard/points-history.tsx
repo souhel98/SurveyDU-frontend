@@ -212,62 +212,98 @@ export default function PointsHistory() {
                 )}
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Transaction</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Amount</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Type</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredHistory.map((item) => (
-                      <tr key={item.historyId} className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="py-4 px-4">
-                          <div>
-                            <h4 className="font-medium text-gray-900">{item.description}</h4>
-                            <p className="text-sm text-gray-600 mt-1">
-                              Transaction ID: {item.historyId}
-                            </p>
-                          </div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <Badge 
-                            variant="secondary" 
-                            className={`${
-                              item.transactionType === 'earned' 
-                                ? 'bg-green-100 text-green-800 border-green-200' 
-                                : 'bg-red-100 text-red-800 border-red-200'
-                            }`}
-                          >
-                            {item.transactionType === 'earned' ? '+' : '-'}{item.pointsAmount} points
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-4">
+              <>
+                {/* Desktop table (lg and above) */}
+                <div className="hidden lg:block overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">Transaction</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">Amount</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">Type</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredHistory.map((item) => (
+                        <tr key={item.historyId} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-4 px-4">
+                            <div>
+                              <h4 className="font-medium text-gray-900">{item.description}</h4>
+                              <p className="text-sm text-gray-600 mt-1">
+                                Transaction ID: {item.historyId}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="py-4 px-4">
+                            <Badge 
+                              variant="secondary" 
+                              className={`${
+                                item.transactionType === 'earned' 
+                                  ? 'bg-green-100 text-green-800 border-green-200' 
+                                  : 'bg-red-100 text-red-800 border-red-200'
+                              }`}
+                            >
+                              {item.transactionType === 'earned' ? '+' : '-'}{item.pointsAmount} points
+                            </Badge>
+                          </td>
+                          <td className="py-4 px-4">
+                            <Badge 
+                              variant="outline" 
+                              className={`${
+                                item.transactionType === 'earned' 
+                                  ? 'bg-green-50 text-green-700 border-green-200' 
+                                  : 'bg-red-50 text-red-700 border-red-200'
+                              }`}
+                            >
+                              {item.transactionType.charAt(0).toUpperCase() + item.transactionType.slice(1)}
+                            </Badge>
+                          </td>
+                          <td className="py-4 px-4">
+                            <div className="flex items-center text-sm text-gray-600">
+                              <Calendar className="h-4 w-4 mr-2" />
+                              {formatDate(item.transactionDate)}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile/Tablet cards (below lg) */}
+                <div className="space-y-4 lg:hidden">
+                  {filteredHistory.map((item) => (
+                    <div key={item.historyId} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="font-semibold text-gray-900">{item.description}</h4>
+                          <p className="text-xs text-gray-500 mt-1">Transaction ID: {item.historyId}</p>
+                        </div>
+                        <Badge 
+                          variant="secondary" 
+                          className={`${item.transactionType === 'earned' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-red-100 text-red-800 border-red-200'} whitespace-nowrap ml-3`}
+                        >
+                          {item.transactionType === 'earned' ? '+' : '-'}{item.pointsAmount}
+                        </Badge>
+                      </div>
+                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
                           <Badge 
                             variant="outline" 
-                            className={`${
-                              item.transactionType === 'earned' 
-                                ? 'bg-green-50 text-green-700 border-green-200' 
-                                : 'bg-red-50 text-red-700 border-red-200'
-                            }`}
+                            className={`${item.transactionType === 'earned' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}
                           >
                             {item.transactionType.charAt(0).toUpperCase() + item.transactionType.slice(1)}
                           </Badge>
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Calendar className="h-4 w-4 mr-2" />
-                            {formatDate(item.transactionDate)}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                        </div>
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Calendar className="h-4 w-4 mr-2" /> {formatDate(item.transactionDate)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

@@ -867,9 +867,9 @@ export default function AllSurveys() {
           </div>
           
           {/* Filters */}
-          <div className="flex flex-row gap-4 items-center">
+          <div className="flex flex-wrap gap-3 items-center">
             {/* NEW: View Selection Dropdown */}
-            <div className="w-48">
+            <div className="w-full sm:max-w-xs md:w-48">
               <CustomSelect
                 value={adminOnly ? "my" : "all"}
                 onChange={(value) => {
@@ -891,7 +891,7 @@ export default function AllSurveys() {
             </div>
 
             {/* Status Filter Dropdown - Removed "All Surveys" and "My Surveys" options */}
-            <div className="w-48">
+            <div className="w-full sm:max-w-xs md:w-48">
               <CustomSelect
                 value={activeFilter || statusFilter}
                 onChange={(value) => {
@@ -913,7 +913,7 @@ export default function AllSurveys() {
                 <CustomSelectOption value="expired">Expired</CustomSelectOption>
               </CustomSelect>
             </div>
-            <div className="w-56">
+            <div className="w-full sm:max-w-sm md:w-56">
               <CustomSelect
                 value={departmentFilter}
                 onChange={setDepartmentFilter}
@@ -930,7 +930,7 @@ export default function AllSurveys() {
                 ))}
               </CustomSelect>
             </div>
-            <div className="w-56">
+            <div className="w-full sm:max-w-sm md:w-56">
               <CustomSelect
                 value={yearFilter}
                 onChange={setYearFilter}
@@ -947,7 +947,7 @@ export default function AllSurveys() {
                 ))}
               </CustomSelect>
             </div>
-            <div className="w-48">
+            <div className="w-full sm:max-w-xs md:w-48">
               <CustomSelect
                 value={genderFilter}
                 onChange={setGenderFilter}
@@ -973,14 +973,14 @@ export default function AllSurveys() {
                   setGenderFilter("all");
                   setActiveFilter("all");
                 }}
-                className="flex items-center gap-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50"
+                className="flex items-center gap-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 w-full sm:w-auto"
                 title="Clear all filters"
               >
                 <X className="h-4 w-4" />
                 Clear
               </Button>
             )}
-            <div className="flex gap-2 ml-auto">
+            <div className="flex gap-2 w-full sm:w-auto md:ml-auto justify-center sm:justify-end">
               <Button
                 variant={viewMode === 'table' ? 'default' : 'outline'}
                 size="sm"
@@ -1457,7 +1457,7 @@ export default function AllSurveys() {
                   {refreshingSurveys ? "Refreshing surveys..." : "Loading surveys..."}
                 </div>
               ) : filteredSurveys.length > 0 ? (
-                <div className="">
+                <div className="max-md:overflow-x-auto">
                   <table className="w-full min-w-[900px]">
                     <thead>
                       <tr className="border-b">

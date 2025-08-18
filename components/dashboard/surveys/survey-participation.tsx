@@ -141,7 +141,8 @@ export default function SurveyParticipation({ surveyId }: SurveyParticipationPro
             const surveysResponse = await api.get("/Student/surveys")
             if (surveysResponse.data && surveysResponse.data.success) {
               const allSurveys = surveysResponse.data.data || []
-              surveyData = allSurveys.find((s: any) => s.surveyId === Number(surveyId))
+              const allSurveysFound = allSurveys.find((s: any) => s.surveyId === Number(surveyId))
+              surveyData = allSurveysFound
               
               if (!surveyData) {
                 throw new Error(`Survey with ID ${surveyId} not found in available surveys`)
@@ -488,8 +489,8 @@ export default function SurveyParticipation({ surveyId }: SurveyParticipationPro
       {/* Header with Survey Info */}
       <div className="bg-white border-b border-gray-200 shadow-sm flex-shrink-0">
         <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between max-w-6xl mx-auto">
-            <div className="flex items-center space-x-6">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between max-w-6xl mx-auto">
+            <div className="flex items-start md:items-center gap-3 md:gap-6 min-w-0">
               <Button
                 variant="ghost"
                 size="sm"
@@ -497,22 +498,26 @@ export default function SurveyParticipation({ surveyId }: SurveyParticipationPro
                 className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
               >
                 <ArrowLeft className="h-4 w-4" />
-                <span>Back to Dashboard</span>
+                <span className="hidden xs:inline">Back to Dashboard</span>
               </Button>
-              
-              <div className="flex items-center space-x-4">
-                <h1 className="text-xl font-bold text-gray-900">{survey.title}</h1>
-                <div className="w-px h-6 bg-gray-300"></div>
-                <p className="text-gray-600 text-sm">{survey.description}</p>
+
+              <div className="flex flex-col md:flex-row md:items-center md:gap-4 min-w-0">
+                <h1 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 truncate">
+                  {survey.title}
+                </h1>
+                <div className="hidden md:block w-px h-6 bg-gray-300"></div>
+                <p className="text-gray-600 text-sm line-clamp-3 md:line-clamp-2 md:max-w-xl mt-1 md:mt-0">
+                  {survey.description}
+                </p>
               </div>
             </div>
-            
-            <div className="flex items-center space-x-4">
+
+            <div className="flex items-center gap-3 md:gap-4 flex-wrap justify-center md:justify-end w-full md:w-auto self-center md:self-auto">
               <div className="flex items-center bg-emerald-100 px-3 py-1 rounded-full">
                 <Award className="h-4 w-4 text-emerald-600 mr-2" />
                 <span className="text-sm font-medium text-emerald-700">{survey.pointsReward} points</span>
               </div>
-              <div className="text-sm text-gray-500">
+              <div className="text-xs sm:text-sm text-gray-500 text-center">
                 Question {currentQuestionIndex + 1} of {survey.questions.length}
               </div>
             </div>
@@ -681,6 +686,8 @@ export default function SurveyParticipation({ surveyId }: SurveyParticipationPro
                                 {currentQuestion.questionType === "multiple_choice" && "You can select multiple options that apply."}
                                 {currentQuestion.questionType === "open_text" &&
                                   "Please provide your detailed feedback in the text area. There is no character limit."}
+                                {currentQuestion.questionType === "percentage" &&
+                                  "Use the 1–5 rating to indicate your level of agreement or satisfaction (1 = very low, 5 = very high). You can adjust your rating before moving to the next question."}
                               </DialogDescription>
                             </DialogHeader>
                           </DialogContent>

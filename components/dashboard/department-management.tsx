@@ -175,75 +175,77 @@ export default function DepartmentsManagement() {
     <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto px-4 py-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold text-gray-900">Departments Management</h1>
-              <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+        <div className="flex flex-col gap-4 sm:flex-row sm:gap-0 sm:justify-between sm:items-center mb-6">
+          <div className="w-full sm:w-auto">
+            <div className="flex flex-col items-center sm:flex-row sm:items-center gap-2 sm:gap-3">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 text-center sm:text-left">Departments Management</h1>
+              <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 text-center sm:text-left">
                 {departments.length} Departments
               </Badge>
             </div>
-            <p className="text-gray-600 mt-2">Manage university departments</p>
+            <p className="text-gray-600 mt-2 text-center sm:text-left">Manage university departments</p>
           </div>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-emerald-500 hover:bg-emerald-600">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Department
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New Department</DialogTitle>
-                <DialogDescription>
-                  Enter the name for the new department.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <label htmlFor="department-name" className="block text-sm font-medium text-gray-700 mb-2">
-                    Department Name
-                  </label>
-                  <Input
-                    id="department-name"
-                    value={newDepartmentName}
-                    onChange={(e) => setNewDepartmentName(e.target.value)}
-                    placeholder="Enter department name"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        handleCreateDepartment();
-                      }
-                    }}
-                  />
+          <div className="w-full sm:w-auto flex justify-center sm:justify-end">
+            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 mt-2 sm:mt-0">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Department
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Department</DialogTitle>
+                  <DialogDescription>
+                    Enter the name for the new department.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="department-name" className="block text-sm font-medium text-gray-700 mb-2">
+                      Department Name
+                    </label>
+                    <Input
+                      id="department-name"
+                      value={newDepartmentName}
+                      onChange={(e) => setNewDepartmentName(e.target.value)}
+                      placeholder="Enter department name"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleCreateDepartment();
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsCreateDialogOpen(false);
+                        setNewDepartmentName("");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleCreateDepartment} 
+                      disabled={isCreating}
+                      className="bg-emerald-500 hover:bg-emerald-600 text-white"
+                    >
+                      {isCreating ? (
+                        <>
+                          <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />
+                          Creating...
+                        </>
+                      ) : (
+                        "Create Department"
+                      )}
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex justify-end space-x-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setIsCreateDialogOpen(false);
-                      setNewDepartmentName("");
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    onClick={handleCreateDepartment} 
-                    disabled={isCreating}
-                    className="bg-emerald-500 hover:bg-emerald-600 text-white"
-                  >
-                    {isCreating ? (
-                      <>
-                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />
-                        Creating...
-                      </>
-                    ) : (
-                      "Create Department"
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         {/* Search */}
