@@ -515,7 +515,7 @@ export default function AllSurveys() {
                       <FileText className="h-6 w-6 text-blue-500" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Total Surveys</p>
+                      <p className="text-sm font-medium text-gray-500">All Surveys</p>
                       <h3 className="text-2xl font-bold">{allSurveys.length}</h3>
                     </div>
                   </div>
@@ -606,7 +606,7 @@ export default function AllSurveys() {
                       <BarChart2 className="h-6 w-6 text-emerald-500" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Total Responses</p>
+                      <p className="text-sm font-medium text-gray-500">All Responses</p>
                       <h3 className="text-2xl font-bold">{(adminOnly ? adminSurveys : allSurveys).reduce((acc: number, s: any) => acc + (s.currentParticipants || 0), 0)}</h3>
                     </div>
                   </div>
@@ -1365,7 +1365,7 @@ export default function AllSurveys() {
                               <Link href={`/dashboard/admin/surveys/${survey.surveyId}/statistics`} className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded">
                                 <BarChart2 className="h-4 w-4 mr-2" /> View Statistics
                               </Link>
-                              {survey.status === 'draft' && (
+                              {survey.status === 'draft' && adminSurveys.some(adminSurvey => adminSurvey.surveyId === survey.surveyId) && (
                                 <button 
                                   className="flex items-center w-full px-2 py-2 hover:bg-green-100 text-green-600 rounded text-left"
                                   onClick={() => handlePublishSurvey(survey.surveyId)}
@@ -1375,7 +1375,7 @@ export default function AllSurveys() {
                                   {publishingSurveyId === survey.surveyId ? "Publishing..." : "Publish"}
                                 </button>
                               )}
-                              {survey.status === 'active' && (
+                              {survey.status === 'active' && adminSurveys.some(adminSurvey => adminSurvey.surveyId === survey.surveyId) && (
                                 <button 
                                   className={`flex items-center w-full px-2 py-2 rounded text-left ${
                                     survey.currentParticipants > 0 
@@ -1682,7 +1682,7 @@ export default function AllSurveys() {
                                   <Link href={`/dashboard/admin/surveys/${survey.surveyId}/statistics`} className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded">
                                     <BarChart2 className="h-4 w-4 mr-2" /> View Statistics
                                   </Link>
-                                  {survey.status === 'draft' && (
+                                  {survey.status === 'draft' && adminSurveys.some(adminSurvey => adminSurvey.surveyId === survey.surveyId) && (
                                     <button 
                                       className="flex items-center w-full px-2 py-2 hover:bg-green-100 text-green-600 rounded text-left"
                                       onClick={() => handlePublishSurvey(survey.surveyId)}
@@ -1692,7 +1692,7 @@ export default function AllSurveys() {
                                       {publishingSurveyId === survey.surveyId ? "Publishing..." : "Publish"}
                                     </button>
                                   )}
-                                  {survey.status === 'active' && (
+                                  {survey.status === 'active' && adminSurveys.some(adminSurvey => adminSurvey.surveyId === survey.surveyId) && (
                                     <button 
                                       className={`flex items-center w-full px-2 py-2 rounded text-left ${
                                         survey.currentParticipants > 0 

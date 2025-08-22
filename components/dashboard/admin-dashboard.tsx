@@ -214,7 +214,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-blue-800 text-lg">Total Users</CardTitle>
+                <CardTitle className="text-blue-800 text-lg">All Users</CardTitle>
                 <div className="text-3xl font-bold text-blue-900">{dashboard.totalUsers}</div>
               </div>
               <CardDescription className="text-blue-600">All registered users</CardDescription>
@@ -235,7 +235,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-purple-800 text-lg">Total Departments</CardTitle>
+                <CardTitle className="text-purple-800 text-lg">All Departments</CardTitle>
                 <div className="text-3xl font-bold text-purple-900">{totalDepartments}</div>
               </div>
               <CardDescription className="text-purple-600">All university departments</CardDescription>
@@ -256,7 +256,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-green-800 text-lg">Total Surveys</CardTitle>
+                <CardTitle className="text-green-800 text-lg">All Surveys</CardTitle>
                 <div className="text-3xl font-bold text-green-900">{dashboard.totalSurveys}</div>
               </div>
               <CardDescription className="text-green-600">All surveys in the system</CardDescription>
