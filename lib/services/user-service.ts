@@ -4,53 +4,70 @@ import { User, UserProfile, UpdateProfileRequest, UserResponse, UserListResponse
 export class UserService {
   // Get current user profile
   static async getCurrentUserProfile(): Promise<UserResponse> {
-    try {
-      // Determine role from cookie or localStorage
-      let role: string | null = null;
-      if (typeof document !== 'undefined') {
-        // Try cookie first
-        const getCookie = (name: string): string | null => {
-          const value = `; ${document.cookie}`;
-          const parts = value.split(`; ${name}=`);
-          if (parts.length === 2) {
-            const part = parts.pop();
-            if (part) return part.split(';').shift() || null;
-          }
-          return null;
-        };
-        role = getCookie('role');
-        if (!role) {
-          // fallback to localStorage
-          const userStr = localStorage.getItem('user');
-          if (userStr) {
-            try {
-              const user = JSON.parse(userStr);
-              role = user.userType;
-            } catch {}
+    let attempts = 0;
+    const maxAttempts = 3;
+    const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+    while (attempts < maxAttempts) {
+      try {
+        // Determine role from cookie or localStorage
+        let role: string | null = null;
+        if (typeof document !== 'undefined') {
+          // Try cookie first
+          const getCookie = (name: string): string | null => {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) {
+              const part = parts.pop();
+              if (part) return part.split(';').shift() || null;
+            }
+            return null;
+          };
+          role = getCookie('role');
+          if (!role) {
+            // fallback to localStorage
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+              try {
+                const user = JSON.parse(userStr);
+                role = user.userType;
+              } catch {}
+            }
           }
         }
-      }
-      let endpoint = '/users/profile';
-      if (role === 'Admin') endpoint = '/Admin/profile';
-      else if (role === 'Teacher') endpoint = '/Teacher/profile';
-      else if (role === 'Student') endpoint = '/Student/profile';
-      const response = await api.get<UserResponse>(endpoint);
-      return response.data;
-    } catch (error: any) {
-      console.error('Error fetching user profile:', error);
-      
-      if (error.response?.status === 401) {
-        throw new Error('You are not authorized. Please log in.');
-      } else if (error.response?.status >= 500) {
-        throw new Error('Server error. Please try again later.');
-      } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-        throw new Error('Request timeout. Please check your internet connection and try again.');
-      } else if (!error.response) {
-        throw new Error('Network error. Please check your internet connection and try again.');
-      } else {
-        throw new Error(error.response.data?.message || 'Failed to fetch profile. Please try again.');
+        let endpoint = '/users/profile';
+        if (role === 'Admin') endpoint = '/Admin/profile';
+        else if (role === 'Teacher') endpoint = '/Teacher/profile';
+        else if (role === 'Student') endpoint = '/Student/profile';
+        const response = await api.get<UserResponse>(endpoint);
+        return response.data;
+      } catch (error: any) {
+        attempts++;
+        if (error.response?.status === 401 || error.response?.status === 404) {
+          if (attempts >= maxAttempts) {
+            // User deleted or unauthorized after retries
+            if (typeof window !== 'undefined') {
+              const { AuthService } = await import('./auth-service');
+              AuthService.logout();
+              window.location.href = '/auth/signin';
+            }
+            throw new Error('Your account is no longer available. You have been signed out.');
+          } else {
+            await delay(1000); // Wait 1 second before retry
+            continue;
+          }
+        } else if (error.response?.status >= 500) {
+          throw new Error('Server error. Please try again later.');
+        } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+          throw new Error('Request timeout. Please check your internet connection and try again.');
+        } else if (!error.response) {
+          throw new Error('Network error. Please check your internet connection and try again.');
+        } else {
+          throw new Error(error.response.data?.message || 'Failed to fetch profile. Please try again.');
+        }
       }
     }
+    // Should never reach here
+    throw new Error('Failed to fetch profile after multiple attempts.');
   }
 
   // Update user profile

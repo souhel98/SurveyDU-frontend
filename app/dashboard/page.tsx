@@ -6,19 +6,38 @@ export default function DashboardRouter() {
   const router = useRouter();
 
   useEffect(() => {
-    function getCookie(name: string) {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) {
-        const part = parts.pop();
-        if (part) return part.split(';').shift();
-      }
-      return undefined;
+    // Check if user is authenticated
+    const authToken = localStorage.getItem("token");
+    const userType = localStorage.getItem("userType");
+    const profileCompleted = localStorage.getItem("profileCompleted");
+
+    console.log("Dashboard Router Debug:", {
+      authToken: authToken ? "EXISTS" : "MISSING",
+      userType,
+      profileCompleted,
+      hasToken: !!authToken,
+      tokenStartsWith: authToken ? authToken.substring(0, 20) + "..." : "N/A"
+    });
+
+    if (!authToken || !userType) {
+      console.log("Not authenticated, redirecting to login");
+      router.replace("/google-signin");
+      return;
     }
-    const role = getCookie("role");
-    if (role === "Admin") {
+
+    // Check if profile is completed
+    if (!profileCompleted) {
+      console.log("Profile not completed, redirecting to complete profile");
+      router.replace("/auth/student/complete-profile");
+      return;
+    }
+
+    console.log("Profile completed, redirecting to role-specific dashboard:", userType);
+
+    // Profile completed, redirect based on user type
+    if (userType === "Admin") {
       router.replace("/dashboard/admin");
-    } else if (role === "Teacher") {
+    } else if (userType === "Teacher") {
       router.replace("/dashboard/teacher");
     } else {
       router.replace("/dashboard/student");

@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from "@/hooks/use-toast"
 import { AuthService } from "@/lib/services/auth-service"
 import { Eye, EyeOff } from "lucide-react"
+import GoogleLogin from "./GoogleLogin"
 
 export default function SignIn() {
   const router = useRouter()
@@ -225,6 +226,12 @@ export default function SignIn() {
               {isLoading ? "Signing In..." : "Sign In"}
             </Button>
           </form>
+          <div className="flex items-center my-4">
+            <div className="flex-grow border-t border-gray-200" />
+            <span className="mx-2 text-gray-400 text-xs">or</span>
+            <div className="flex-grow border-t border-gray-200" />
+          </div>
+          <GoogleLogin />
         </CardContent>
         <CardFooter className="flex justify-center">
           <p className="text-sm text-gray-500">

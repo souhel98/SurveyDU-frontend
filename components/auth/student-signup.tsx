@@ -28,6 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { GENDERS, ACADEMIC_YEARS } from "@/lib/constants";
 import { Eye, EyeOff } from "lucide-react";
 import { CustomSelect, CustomSelectOption } from "@/components/ui/custom-select";
+import GoogleLogin from "./GoogleLogin";
 
 export default function StudentSignup() {
   const router = useRouter();
@@ -203,6 +204,15 @@ export default function StudentSignup() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {/* Google Login Button */}
+            <div className="mb-6">
+              <GoogleLogin />
+              <div className="flex items-center my-4">
+                <div className="flex-grow border-t border-gray-200"></div>
+                <span className="mx-2 text-gray-400 text-xs uppercase">or</span>
+                <div className="flex-grow border-t border-gray-200"></div>
+              </div>
+            </div>
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Personal Information */}
               <div className="space-y-4">

@@ -54,6 +54,7 @@ export default function UserManagement() {
   const [showRegisterAdminModal, setShowRegisterAdminModal] = useState(false);
   const [registerAdminData, setRegisterAdminData] = useState({ firstName: '', lastName: '', email: '' });
   const [registerAdminLoading, setRegisterAdminLoading] = useState(false);
+  const [roleFilter, setRoleFilter] = useState<string>('all');
 
   useEffect(() => {
     AdminService.getUsers()
@@ -237,15 +238,97 @@ export default function UserManagement() {
   if (loading) return <div className="p-8 text-center">Loading users...</div>;
   if (error) return <div className="p-8 text-center text-red-500">{error}</div>;
 
+  // Filter users based on role filter
+  const filteredUsers = users.filter(user => 
+    roleFilter === 'all' || user.userType === roleFilter
+  );
+
   return (
     <div className="container mx-auto px-4 py-6">
-      <div className="flex justify-end mb-4">
-        <Button onClick={() => setShowRegisterModal(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 mr-2">
-          <Plus className="h-4 w-4" /> Register Teacher
-        </Button>
-        <Button onClick={() => setShowRegisterAdminModal(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 focus:ring-2 focus:ring-emerald-300 active:bg-emerald-800 disabled:bg-emerald-400">
-          <Plus className="h-4 w-4" /> Register Admin
-        </Button>
+      {/* Register Buttons and Filters Section */}
+      <div className="mb-6">
+        {/* Desktop: Single row layout */}
+        <div className="hidden sm:flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <label htmlFor="roleFilter" className="text-sm font-medium text-gray-700 whitespace-nowrap">Filter by Role:</label>
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="All Roles" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="Admin">Admin</SelectItem>
+                  <SelectItem value="Teacher">Teacher</SelectItem>
+                  <SelectItem value="Student">Student</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {roleFilter !== 'all' && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setRoleFilter('all')}
+                className="text-gray-600 hover:text-gray-800"
+              >
+                Clear Filter
+              </Button>
+            )}
+            <span className="text-sm text-gray-500">
+              Showing {filteredUsers.length} of {users.length} users
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={() => setShowRegisterModal(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
+              <Plus className="h-4 w-4" /> Register Teacher
+            </Button>
+            <Button onClick={() => setShowRegisterAdminModal(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 focus:ring-2 focus:ring-emerald-300 active:bg-emerald-800 disabled:bg-emerald-400">
+              <Plus className="h-4 w-4" /> Register Admin
+            </Button>
+          </div>
+        </div>
+
+        {/* Mobile: Stacked layout */}
+        <div className="sm:hidden space-y-4">
+          <div className="flex flex-col gap-2">
+            <Button onClick={() => setShowRegisterModal(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 w-full">
+              <Plus className="h-4 w-4" /> Register Teacher
+            </Button>
+            <Button onClick={() => setShowRegisterAdminModal(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 focus:ring-2 focus:ring-emerald-300 active:bg-emerald-800 disabled:bg-emerald-400 w-full">
+              <Plus className="h-4 w-4" /> Register Admin
+            </Button>
+          </div>
+          
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3">
+              <label htmlFor="roleFilter" className="text-sm font-medium text-gray-700 whitespace-nowrap">Filter by Role:</label>
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="All Roles" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="Admin">Admin</SelectItem>
+                  <SelectItem value="Teacher">Teacher</SelectItem>
+                  <SelectItem value="Student">Student</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {roleFilter !== 'all' && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setRoleFilter('all')}
+                className="text-gray-600 hover:text-gray-800 w-full"
+              >
+                Clear Filter
+              </Button>
+            )}
+            <div className="text-sm text-gray-500">
+              Showing {filteredUsers.length} of {users.length} users
+            </div>
+          </div>
+        </div>
       </div>
       {/* Responsive Table: Desktop only */}
       <div className="hidden lg:block overflow-x-auto">
@@ -260,7 +343,7 @@ export default function UserManagement() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map((user) => (
+            {filteredUsers.map((user) => (
               <TableRow key={user.id}>
                 <TableCell>{user.firstName} {user.lastName}</TableCell>
                 <TableCell>{user.email}</TableCell>
@@ -297,7 +380,7 @@ export default function UserManagement() {
       </div>
       {/* Responsive Cards: Mobile/Tablet only */}
       <div className="space-y-4 lg:hidden">
-        {users.map((user) => (
+        {filteredUsers.map((user) => (
           <div key={user.id} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
             <div className="flex items-start justify-between">
               <div>
@@ -330,7 +413,7 @@ export default function UserManagement() {
       </div>
       {/* User Details Modal */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="w-full !max-w-full p-4 max-h-[90vh] overflow-y-auto sm:max-w-lg sm:p-6">
+        <DialogContent className="w-full p-4 max-h-[90vh] overflow-y-auto sm:max-w-md sm:p-6">
           <DialogHeader>
             <DialogTitle>User Details</DialogTitle>
           </DialogHeader>
@@ -425,7 +508,7 @@ export default function UserManagement() {
       />
       {/* Register Teacher Modal */}
       <Dialog open={showRegisterModal} onOpenChange={setShowRegisterModal}>
-        <DialogContent className="w-full !max-w-full p-4 max-h-[90vh] overflow-y-auto sm:max-w-lg sm:p-6">
+        <DialogContent className="w-full p-4 max-h-[90vh] overflow-y-auto sm:max-w-md sm:p-6">
           <DialogHeader>
             <DialogTitle>Register New Teacher</DialogTitle>
           </DialogHeader>
@@ -465,7 +548,7 @@ export default function UserManagement() {
       </Dialog>
       {/* Register Admin Modal */}
       <Dialog open={showRegisterAdminModal} onOpenChange={setShowRegisterAdminModal}>
-        <DialogContent className="w-full !max-w-full p-4 max-h-[90vh] overflow-y-auto sm:max-w-lg sm:p-6">
+        <DialogContent className="w-full p-4 max-h-[90vh] overflow-y-auto sm:max-w-md sm:p-6">
           <DialogHeader>
             <DialogTitle>Register New Admin</DialogTitle>
           </DialogHeader>
