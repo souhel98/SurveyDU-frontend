@@ -204,7 +204,7 @@ export default function GoogleLogin() {
     <div className="flex justify-center items-center">
       <div className="w-full">
         
-        <div id="googleBtn" className=" w-full"></div>
+        <div id="googleBtn" className="flex justify-center items-center w-full"></div>
 
         {loading && (
           <div className="animate-spin mt-4 w-6 h-6 border-4 border-t-blue-500 rounded-full mx-auto"></div>
