@@ -44,21 +44,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!departmentId) {
+    if (!departmentId && departmentId !== null && departmentId !== '') {
       return NextResponse.json(
         { message: 'Department is required' },
         { status: 400 }
       );
     }
 
-    if (!universityIdNumber) {
+    if (!universityIdNumber && universityIdNumber !== null && universityIdNumber !== '') {
       return NextResponse.json(
         { message: 'University ID is required' },
         { status: 400 }
       );
     }
 
-    if (!academicYear) {
+    if (!academicYear && academicYear !== null && academicYear !== '') {
       return NextResponse.json(
         { message: 'Academic year is required' },
         { status: 400 }

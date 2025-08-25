@@ -29,6 +29,8 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
+  const [profileRequirements, setProfileRequirements] = useState<any>(null)
+  const [checkingProfile, setCheckingProfile] = useState(true)
 
   // Fetch all data in parallel
   useEffect(() => {
@@ -46,12 +48,14 @@ export default function StudentDashboard() {
         
         if (!surveyRes.data.success) throw new Error(surveyRes.data.message)
         setSurveys(surveyRes.data.data || [])
-        setDepartments(deptRes.success ? deptRes.data : deptRes)
+        // Handle department response - it could be an array or an object with data property
+        const deptData = Array.isArray(deptRes) ? deptRes : (deptRes as any)?.data || deptRes || []
+        setDepartments(deptData)
         setProfile(profileRes.data)
         
         console.log("Data set successfully:", {
           surveys: surveyRes.data.data?.length || 0,
-          departments: deptRes.success ? deptRes.data?.length : deptRes?.length || 0,
+          departments: deptData.length || 0,
           profile: !!profileRes.data
         })
       })
@@ -61,6 +65,40 @@ export default function StudentDashboard() {
       })
       .finally(() => setLoading(false))
   }, [])
+
+  // Check profile completion status
+  useEffect(() => {
+    const checkProfileCompletion = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setCheckingProfile(false);
+          return;
+        }
+
+        const response = await fetch("https://mhhmd6g0-001-site1.rtempurl.com/api/Auth/profile-requirements", {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Profile requirements check:", data);
+          setProfileRequirements(data);
+        } else {
+          console.log("Failed to check profile requirements");
+        }
+      } catch (err) {
+        console.error("Error checking profile requirements:", err);
+      } finally {
+        setCheckingProfile(false);
+      }
+    };
+
+    checkProfileCompletion();
+  }, []);
 
   // Map department IDs to names for each survey
   const departmentMap = useMemo(() => {
@@ -129,7 +167,58 @@ export default function StudentDashboard() {
           </Card>
         )}
 
-
+        {/* Profile Completion Notification */}
+        {!checkingProfile && profileRequirements && !profileRequirements.isProfileComplete && (
+          <Card className="mb-6 border-amber-200 bg-amber-50">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                    <BookOpen className="h-5 w-5 text-amber-600" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-amber-800 mb-2">
+                    Complete Your Profile
+                  </h3>
+                  <p className="text-amber-700 mb-4">
+                    Your profile is incomplete. Please complete your profile to access all features and participate in surveys.
+                  </p>
+                  
+                  {/* Show what's missing */}
+                  {profileRequirements.missingFields && profileRequirements.missingFields.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-sm font-medium text-amber-700 mb-2">Missing information:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {profileRequirements.missingFields.map((field: string, index: number) => (
+                          <Badge key={index} variant="outline" className="border-amber-300 text-amber-700 bg-amber-100">
+                            {field}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="flex gap-3">
+                    <Button 
+                      onClick={() => window.location.href = '/auth/student/complete-profile'}
+                      className="bg-amber-600 hover:bg-amber-700 text-white"
+                    >
+                      Complete Profile Now
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="border-amber-300 text-amber-700 hover:bg-amber-100"
+                      onClick={() => setCheckingProfile(true)}
+                    >
+                      Check Again
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Search */}
         <div className="bg-white rounded-lg shadow-sm p-4 mb-6">

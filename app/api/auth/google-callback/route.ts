@@ -95,23 +95,28 @@ export async function POST(request: NextRequest) {
           if (gender === 'male') genderValue = 1;
           else if (gender === 'female') genderValue = 2;
           
+          // For Google users, only send the essential personal information
+          // Let the backend handle academic fields as needed
           const registrationData = {
             firstName: firstName,
             lastName: lastName,
             email: email,
-            departmentId: 1, // Default department - user will update this
-            academicYear: 1, // Default academic year - user will update this
+            departmentId: null, // Send null to prevent backend defaults
+            academicYear: null, // Send null to prevent backend defaults
             gender: genderValue,
-            dateOfBirth: dateOfBirth || '1990-01-01', // Default date if not provided
-            universityIdNumber: 'TEMP_' + Date.now(), // Temporary ID - user will update this
+            dateOfBirth: dateOfBirth || '1990-01-01',
+            universityIdNumber: null, // Send null to prevent backend defaults
             password: tempPassword,
             confirmPassword: tempPassword
+            // Note: departmentId, academicYear, and universityIdNumber are intentionally null
+            // The backend should handle these fields appropriately for Google users
           };
           
           console.log('Mapped gender value:', { original: gender, mapped: genderValue });
 
           console.log('Sending registration request to:', `${API_CONFIG.BASE_URL}/auth/register/student`);
-          console.log('Registration data:', registrationData);
+          console.log('Registration data (Google user - academic fields set to null):', registrationData);
+          console.log('Note: departmentId, academicYear, and universityIdNumber are intentionally null for Google users');
           
           const registrationResponse = await fetch(`${API_CONFIG.BASE_URL}/auth/register/student`, {
             method: 'POST',

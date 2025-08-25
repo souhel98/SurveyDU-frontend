@@ -3,29 +3,52 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Eye, EyeOff } from "lucide-react";
+import { CustomSelect, CustomSelectOption } from "@/components/ui/custom-select";
+import { ACADEMIC_YEARS } from "@/lib/constants";
 
 interface Department {
-  Id: number;
-  Name: string;
+  id: number;
+  name: string;
 }
 
-interface Profile {
-  DepartmentId?: number;
-  UniversityIdNumber?: string;
-  AcademicYear?: string;
-  DateOfBirth?: string;
+interface ProfileRequirements {
+  userId: string;
+  email: string;
+  userType: string;
+  isProfileComplete: boolean;
+  missingFields: string[];
+  needsPassword: boolean;
+  needsDepartment: boolean;
+  needsUniversityId: boolean;
+  needsAcademicYear: boolean;
+  needsGender: boolean;
+  needsDateOfBirth: boolean;
 }
 
 export default function CompleteProfilePage() {
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profileRequirements, setProfileRequirements] = useState<ProfileRequirements | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [status, setStatus] = useState<{ message: string; type: string } | null>(
     null
   );
   const [loading, setLoading] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isCheckingProfile, setIsCheckingProfile] = useState(true);
 
-  const [departmentId, setDepartmentId] = useState<number | "">("");
+  const [departmentId, setDepartmentId] = useState<string>("");
   const [universityId, setUniversityId] = useState("");
   const [academicYear, setAcademicYear] = useState("");
   const [password, setPassword] = useState("");
@@ -35,6 +58,8 @@ export default function CompleteProfilePage() {
   const [gender, setGender] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const router = useRouter();
   const { isAuthenticated, user } = useAuth();
@@ -77,20 +102,7 @@ export default function CompleteProfilePage() {
     setIsAuthorized(true);
   }, [router]);
 
-  // Debug state changes
-  useEffect(() => {
-    console.log("State changed:", {
-      firstName,
-      lastName,
-      gender,
-      dateOfBirth,
-      departmentId,
-      universityId,
-      academicYear
-    });
-  }, [firstName, lastName, gender, dateOfBirth, departmentId, universityId, academicYear]);
-
-  // Load user & profile on mount
+  // Check profile requirements and load user data
   useEffect(() => {
     // Only proceed if user is authorized (student)
     if (!isAuthorized) {
@@ -106,7 +118,7 @@ export default function CompleteProfilePage() {
       userId: storedUserId,
       authToken: storedAuthToken ? "EXISTS" : "MISSING",
       userFirstName: localStorage.getItem("userFirstName"),
-      userLastName: localStorage.getItem("userLastName"),
+      userLastName: localStorage.getItem("userFirstName"),
       userGender: localStorage.getItem("userGender"),
       userDateOfBirth: localStorage.getItem("userDateOfBirth")
     });
@@ -121,95 +133,104 @@ export default function CompleteProfilePage() {
       return;
     }
     
-    // Check if token is valid (not a temporary token)
-    if (storedAuthToken.startsWith("temp_") || storedAuthToken.startsWith("google_session_")) {
-      console.log("Token is temporary, showing info message");
-      setStatus({
-        message: "Please complete your profile to activate your account.",
-        type: "info",
-      });
-    }
-    
     setUserId(storedUserId);
 
-    // Load user info from Google login
+    // Load user info from Google login (only personal info)
     const storedFirstName = localStorage.getItem("userFirstName");
     const storedLastName = localStorage.getItem("userLastName");
     const storedGender = localStorage.getItem("userGender");
     const storedDateOfBirth = localStorage.getItem("userDateOfBirth");
     
-    console.log("Setting form fields with Google data:", {
-      firstName: storedFirstName,
-      lastName: storedLastName,
-      gender: storedGender,
-      dateOfBirth: storedDateOfBirth
-    });
-    
     if (storedFirstName) {
-      console.log("Setting firstName to:", storedFirstName);
       setFirstName(storedFirstName);
     }
     if (storedLastName) {
-      console.log("Setting lastName to:", storedLastName);
       setLastName(storedLastName);
     }
     if (storedGender) {
-      console.log("Setting gender to:", storedGender);
       setGender(storedGender);
     }
     if (storedDateOfBirth) {
-      console.log("Setting dateOfBirth to:", storedDateOfBirth);
       setDateOfBirth(storedDateOfBirth);
     }
 
-    console.log("Current state after setting Google data:", {
-      firstName: firstName,
-      lastName: lastName,
-      gender: gender,
-      dateOfBirth: dateOfBirth
-    });
-
-    loadProfile();
+    // Check profile requirements first
+    checkProfileRequirements();
     loadDepartments();
     
     console.log("=== CompleteProfilePage useEffect END ===");
   }, [router, isAuthorized]);
 
-  async function loadProfile() {
+  // Check if profile is complete using the API
+  async function checkProfileRequirements() {
     try {
       const token = localStorage.getItem("token");
-      console.log("Loading profile with token:", token ? "EXISTS" : "MISSING");
+      console.log("Checking profile requirements with token:", token ? "EXISTS" : "MISSING");
       
-      const res = await fetch("/api/auth/current-profile", {
-        headers: { Authorization: `Bearer ${token}` },
+      const response = await fetch("https://mhhmd6g0-001-site1.rtempurl.com/api/Auth/profile-requirements", {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
       });
       
-      if (res.ok) {
-        const data: Profile = await res.json();
-        console.log("Profile data from backend:", data);
-        setProfile(data);
-        if (data.UniversityIdNumber && !data.UniversityIdNumber.startsWith("TEMP_")) {
-          setUniversityId(data.UniversityIdNumber);
+      if (response.ok) {
+        const data: ProfileRequirements = await response.json();
+        console.log("Profile requirements from API:", data);
+        setProfileRequirements(data);
+        
+        // If profile is complete, redirect to dashboard
+        if (data.isProfileComplete) {
+          console.log("Profile is complete, redirecting to dashboard");
+          setStatus({
+            message: "Your profile is already complete! Redirecting to dashboard...",
+            type: "success",
+          });
+          setTimeout(() => {
+            router.push("/dashboard/student");
+          }, 2000);
+          return;
         }
-        if (data.AcademicYear) setAcademicYear(data.AcademicYear);
-        if (data.DepartmentId) setDepartmentId(data.DepartmentId);
+        
+        // If profile is incomplete, show the form
+        console.log("Profile is incomplete, showing form");
+        setIsCheckingProfile(false);
+        
+        // Pre-fill form fields based on what's already available
+        if (data.needsDepartment === false) {
+          // If department is not needed, it means it's already set
+          // You might want to fetch the current department value here
+        }
+        
       } else {
-        console.log("Failed to load profile, status:", res.status);
+        console.log("Failed to check profile requirements, status:", response.status);
+        // If we can't check requirements, show the form anyway
+        setIsCheckingProfile(false);
       }
     } catch (err) {
-      console.error("Error loading profile", err);
+      console.error("Error checking profile requirements", err);
+      // If there's an error, show the form anyway
+      setIsCheckingProfile(false);
     }
   }
 
   function loadDepartments() {
-    // Hardcoded for now
+    // Hardcoded for now - should be replaced with API call
     const depts: Department[] = [
-      { Id: 1, Name: "Computer Science" },
-      { Id: 2, Name: "Communication Engineering" },
-      { Id: 3, Name: "Medical Engineering" },
+      { id: 1, name: "Computer Science" },
+      { id: 2, name: "Communication Engineering" },
+      { id: 3, name: "Medical Engineering" },
     ];
     setDepartments(depts);
   }
+
+  const handleSelectChange = (name: string, value: string) => {
+    if (name === "departmentId") {
+      setDepartmentId(value);
+    } else if (name === "academicYear") {
+      setAcademicYear(value);
+    }
+  };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -231,20 +252,7 @@ export default function CompleteProfilePage() {
     }
 
     // Format gender and dateOfBirth for backend
-    console.log("Gender conversion debug:", {
-      originalGender: gender,
-      genderType: typeof gender,
-      genderLowerCase: gender.toLowerCase(),
-      genderTrimmed: gender.trim().toLowerCase(),
-      isMale: gender.trim().toLowerCase() === "male",
-      isFemale: gender.trim().toLowerCase() === "female"
-    });
-    
-    // Send gender as string, not number (backend expects "male", "female")
     const genderValue = gender.trim().toLowerCase();
-    
-    console.log("Gender value after conversion:", genderValue);
-    
     const dateOfBirthFormatted = dateOfBirth ? dateOfBirth.split("T")[0] : "";
 
     const formData = {
@@ -252,7 +260,7 @@ export default function CompleteProfilePage() {
       lastName,
       gender: genderValue,
       dateOfBirth: dateOfBirthFormatted,
-      departmentId,
+      departmentId: Number(departmentId),
       universityIdNumber: universityId,
       academicYear,
       password,
@@ -260,15 +268,6 @@ export default function CompleteProfilePage() {
     };
 
     console.log("Submitting form data:", formData);
-    console.log("Current state values:", {
-      firstName,
-      lastName,
-      gender,
-      dateOfBirth,
-      departmentId,
-      universityId,
-      academicYear
-    });
 
     setLoading(true);
     setStatus({ message: "Updating profile...", type: "loading" });
@@ -301,7 +300,7 @@ export default function CompleteProfilePage() {
         localStorage.setItem("profileCompleted", "true");
         console.log("Profile marked as completed, redirecting to dashboard...");
         // Redirect immediately
-        router.push("/dashboard");
+        router.push("/dashboard/student");
       } else {
         const err = await res.json();
         if (err.errors) {
@@ -324,181 +323,307 @@ export default function CompleteProfilePage() {
     }
   }
 
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
-      <div className="bg-white rounded-lg shadow-md p-6 w-full max-w-lg">
-        <h1 className="text-2xl font-bold text-blue-600 text-center mb-4">
-          Complete Your Profile
-        </h1>
-        
-        {/* Show loading while checking authorization */}
-        {!isAuthorized && (
-          <div className="text-center py-8">
-            <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-gray-600">Checking authorization...</p>
+  // Show loading while checking profile requirements
+  if (isCheckingProfile) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        {/* Header */}
+        <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Link href="/" className="flex items-center group">
+                  <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white p-3 rounded-xl mr-3 shadow-lg group-hover:shadow-xl transition-all duration-300">
+                    <span className="font-bold text-lg">SurveyDU</span>
+                  </div>
+                </Link>
+              </div>
+            </div>
           </div>
-        )}
-        
-        {/* Only show form if authorized */}
-        {isAuthorized && (
-          <>
-            <p className="text-center text-gray-600 mb-6">
-              Please provide the following information to complete your profile setup.
-            </p>
+        </header>
 
-            {/* Debug info */}
-            <div className="mb-4 p-3 bg-gray-100 rounded text-xs">
-              <strong>Debug Info:</strong><br/>
-              firstName: "{firstName}"<br/>
-              lastName: "{lastName}"<br/>
-              gender: "{gender}"<br/>
-              dateOfBirth: "{dateOfBirth}"<br/>
-              departmentId: "{departmentId}"<br/>
-              universityId: "{universityId}"<br/>
-              academicYear: "{academicYear}"
+        {/* Loading Content */}
+        <div className="flex-1 flex items-center justify-center p-4">
+          <Card className="w-full max-w-2xl">
+            <CardContent className="text-center py-12">
+              <div className="animate-spin h-12 w-12 border-4 border-emerald-500 border-t-transparent rounded-full mx-auto mb-6"></div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Checking Profile Status</h2>
+              <p className="text-gray-600">Please wait while we verify your profile requirements...</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Header */}
+      <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Link href="/" className="flex items-center group">
+                <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white p-3 rounded-xl mr-3 shadow-lg group-hover:shadow-xl transition-all duration-300">
+                  <span className="font-bold text-lg">SurveyDU</span>
+                </div>
+              </Link>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block font-semibold mb-1">First Name *</label>
-                <input
-                  type="text"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  required
-                  className="w-full border rounded p-2"
-                  placeholder="Enter your first name"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold mb-1">Last Name *</label>
-                <input
-                  type="text"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  required
-                  className="w-full border rounded p-2"
-                  placeholder="Enter your last name"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold mb-1">Gender (from Google)</label>
-                <input
-                  type="text"
-                  value={gender}
-                  readOnly
-                  className="w-full border rounded p-2 bg-gray-100"
-                  placeholder="Gender from Google"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold mb-1">Date of Birth (from Google)</label>
-                <input
-                  type="text"
-                  value={dateOfBirth}
-                  readOnly
-                  className="w-full border rounded p-2 bg-gray-100"
-                  placeholder="Date of birth from Google"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold mb-1">Department *</label>
-                <select
-                  value={departmentId}
-                  onChange={(e) => setDepartmentId(parseInt(e.target.value))}
-                  required
-                  className="w-full border rounded p-2"
-                >
-                  <option value="">Select Department</option>
-                  {departments.map((d) => (
-                    <option key={d.Id} value={d.Id}>
-                      {d.Name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block font-semibold mb-1">University ID Number *</label>
-                <input
-                  type="text"
-                  value={universityId}
-                  onChange={(e) => setUniversityId(e.target.value)}
-                  required
-                  className="w-full border rounded p-2"
-                  placeholder="Enter your university ID"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold mb-1">Academic Year *</label>
-                <select
-                  value={academicYear}
-                  onChange={(e) => setAcademicYear(e.target.value)}
-                  required
-                  className="w-full border rounded p-2"
-                >
-                  <option value="">Select Academic Year</option>
-                  <option value="First">First</option>
-                  <option value="Second">Second</option>
-                  <option value="Third">Third</option>
-                  <option value="Fourth">Fourth</option>
-                  <option value="Fifth">Fifth</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block font-semibold mb-1">Password *</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full border rounded p-2"
-                  placeholder="Enter a password"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold mb-1">Confirm Password *</label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  className="w-full border rounded p-2"
-                  placeholder="Confirm your password"
-                />
-              </div>
-
+            {/* Mobile menu button */}
+            <div className="md:hidden">
               <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="text-gray-500 hover:text-gray-600 focus:outline-none transition-colors"
               >
-                {loading ? "Processing..." : "Complete Profile"}
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  {isMenuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
               </button>
-            </form>
-          </>
-        )}
+            </div>
 
-        {status && (
-          <div
-            className={`mt-4 p-3 rounded text-center ${
-              status.type === "success"
-                ? "bg-green-100 text-green-700"
-                : status.type === "error"
-                ? "bg-red-100 text-red-700"
-                : "bg-blue-100 text-blue-700"
-            }`}
-          >
-            {status.message}
+            {/* Desktop navigation */}
+            <nav className="hidden md:flex items-center space-x-6">
+              <Link href="/" className="text-gray-600 hover:text-emerald-500 px-4 py-2 rounded-lg transition-all duration-300 hover:bg-emerald-50">
+                Home
+              </Link>
+              <Button
+                onClick={() => router.push("/auth/signin")}
+                className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                Sign In
+              </Button>
+            </nav>
           </div>
-        )}
+
+          {/* Mobile menu */}
+          {isMenuOpen && (
+            <div className="md:hidden mt-4 pb-4 animate-in slide-in-from-top-2 duration-300">
+              <Link
+                href="/"
+                className="block px-4 py-3 text-gray-600 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all duration-300"
+              >
+                Home
+              </Link>
+              <Button
+                onClick={() => router.push("/auth/signin")}
+                className="w-full mt-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                Sign In
+              </Button>
+            </div>
+          )}
+        </div>
+      </header>
+
+      {/* Form Card */}
+      <div className="flex-1 flex items-center justify-center p-4">
+        <Card className="w-full max-w-2xl">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">Complete Your Profile</CardTitle>
+            <CardDescription>
+              Please provide the following information to complete your profile setup
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {/* Show loading while checking authorization */}
+            {!isAuthorized && (
+              <div className="text-center py-8">
+                <div className="animate-spin h-8 w-8 border-4 border-emerald-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+                <p className="text-gray-600">Checking authorization...</p>
+              </div>
+            )}
+            
+            {/* Only show form if authorized */}
+            {isAuthorized && (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Personal Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium text-gray-900 border-b pb-2">Personal Information</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName">First Name (from Google)</Label>
+                      <Input
+                        id="firstName"
+                        value={firstName}
+                        readOnly
+                        className="bg-gray-100"
+                        placeholder="First name from Google"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName">Last Name (from Google)</Label>
+                      <Input
+                        id="lastName"
+                        value={lastName}
+                        readOnly
+                        className="bg-gray-100"
+                        placeholder="Last name from Google"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="gender">Gender (from Google)</Label>
+                      <Input
+                        id="gender"
+                        value={gender}
+                        readOnly
+                        className="bg-gray-100"
+                        placeholder="Gender from Google"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="dateOfBirth">Date of Birth (from Google)</Label>
+                      <Input
+                        id="dateOfBirth"
+                        value={dateOfBirth}
+                        readOnly
+                        className="bg-gray-100"
+                        placeholder="Date of birth from Google"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Academic Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium text-gray-900 border-b pb-2">Academic Information</h3>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="departmentId">Department</Label>
+                    <CustomSelect
+                      value={departmentId}
+                      onChange={value => handleSelectChange("departmentId", value)}
+                      placeholder="Select department"
+                    >
+                      {departments.map((dept) => (
+                        <CustomSelectOption key={dept.id} value={String(dept.id)}>{dept.name}</CustomSelectOption>
+                      ))}
+                    </CustomSelect>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="academicYear">Academic Year</Label>
+                      <CustomSelect
+                        value={academicYear}
+                        onChange={value => handleSelectChange("academicYear", value)}
+                        placeholder="Select academic year"
+                      >
+                        {ACADEMIC_YEARS.map((year) => (
+                          <CustomSelectOption key={year.value} value={String(year.value)}>{year.label}</CustomSelectOption>
+                        ))}
+                      </CustomSelect>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="universityId">University ID Number</Label>
+                      <Input
+                        id="universityId"
+                        value={universityId}
+                        onChange={(e) => setUniversityId(e.target.value)}
+                        required
+                        placeholder="Enter your university ID"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Account Security */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium text-gray-900 border-b pb-2">Account Security</h3>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        placeholder="Enter a password"
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        tabIndex={-1}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                      >
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                        placeholder="Confirm your password"
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                        onClick={() => setShowConfirmPassword((prev) => !prev)}
+                        tabIndex={-1}
+                        aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Status Message */}
+                {status && (
+                  <div
+                    className={`p-4 rounded-lg text-center ${
+                      status.type === "success"
+                        ? "bg-green-100 text-green-700 border border-green-200"
+                        : status.type === "error"
+                        ? "bg-red-100 text-red-700 border border-red-200"
+                        : status.type === "loading"
+                        ? "bg-blue-100 text-blue-700 border border-blue-200"
+                        : "bg-blue-100 text-blue-700 border border-blue-200"
+                    }`}
+                  >
+                    {status.message}
+                  </div>
+                )}
+
+                <Button
+                  type="submit"
+                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-lg py-3"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <span className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full inline-block align-middle"></span>
+                      Processing...
+                    </>
+                  ) : (
+                    "Complete Profile"
+                  )}
+                </Button>
+              </form>
+            )}
+          </CardContent>
+          
+        </Card>
       </div>
     </div>
   );

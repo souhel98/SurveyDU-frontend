@@ -16,7 +16,7 @@ import {
   Clock,
   Plus,
   Minus,
-  DollarSign
+  DollarSign,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -132,7 +132,7 @@ export default function PointsHistory() {
                   <p className="text-sm font-medium text-emerald-600">Current Balance</p>
                   <p className="text-2xl font-bold text-emerald-900">{currentBalance}</p>
                 </div>
-                <DollarSign className="h-8 w-8 text-emerald-600" />
+                <Award className="h-8 w-8 text-emerald-600" />
               </div>
             </CardContent>
           </Card>

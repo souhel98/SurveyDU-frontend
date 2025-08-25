@@ -228,16 +228,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Top Navigation Bar */}
       <header className="fixed top-0 left-0 w-full bg-white border-b border-gray-200 z-50 h-20 flex items-center">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between h-full">
-          <div className="flex items-center">
-            <Link href="/dashboard" className="flex items-center">
+          <div className="flex items-center min-w-0 flex-1">
+            <Link href="/dashboard" className="flex items-center flex-shrink-0">
               <div className="bg-emerald-500 text-white p-2 rounded-md mr-2">
                 <span className="font-bold">SurveyDU</span>
               </div>
             </Link>
-            {/* Title and subtitle right next to system name */}
-            <div className="flex flex-col justify-center ml-4">
-              <span className="text-2xl font-bold text-gray-900 leading-tight">{title}</span>
-              <span className="text-gray-500 text-sm leading-tight">{subtitle}</span>
+            {/* Title and subtitle with better mobile responsiveness */}
+            <div className="flex flex-col justify-center ml-4 min-w-0 flex-1">
+              <span className="text-xl md:text-2xl font-bold text-gray-900 leading-tight truncate">{title}</span>
+              <span className="hidden md:block text-gray-500 text-sm leading-tight truncate">{subtitle}</span>
             </div>
             <nav className="hidden md:flex ml-8 space-x-1"></nav>
           </div>
@@ -524,7 +524,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               )}
             </div>
             {/* Mobile menu toggle */}
-            <div className="md:hidden">
+            <div className="md:hidden flex-shrink-0">
               <button
                 aria-label="Toggle menu"
                 aria-expanded={mobileMenuOpen}
@@ -540,35 +540,35 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Mobile menu panel */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed top-20 left-0 w-full bg-white border-b border-gray-200 z-40">
-          <div className="container mx-auto px-4 py-3 space-y-2">
+        <div className="md:hidden fixed top-20 left-0 w-full bg-white border-b border-gray-200 z-40 shadow-lg">
+          <div className="container mx-auto px-4 py-4 space-y-3">
             {role === 'Admin' && (
               <>
-                <Link href={allSurveysLink} onClick={() => setMobileMenuOpen(false)} className={`block px-3 py-3 rounded-md font-medium ${isActive(allSurveysLink) ? 'bg-emerald-100 text-emerald-800' : 'text-gray-700 hover:bg-gray-50'}`}>All Surveys</Link>
-                <Link href={userManagementLink} onClick={() => setMobileMenuOpen(false)} className={`block px-3 py-3 rounded-md font-medium ${isActive(userManagementLink) ? 'bg-blue-100 text-blue-800' : 'text-gray-700 hover:bg-gray-50'}`}>User Management</Link>
-                <Link href="/dashboard/admin/departments" onClick={() => setMobileMenuOpen(false)} className={`block px-3 py-3 rounded-md font-medium ${isActive('/dashboard/admin/departments') ? 'bg-purple-100 text-purple-800' : 'text-gray-700 hover:bg-gray-50'}`}>Departments</Link>
-                <div className="h-px bg-gray-200 my-2" />
-                <Link href={profileLink} onClick={() => setMobileMenuOpen(false)} className={`block px-3 py-3 rounded-md font-medium ${isActive(profileLink) ? 'bg-orange-100 text-orange-800' : 'text-gray-700 hover:bg-gray-50'}`}>Profile</Link>
-                <button onClick={() => { setMobileMenuOpen(false); handleLogout(); }} className="block w-full text-left px-3 py-3 rounded-md font-medium text-gray-700 hover:bg-gray-50">Logout</button>
+                <Link href={allSurveysLink} onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg font-medium transition-colors ${isActive(allSurveysLink) ? 'bg-emerald-100 text-emerald-800' : 'text-gray-700 hover:bg-gray-50'}`}>All Surveys</Link>
+                <Link href={userManagementLink} onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg font-medium transition-colors ${isActive(userManagementLink) ? 'bg-blue-100 text-blue-800' : 'text-gray-700 hover:bg-gray-50'}`}>User Management</Link>
+                <Link href="/dashboard/admin/departments" onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg font-medium transition-colors ${isActive('/dashboard/admin/departments') ? 'bg-purple-100 text-purple-800' : 'text-gray-700 hover:bg-gray-50'}`}>Departments</Link>
+                <div className="h-px bg-gray-200 my-3" />
+                <Link href={profileLink} onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg font-medium transition-colors ${isActive(profileLink) ? 'bg-orange-100 text-orange-800' : 'text-gray-700 hover:bg-gray-50'}`}>Profile</Link>
+                <button onClick={() => { setMobileMenuOpen(false); handleLogout(); }} className="block w-full text-left px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors">Logout</button>
               </>
             )}
             {role === 'Teacher' && (
               <>
-                <Link href={createSurveyLink} onClick={() => setMobileMenuOpen(false)} className={`block px-3 py-3 rounded-md font-medium ${isActive(createSurveyLink) ? 'bg-emerald-100 text-emerald-800' : 'text-gray-700 hover:bg-gray-50'}`}>Create Survey</Link>
-                <div className="h-px bg-gray-200 my-2" />
-                <Link href={profileLink} onClick={() => setMobileMenuOpen(false)} className={`block px-3 py-3 rounded-md font-medium ${isActive(profileLink) ? 'bg-orange-100 text-orange-800' : 'text-gray-700 hover:bg-gray-50'}`}>Profile</Link>
-                <button onClick={() => { setMobileMenuOpen(false); handleLogout(); }} className="block w-full text-left px-3 py-3 rounded-md font-medium text-gray-700 hover:bg-gray-50">Logout</button>
+                <Link href={createSurveyLink} onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg font-medium transition-colors ${isActive(createSurveyLink) ? 'bg-emerald-100 text-emerald-800' : 'text-gray-700 hover:bg-gray-50'}`}>Create Survey</Link>
+                <div className="h-px bg-gray-200 my-3" />
+                <Link href={profileLink} onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg font-medium transition-colors ${isActive(profileLink) ? 'bg-orange-100 text-orange-800' : 'text-gray-700 hover:bg-gray-50'}`}>Profile</Link>
+                <button onClick={() => { setMobileMenuOpen(false); handleLogout(); }} className="block w-full text-left px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors">Logout</button>
               </>
             )}
             {role === 'Student' && (
               <>
-                <Link href="/dashboard/student/participation-history" onClick={() => setMobileMenuOpen(false)} className={`block px-3 py-3 rounded-md font-medium ${isActive('/dashboard/student/participation-history') ? 'bg-emerald-100 text-emerald-800' : 'text-gray-700 hover:bg-gray-50'}`}>Participation History</Link>
-                <Link href="/dashboard/student/points-history" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-3 rounded-md font-medium text-gray-700 hover:bg-gray-50">
+                <Link href="/dashboard/student/participation-history" onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg font-medium transition-colors ${isActive('/dashboard/student/participation-history') ? 'bg-emerald-100 text-emerald-800' : 'text-gray-700 hover:bg-gray-50'}`}>Participation History</Link>
+                <Link href="/dashboard/student/points-history" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                   Points History {pointsLoading ? '(...)' : pointsError ? '(Error)' : typeof studentPoints === 'number' ? `(${studentPoints})` : ''}
                 </Link>
-                <div className="h-px bg-gray-200 my-2" />
-                <Link href={profileLink} onClick={() => setMobileMenuOpen(false)} className={`block px-3 py-3 rounded-md font-medium ${isActive(profileLink) ? 'bg-orange-100 text-orange-800' : 'text-gray-700 hover:bg-gray-50'}`}>Profile</Link>
-                <button onClick={() => { setMobileMenuOpen(false); handleLogout(); }} className="block w-full text-left px-3 py-3 rounded-md font-medium text-gray-700 hover:bg-gray-50">Logout</button>
+                <div className="h-px bg-gray-200 my-3" />
+                <Link href={profileLink} onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg font-medium transition-colors ${isActive(profileLink) ? 'bg-orange-100 text-orange-800' : 'text-gray-700 hover:bg-gray-50'}`}>Profile</Link>
+                <button onClick={() => { setMobileMenuOpen(false); handleLogout(); }} className="block w-full text-left px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors">Logout</button>
               </>
             )}
             {!isDashboardMainPage && (
@@ -576,7 +576,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 role === 'Admin' ? '/dashboard/admin' :
                 role === 'Teacher' ? '/dashboard/teacher' :
                 '/dashboard/student'
-              } onClick={() => setMobileMenuOpen(false)} className="block px-3 py-3 rounded-md font-medium text-gray-700 hover:bg-gray-50">Back to Dashboard</Link>
+              } onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors">Back to Dashboard</Link>
             )}
           </div>
         </div>
