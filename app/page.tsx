@@ -93,8 +93,9 @@ export default function Home2Page() {
               </Link>
             </div>
 
-            {/* Mobile menu button */}
-            <div className="md:hidden">
+            {/* Mobile menu button and language switcher */}
+            <div className="md:hidden flex items-center space-x-2">
+              <LanguageSwitcher currentLocale={currentLocale} onLocaleChange={setCurrentLocale} />
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="text-gray-500 hover:text-gray-600 focus:outline-none transition-colors"
@@ -127,9 +128,6 @@ export default function Home2Page() {
           {/* Mobile menu */}
           {isMenuOpen && (
             <div className="md:hidden mt-4 pb-4 animate-in slide-in-from-top-2 duration-300">
-              <div className="mb-4">
-                <LanguageSwitcher currentLocale={currentLocale} onLocaleChange={setCurrentLocale} />
-              </div>
               <Link
                 href="/auth/signin"
                 className="block px-4 py-3 text-gray-600 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all duration-300"
