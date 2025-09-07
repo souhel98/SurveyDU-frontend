@@ -374,7 +374,7 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <FileText className="h-5 w-5" />
-                  <span>{t('surveys.management.questions', currentLocale)} ({survey.questions.length})</span>
+                  <span>{t('common.questions', currentLocale)} ({survey.questions.length})</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
