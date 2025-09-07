@@ -234,7 +234,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <header className="fixed top-0 left-0 w-full bg-white border-b border-gray-200 z-50 h-20 flex items-center">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between h-full">
           <div className="flex items-center min-w-0 flex-1">
-            <Link href="/dashboard" className="flex items-center flex-shrink-0">
+            <Link href={
+              role === 'Admin' ? '/dashboard/admin' :
+              role === 'Teacher' ? '/dashboard/teacher' :
+              '/dashboard/student'
+            } className="flex items-center flex-shrink-0">
               <div className="bg-emerald-500 text-white p-2 rounded-md mr-2">
                 <span className="font-bold">SurveyDU</span>
               </div>
