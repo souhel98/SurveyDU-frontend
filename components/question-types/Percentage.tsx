@@ -1,6 +1,11 @@
 import React from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
+import { useLocale } from "@/components/ui/locale-provider";
 
 export default function Percentage() {
+  const { t } = useTranslation();
+  const { currentLocale } = useLocale();
+
   return (
     <div className="space-y-2">
       <div className="flex justify-center space-x-2">
@@ -10,7 +15,7 @@ export default function Percentage() {
           </div>
         ))}
       </div>
-      <p className="text-sm text-gray-500 text-center">Students will rate from 1 to 5.</p>
+      <p className="text-sm text-gray-500 text-center">{t('common.questionTypes.percentageDescription', currentLocale)}</p>
     </div>
   );
 } 

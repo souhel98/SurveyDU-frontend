@@ -296,7 +296,11 @@ export class SurveyService {
 
       // Create the duplicate survey
       const response = await api.post('/Admin/surveys/with-questions', duplicateData);
-      return response.data;
+      if (response.data && response.data.success) {
+        return response.data.data;
+      } else {
+        throw new Error(response.data?.message || 'Failed to duplicate survey.');
+      }
     } catch (error: any) {
       console.error('Error duplicating admin survey:', error);
       if (error.response?.status === 400) {

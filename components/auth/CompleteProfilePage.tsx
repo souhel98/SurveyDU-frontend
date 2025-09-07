@@ -17,6 +17,9 @@ import {
 import { Eye, EyeOff } from "lucide-react";
 import { CustomSelect, CustomSelectOption } from "@/components/ui/custom-select";
 import { ACADEMIC_YEARS } from "@/lib/constants";
+import LanguageSwitcher from "@/components/ui/language-switcher";
+import { useTranslation } from "@/hooks/useTranslation";
+import { useLocale } from "@/components/ui/locale-provider";
 
 interface Department {
   id: number;
@@ -38,6 +41,8 @@ interface ProfileRequirements {
 }
 
 export default function CompleteProfilePage() {
+  const { t } = useTranslation();
+  const { currentLocale, setCurrentLocale } = useLocale();
   const [departments, setDepartments] = useState<Department[]>([]);
   const [profileRequirements, setProfileRequirements] = useState<ProfileRequirements | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -126,7 +131,7 @@ export default function CompleteProfilePage() {
     if (!storedUserId || !storedAuthToken) {
       console.log("Missing userId or authToken, redirecting to login");
       setStatus({
-        message: "Authentication required. Please sign in again.",
+        message: t('auth.authenticationRequired', currentLocale),
         type: "error",
       });
       setTimeout(() => router.push("/google-signin"), 3000);
@@ -183,7 +188,7 @@ export default function CompleteProfilePage() {
         if (data.isProfileComplete) {
           console.log("Profile is complete, redirecting to dashboard");
           setStatus({
-            message: "Your profile is already complete! Redirecting to dashboard...",
+            message: t('auth.profileAlreadyComplete', currentLocale),
             type: "success",
           });
           setTimeout(() => {
@@ -214,14 +219,39 @@ export default function CompleteProfilePage() {
     }
   }
 
-  function loadDepartments() {
-    // Hardcoded for now - should be replaced with API call
-    const depts: Department[] = [
-      { id: 1, name: "Computer Science" },
-      { id: 2, name: "Communication Engineering" },
-      { id: 3, name: "Medical Engineering" },
-    ];
-    setDepartments(depts);
+  async function loadDepartments() {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("https://mhhmd6g0-001-site1.rtempurl.com/api/Department", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setDepartments(data);
+      } else {
+        console.error('Failed to fetch departments');
+        // Fallback to hardcoded departments
+        const depts: Department[] = [
+          { id: 1, name: currentLocale === 'ar' ? 'علوم الحاسوب' : 'Computer Science' },
+          { id: 2, name: currentLocale === 'ar' ? 'هندسة الاتصالات' : 'Communication Engineering' },
+          { id: 3, name: currentLocale === 'ar' ? 'الهندسة الطبية' : 'Medical Engineering' },
+        ];
+        setDepartments(depts);
+      }
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+      // Fallback to hardcoded departments
+      const depts: Department[] = [
+        { id: 1, name: currentLocale === 'ar' ? 'علوم الحاسوب' : 'Computer Science' },
+        { id: 2, name: currentLocale === 'ar' ? 'هندسة الاتصالات' : 'Communication Engineering' },
+        { id: 3, name: currentLocale === 'ar' ? 'الهندسة الطبية' : 'Medical Engineering' },
+      ];
+      setDepartments(depts);
+    }
   }
 
   const handleSelectChange = (name: string, value: string) => {
@@ -236,16 +266,16 @@ export default function CompleteProfilePage() {
     e.preventDefault();
 
     if (!departmentId) {
-      setStatus({ message: "Please select a valid department.", type: "error" });
+      setStatus({ message: t('auth.selectValidDepartment', currentLocale), type: "error" });
       return;
     }
     if (password !== confirmPassword) {
-      setStatus({ message: "Passwords do not match", type: "error" });
+      setStatus({ message: t('auth.passwordsDontMatch', currentLocale), type: "error" });
       return;
     }
     if (password.length < 8) {
       setStatus({
-        message: "Password must be at least 8 characters long",
+        message: t('auth.passwordMinLength', currentLocale),
         type: "error",
       });
       return;
@@ -270,7 +300,7 @@ export default function CompleteProfilePage() {
     console.log("Submitting form data:", formData);
 
     setLoading(true);
-    setStatus({ message: "Updating profile...", type: "loading" });
+    setStatus({ message: t('auth.updatingProfile', currentLocale), type: "loading" });
 
     try {
       const token = localStorage.getItem("token");
@@ -293,7 +323,7 @@ export default function CompleteProfilePage() {
         const result = await res.json();
         console.log("Backend response:", result);
         setStatus({
-          message: "Profile completed successfully! Redirecting...",
+          message: t('auth.profileCompletedSuccessfully', currentLocale),
           type: "success",
         });
         // Mark profile as completed
@@ -305,17 +335,17 @@ export default function CompleteProfilePage() {
         const err = await res.json();
         if (err.errors) {
           const msgs = Object.values(err.errors).flat().join(", ");
-          setStatus({ message: `Validation errors: ${msgs}`, type: "error" });
+          setStatus({ message: `${t('auth.validationErrors', currentLocale)}: ${msgs}`, type: "error" });
         } else if (err.message) {
           setStatus({ message: err.message, type: "error" });
         } else {
-          setStatus({ message: "Failed to complete profile", type: "error" });
+          setStatus({ message: t('auth.failedToCompleteProfile', currentLocale), type: "error" });
         }
       }
     } catch (err) {
       console.error(err);
       setStatus({
-        message: "An error occurred while completing your profile",
+        message: t('auth.errorCompletingProfile', currentLocale),
         type: "error",
       });
     } finally {
@@ -347,8 +377,8 @@ export default function CompleteProfilePage() {
           <Card className="w-full max-w-2xl">
             <CardContent className="text-center py-12">
               <div className="animate-spin h-12 w-12 border-4 border-emerald-500 border-t-transparent rounded-full mx-auto mb-6"></div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Checking Profile Status</h2>
-              <p className="text-gray-600">Please wait while we verify your profile requirements...</p>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('auth.checkingProfileStatus', currentLocale)}</h2>
+              <p className="text-gray-600">{t('auth.verifyingProfileRequirements', currentLocale)}</p>
             </CardContent>
           </Card>
         </div>
@@ -370,8 +400,9 @@ export default function CompleteProfilePage() {
               </Link>
             </div>
 
-            {/* Mobile menu button */}
-            <div className="md:hidden">
+            {/* Mobile navigation */}
+            <div className="md:hidden flex items-center space-x-2">
+              <LanguageSwitcher currentLocale={currentLocale} onLocaleChange={setCurrentLocale} />
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="text-gray-500 hover:text-gray-600 focus:outline-none transition-colors"
@@ -388,14 +419,15 @@ export default function CompleteProfilePage() {
 
             {/* Desktop navigation */}
             <nav className="hidden md:flex items-center space-x-6">
+              <LanguageSwitcher currentLocale={currentLocale} onLocaleChange={setCurrentLocale} />
               <Link href="/" className="text-gray-600 hover:text-emerald-500 px-4 py-2 rounded-lg transition-all duration-300 hover:bg-emerald-50">
-                Home
+                {t('navigation.home', currentLocale)}
               </Link>
               <Button
                 onClick={() => router.push("/auth/signin")}
                 className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
               >
-                Sign In
+                {t('navigation.signin', currentLocale)}
               </Button>
             </nav>
           </div>
@@ -407,13 +439,13 @@ export default function CompleteProfilePage() {
                 href="/"
                 className="block px-4 py-3 text-gray-600 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all duration-300"
               >
-                Home
+                {t('navigation.home', currentLocale)}
               </Link>
               <Button
                 onClick={() => router.push("/auth/signin")}
                 className="w-full mt-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
               >
-                Sign In
+                {t('navigation.signin', currentLocale)}
               </Button>
             </div>
           )}
@@ -424,9 +456,9 @@ export default function CompleteProfilePage() {
       <div className="flex-1 flex items-center justify-center p-4">
         <Card className="w-full max-w-2xl">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Complete Your Profile</CardTitle>
+            <CardTitle className="text-2xl">{t('auth.completeYourProfile', currentLocale)}</CardTitle>
             <CardDescription>
-              Please provide the following information to complete your profile setup
+              {t('auth.completeProfileDescription', currentLocale)}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -434,7 +466,7 @@ export default function CompleteProfilePage() {
             {!isAuthorized && (
               <div className="text-center py-8">
                 <div className="animate-spin h-8 w-8 border-4 border-emerald-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-                <p className="text-gray-600">Checking authorization...</p>
+                <p className="text-gray-600">{t('auth.checkingAuthorization', currentLocale)}</p>
               </div>
             )}
             
@@ -443,51 +475,51 @@ export default function CompleteProfilePage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Personal Information */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-gray-900 border-b pb-2">Personal Information</h3>
+                  <h3 className="text-lg font-medium text-gray-900 border-b pb-2">{t('auth.personalInformation', currentLocale)}</h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="firstName">First Name (from Google)</Label>
+                      <Label htmlFor="firstName">{t('auth.firstNameFromGoogle', currentLocale)}</Label>
                       <Input
                         id="firstName"
                         value={firstName}
                         readOnly
                         className="bg-gray-100"
-                        placeholder="First name from Google"
+                        placeholder={t('auth.firstNameFromGoogle', currentLocale)}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="lastName">Last Name (from Google)</Label>
+                      <Label htmlFor="lastName">{t('auth.lastNameFromGoogle', currentLocale)}</Label>
                       <Input
                         id="lastName"
                         value={lastName}
                         readOnly
                         className="bg-gray-100"
-                        placeholder="Last name from Google"
+                        placeholder={t('auth.lastNameFromGoogle', currentLocale)}
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="gender">Gender (from Google)</Label>
+                      <Label htmlFor="gender">{t('auth.genderFromGoogle', currentLocale)}</Label>
                       <Input
                         id="gender"
                         value={gender}
                         readOnly
                         className="bg-gray-100"
-                        placeholder="Gender from Google"
+                        placeholder={t('auth.genderFromGoogle', currentLocale)}
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="dateOfBirth">Date of Birth (from Google)</Label>
+                      <Label htmlFor="dateOfBirth">{t('auth.dateOfBirthFromGoogle', currentLocale)}</Label>
                       <Input
                         id="dateOfBirth"
                         value={dateOfBirth}
                         readOnly
                         className="bg-gray-100"
-                        placeholder="Date of birth from Google"
+                        placeholder={t('auth.dateOfBirthFromGoogle', currentLocale)}
                       />
                     </div>
                   </div>
@@ -495,14 +527,14 @@ export default function CompleteProfilePage() {
 
                 {/* Academic Information */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-gray-900 border-b pb-2">Academic Information</h3>
+                  <h3 className="text-lg font-medium text-gray-900 border-b pb-2">{t('auth.academicInformation', currentLocale)}</h3>
 
                   <div className="space-y-2">
-                    <Label htmlFor="departmentId">Department</Label>
+                    <Label htmlFor="departmentId">{t('auth.department', currentLocale)}</Label>
                     <CustomSelect
                       value={departmentId}
                       onChange={value => handleSelectChange("departmentId", value)}
-                      placeholder="Select department"
+                      placeholder={t('auth.selectDepartment', currentLocale)}
                     >
                       {departments.map((dept) => (
                         <CustomSelectOption key={dept.id} value={String(dept.id)}>{dept.name}</CustomSelectOption>
@@ -512,26 +544,26 @@ export default function CompleteProfilePage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="academicYear">Academic Year</Label>
+                      <Label htmlFor="academicYear">{t('auth.academicYear', currentLocale)}</Label>
                       <CustomSelect
                         value={academicYear}
                         onChange={value => handleSelectChange("academicYear", value)}
-                        placeholder="Select academic year"
+                        placeholder={t('auth.selectAcademicYear', currentLocale)}
                       >
                         {ACADEMIC_YEARS.map((year) => (
-                          <CustomSelectOption key={year.value} value={String(year.value)}>{year.label}</CustomSelectOption>
+                          <CustomSelectOption key={year.value} value={String(year.value)}>{t(`common.academicYears.${year.label.toLowerCase()}`, currentLocale)}</CustomSelectOption>
                         ))}
                       </CustomSelect>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="universityId">University ID Number</Label>
+                      <Label htmlFor="universityId">{t('auth.universityIdNumber', currentLocale)}</Label>
                       <Input
                         id="universityId"
                         value={universityId}
                         onChange={(e) => setUniversityId(e.target.value)}
                         required
-                        placeholder="Enter your university ID"
+                        placeholder={t('auth.enterUniversityId', currentLocale)}
                       />
                     </div>
                   </div>
@@ -539,10 +571,10 @@ export default function CompleteProfilePage() {
 
                 {/* Account Security */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-gray-900 border-b pb-2">Account Security</h3>
+                  <h3 className="text-lg font-medium text-gray-900 border-b pb-2">{t('auth.accountSecurity', currentLocale)}</h3>
 
                   <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password">{t('auth.password', currentLocale)}</Label>
                     <div className="relative">
                       <Input
                         id="password"
@@ -550,14 +582,14 @@ export default function CompleteProfilePage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        placeholder="Enter a password"
+                        placeholder={t('auth.enterPassword', currentLocale)}
                       />
                       <button
                         type="button"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                        className={`absolute top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none ${currentLocale === 'ar' ? 'left-3' : 'right-3'}`}
                         onClick={() => setShowPassword((prev) => !prev)}
                         tabIndex={-1}
-                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        aria-label={showPassword ? t('auth.hidePassword', currentLocale) : t('auth.showPassword', currentLocale)}
                       >
                         {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                       </button>
@@ -565,7 +597,7 @@ export default function CompleteProfilePage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                    <Label htmlFor="confirmPassword">{t('auth.confirmPassword', currentLocale)}</Label>
                     <div className="relative">
                       <Input
                         id="confirmPassword"
@@ -573,14 +605,14 @@ export default function CompleteProfilePage() {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         required
-                        placeholder="Confirm your password"
+                        placeholder={t('auth.confirmYourPassword', currentLocale)}
                       />
                       <button
                         type="button"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                        className={`absolute top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none ${currentLocale === 'ar' ? 'left-3' : 'right-3'}`}
                         onClick={() => setShowConfirmPassword((prev) => !prev)}
                         tabIndex={-1}
-                        aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                        aria-label={showConfirmPassword ? t('auth.hidePassword', currentLocale) : t('auth.showPassword', currentLocale)}
                       >
                         {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                       </button>
@@ -613,10 +645,10 @@ export default function CompleteProfilePage() {
                   {loading ? (
                     <>
                       <span className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full inline-block align-middle"></span>
-                      Processing...
+                      {t('auth.processing', currentLocale)}...
                     </>
                   ) : (
-                    "Complete Profile"
+                    t('auth.completeProfile', currentLocale)
                   )}
                 </Button>
               </form>

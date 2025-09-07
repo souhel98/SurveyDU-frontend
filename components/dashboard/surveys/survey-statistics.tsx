@@ -29,6 +29,8 @@ import {
 import { SurveyService } from '@/lib/services/survey-service'
 import { DepartmentService } from '@/lib/services/department-service'
 import { useToast } from '@/hooks/use-toast'
+import { useTranslation } from '@/hooks/useTranslation'
+import { useLocale } from '@/components/ui/locale-provider'
 
 interface SurveyStatisticsProps {
   surveyId: string
@@ -75,6 +77,8 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const { toast } = useToast()
+  const { t } = useTranslation()
+  const { currentLocale } = useLocale()
 
   useEffect(() => {
     const fetchData = async () => {
@@ -91,10 +95,10 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
         setDepartments(departmentsData)
       } catch (err: any) {
         console.error('Error fetching statistics:', err)
-        setError(err.message || 'Failed to fetch survey statistics')
+        setError(err.message || t('statistics.errorLoading', currentLocale))
         toast({
-          title: "Error",
-          description: err.message || 'Failed to fetch survey statistics',
+          title: t('common.error', currentLocale),
+          description: err.message || t('statistics.errorLoading', currentLocale),
           variant: "destructive"
         })
       } finally {
@@ -123,13 +127,13 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
   const getQuestionTypeLabel = (type: string) => {
     switch (type) {
       case 'multiple_choice':
-        return 'Multiple Choice'
+        return t('statistics.multipleChoice', currentLocale)
       case 'single_answer':
-        return 'Single Answer'
+        return t('statistics.singleAnswer', currentLocale)
       case 'open_text':
-        return 'Open Text'
+        return t('statistics.openText', currentLocale)
       case 'percentage':
-        return 'Rating Scale (1-5)'
+        return t('statistics.ratingScale', currentLocale)
       default:
         return type
     }
@@ -138,11 +142,11 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
   const getGenderLabel = (gender: string) => {
     switch (gender) {
       case 'male':
-        return 'Male'
+        return t('statistics.male', currentLocale)
       case 'female':
-        return 'Female'
+        return t('statistics.female', currentLocale)
       case 'all':
-        return 'All Genders'
+        return t('statistics.allGenders', currentLocale)
       default:
         return gender
     }
@@ -150,25 +154,25 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-              <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
-        <p className="mt-4 text-gray-600">Loading survey statistics...</p>
-      </div>
+      <div className="bg-gray-50 flex items-center justify-center py-20">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">{t('statistics.loading', currentLocale)}</p>
+        </div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="bg-gray-50 flex items-center justify-center py-20">
         <div className="text-center">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Statistics</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('statistics.errorLoading', currentLocale)}</h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <Button onClick={() => router.back()}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Go Back
+            {t('common.back', currentLocale)}
           </Button>
         </div>
       </div>
@@ -177,14 +181,14 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
 
   if (!statistics) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="bg-gray-50 flex items-center justify-center py-20">
         <div className="text-center">
           <div className="text-gray-500 text-6xl mb-4">📊</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">No Statistics Available</h2>
-          <p className="text-gray-600 mb-6">This survey doesn't have any statistics yet.</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('statistics.noStatistics', currentLocale)}</h2>
+          <p className="text-gray-600 mb-6">{t('statistics.noStatisticsDescription', currentLocale)}</p>
           <Button onClick={() => router.back()}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Go Back
+            {t('common.back', currentLocale)}
           </Button>
         </div>
       </div>
@@ -192,40 +196,13 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => router.back()}
-                className="gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Survey Statistics</h1>
-                <p className="text-sm text-gray-600">Detailed analytics and insights</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <BarChart3 className="h-6 w-6 text-blue-600" />
-              <span className="text-lg font-semibold text-gray-900">Analytics</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="bg-gray-50">
+      <div className="container mx-auto px-4 py-8">
         {/* Survey Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Responses</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('statistics.totalResponses', currentLocale)}</CardTitle>
               <Users className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
@@ -233,14 +210,14 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
                 {statistics.surveyInfo.totalResponses}
               </div>
               <p className="text-xs text-muted-foreground">
-                out of {statistics.surveyInfo.requiredParticipants} required
+                {t('statistics.outOf', currentLocale)} {statistics.surveyInfo.requiredParticipants} {t('statistics.required', currentLocale)}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('statistics.completionRate', currentLocale)}</CardTitle>
               <TrendingUp className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
@@ -260,7 +237,7 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Questions</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('common.questions', currentLocale)}</CardTitle>
               <FileText className="h-4 w-4 text-purple-600" />
             </CardHeader>
             <CardContent>
@@ -268,14 +245,14 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
                 {statistics.questionStatistics.length}
               </div>
               <p className="text-xs text-muted-foreground">
-                total questions
+                {t('statistics.totalQuestions', currentLocale)}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Comments</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('statistics.comments', currentLocale)}</CardTitle>
               <MessageSquare className="h-4 w-4 text-orange-600" />
             </CardHeader>
             <CardContent>
@@ -283,7 +260,7 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
                 {statistics.comments.length}
               </div>
               <p className="text-xs text-muted-foreground">
-                feedback received
+                {t('statistics.feedbackReceived', currentLocale)}
               </p>
             </CardContent>
           </Card>
@@ -294,7 +271,7 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Target className="h-5 w-5 text-blue-600" />
-              Survey Information
+              {t('statistics.surveyInformation', currentLocale)}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -306,27 +283,27 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm text-gray-600">Owner: {statistics.surveyInfo.ownerName}</span>
+                    <span className="text-sm text-gray-600">{t('statistics.owner', currentLocale)}: {statistics.surveyInfo.ownerName}</span>
                   </div>
                   
                   <div className="flex items-center gap-2">
                     <Target className="h-4 w-4 text-gray-500" />
                     <span className="text-sm text-gray-600">
-                      Target Gender: {getGenderLabel(statistics.surveyInfo.targetGender)}
+                      {t('statistics.targetGender', currentLocale)}: {getGenderLabel(statistics.surveyInfo.targetGender)}
                     </span>
                   </div>
                   
                   <div className="flex items-center gap-2">
                     <GraduationCap className="h-4 w-4 text-gray-500" />
                     <span className="text-sm text-gray-600">
-                      Academic Years: {statistics.surveyInfo.targetAcademicYears.join(', ')}
+                      {t('statistics.academicYears', currentLocale)}: {statistics.surveyInfo.targetAcademicYears.join(', ')}
                     </span>
                   </div>
                   
                   <div className="flex items-center gap-2">
                     <Building className="h-4 w-4 text-gray-500" />
                     <span className="text-sm text-gray-600">
-                      Departments: {
+                      {t('statistics.departments', currentLocale)}: {
                         statistics.surveyInfo.targetDepartmentIds
                           .map(id => departments.find(dep => dep.id === id)?.name || id)
                           .join(', ')
@@ -338,9 +315,9 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
               
               <div className="space-y-4">
                 <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-blue-900 mb-2">Response Progress</h4>
+                  <h4 className="font-semibold text-blue-900 mb-2">{t('statistics.responseProgress', currentLocale)}</h4>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-blue-700">Current Responses</span>
+                    <span className="text-sm text-blue-700">{t('statistics.currentResponses', currentLocale)}</span>
                     <span className="text-sm font-semibold text-blue-900">
                       {statistics.surveyInfo.totalResponses} / {statistics.surveyInfo.requiredParticipants}
                     </span>
@@ -356,12 +333,12 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
                 </div>
                 
                 <div className="bg-green-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-green-900 mb-2">Completion Rate</h4>
+                  <h4 className="font-semibold text-green-900 mb-2">{t('statistics.completionRate', currentLocale)}</h4>
                   <div className="text-2xl font-bold text-green-600">
                     {statistics.surveyInfo.completionRate.toFixed(1)}%
                   </div>
                   <p className="text-sm text-green-700">
-                    {statistics.surveyInfo.completionRate >= 100 ? 'Target achieved!' : 'Target not yet reached'}
+                    {statistics.surveyInfo.completionRate >= 100 ? t('statistics.targetAchieved', currentLocale) : t('statistics.targetNotYetReached', currentLocale)}
                   </p>
                 </div>
               </div>
@@ -374,11 +351,11 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="questions" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              Question Statistics
+              {t('statistics.questionStatistics', currentLocale)}
             </TabsTrigger>
             <TabsTrigger value="comments" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
-              Comments ({statistics.comments.length})
+              {t('statistics.comments', currentLocale)} ({statistics.comments.length})
             </TabsTrigger>
           </TabsList>
 
@@ -392,10 +369,10 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
                         {getQuestionTypeIcon(question.questionType)}
                         {getQuestionTypeLabel(question.questionType)}
                       </Badge>
-                      <span className="text-sm text-gray-500">Question {index + 1}</span>
+                      <span className="text-sm text-gray-500">{t('statistics.question', currentLocale)} {index + 1}</span>
                     </div>
                     <div className="text-sm text-gray-500">
-                      {question.totalAnswers} responses
+                      {question.totalAnswers} {t('statistics.responses', currentLocale)}
                     </div>
                   </div>
                   <CardTitle className="text-lg">{question.questionText}</CardTitle>
@@ -422,7 +399,7 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
                     </div>
                   ) : question.questionType === 'open_text' ? (
                     <div className="space-y-3">
-                      <h4 className="font-semibold text-gray-900">Text Responses:</h4>
+                      <h4 className="font-semibold text-gray-900">{t('statistics.textResponses', currentLocale)}:</h4>
                       {question.textAnswers.length > 0 ? (
                         <div className="space-y-2">
                           {question.textAnswers.map((answer, idx) => (
@@ -432,12 +409,12 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
                           ))}
                         </div>
                       ) : (
-                        <p className="text-gray-500 text-sm">No text responses yet.</p>
+                        <p className="text-gray-500 text-sm">{t('statistics.noTextResponsesYet', currentLocale)}</p>
                       )}
                     </div>
                   ) : question.questionType === 'percentage' ? (
                     <div className="space-y-3">
-                      <h4 className="font-semibold text-gray-900">Rating Distribution:</h4>
+                      <h4 className="font-semibold text-gray-900">{t('statistics.ratingDistribution', currentLocale)}:</h4>
                       {question.percentageStats.length > 0 ? (
                         <div className="grid grid-cols-5 gap-2">
                           {[1, 2, 3, 4, 5].map((rating) => {
@@ -455,7 +432,7 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
                           })}
                         </div>
                       ) : (
-                        <p className="text-gray-500 text-sm">No ratings yet.</p>
+                        <p className="text-gray-500 text-sm">{t('statistics.noRatingsYet', currentLocale)}</p>
                       )}
                     </div>
                   ) : null}
@@ -469,10 +446,10 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5 text-orange-600" />
-                  Student Comments & Feedback
+                  {t('statistics.studentComments', currentLocale)}
                 </CardTitle>
                 <CardDescription>
-                  Comments left by students when completing the survey
+                  {t('statistics.commentsLeftByStudents', currentLocale)}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -486,7 +463,7 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
                           </div>
                           <div className="flex-1">
                             <p className="text-gray-900">"{comment}"</p>
-                            <p className="text-xs text-gray-500 mt-2">Comment #{index + 1}</p>
+                            <p className="text-xs text-gray-500 mt-2">{t('statistics.comment', currentLocale)} #{index + 1}</p>
                           </div>
                         </div>
                       </div>
@@ -495,9 +472,9 @@ export default function SurveyStatistics({ surveyId }: SurveyStatisticsProps) {
                 ) : (
                   <div className="text-center py-8">
                     <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No Comments Yet</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('statistics.noCommentsYet', currentLocale)}</h3>
                     <p className="text-gray-600">
-                      Students haven't left any comments for this survey yet.
+                      {t('statistics.studentsHaventLeftComments', currentLocale)}
                     </p>
                   </div>
                 )}

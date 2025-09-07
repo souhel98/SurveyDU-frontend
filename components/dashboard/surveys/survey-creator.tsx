@@ -48,6 +48,8 @@ import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } 
 
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogHeader, DialogFooter, DialogClose, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { useTranslation } from "@/hooks/useTranslation";
+import { useLocale } from "@/components/ui/locale-provider";
 
 // Import question type components
 import MultipleChoice from "@/components/question-types/MultipleChoice";
@@ -89,10 +91,11 @@ interface SortableSidebarQuestionProps {
   activeDragId: number | null;
   setQuestions: React.Dispatch<React.SetStateAction<QuestionData[]>>;
   QUESTION_TYPE_ICONS: any;
+  t: (key: string) => string;
 }
-function SortableSidebarQuestion({ q, idx, activeQuestionId, setActiveQuestionId, activeDragId, setQuestions, QUESTION_TYPE_ICONS }: SortableSidebarQuestionProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: q.id });
-  const { isOver, setNodeRef: setDropRef } = useDroppable({ id: q.id });
+function SortableSidebarQuestion({ q, idx, activeQuestionId, setActiveQuestionId, activeDragId, setQuestions, QUESTION_TYPE_ICONS, t }: SortableSidebarQuestionProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: q.id || idx });
+  const { isOver, setNodeRef: setDropRef } = useDroppable({ id: q.id || idx });
   const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -137,8 +140,8 @@ function SortableSidebarQuestion({ q, idx, activeQuestionId, setActiveQuestionId
               if (e.key === 'Enter' || e.key === 'Escape') setIsEditing(false);
             }}
             maxLength={64}
-            placeholder="Add your question title"
-            aria-label="Edit question title"
+            placeholder={t('surveyCreator.addQuestionTitle')}
+            aria-label={t('surveyCreator.addQuestionTitle')}
           />
         ) : (
           <>
@@ -147,7 +150,7 @@ function SortableSidebarQuestion({ q, idx, activeQuestionId, setActiveQuestionId
               className="truncate text-sm text-gray-700 flex-1 min-w-0"
               title={q.questionText && q.questionText.length > 32 ? q.questionText : undefined}
             >
-              {q.questionText ? q.questionText : <span className="italic text-gray-400">Untitled question</span>}
+              {q.questionText ? q.questionText : <span className="italic text-gray-400">{t('surveyCreator.untitledQuestion')}</span>}
             </span>
             <div className="flex items-center gap-0.5">
               <button
@@ -175,7 +178,11 @@ function SortableSidebarQuestion({ q, idx, activeQuestionId, setActiveQuestionId
                       questionOrder: idxQ + 1,
                       typeId: q.typeId,
                       typeName: q.typeName,
-                      options: q.options.map((opt: any, i: number) => ({ ...opt, order: i })),
+                      options: q.options.map((opt: any, i: number) => ({ 
+                        ...opt, 
+                        id: Date.now() + i + 1, // Generate unique IDs for options
+                        order: i 
+                      })),
                     };
                     const newQuestions = [
                       ...questions.slice(0, idxQ + 1),
@@ -220,8 +227,8 @@ interface SortableQuestionCardProps {
   QUESTION_TYPE_COMPONENTS: any;
 }
 function SortableQuestionCard({ question, index, activeQuestionId, setActiveQuestionId, children, activeDragId, QUESTION_TYPE_ICONS, QUESTION_TYPE_LABELS, QUESTION_TYPE_COMPONENTS }: SortableQuestionCardProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: question.id });
-  const { isOver, setNodeRef: setDropRef } = useDroppable({ id: question.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: question.id || index });
+  const { isOver, setNodeRef: setDropRef } = useDroppable({ id: question.id || index });
   return (
     <>
       {activeDragId != null && (
@@ -233,7 +240,7 @@ function SortableQuestionCard({ question, index, activeQuestionId, setActiveQues
       )}
       <motion.div
         ref={setNodeRef}
-        key={question.id}
+        key={question.id || `question-${index}`}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
@@ -262,7 +269,7 @@ function SortableQuestionCard({ question, index, activeQuestionId, setActiveQues
 // --- DRAGGABLE SIDEBAR QUESTION TYPE ---
 function DraggableQuestionType({ type, icon, label, index, onDragStart, onClick }: { type: any, icon: React.ReactNode, label: string, index: number, onDragStart: (type: any) => void, onClick?: () => void }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: `question-type-${type.typeId}`,
+    id: `question-type-${type.typeId || index}`,
     data: { type },
   });
   return (
@@ -290,29 +297,31 @@ function DraggableQuestionType({ type, icon, label, index, onDragStart, onClick 
 }
 
 // --- MAIN DROP ZONE BETWEEN QUESTIONS ---
-function QuestionDropZone({ index, isOver, setNodeRef }: { index: number, isOver: boolean, setNodeRef: (node: HTMLElement | null) => void }) {
+function QuestionDropZone({ index, isOver, setNodeRef, t }: { index: number, isOver: boolean, setNodeRef: (node: HTMLElement | null) => void, t: (key: string) => string }) {
   return (
     <div
       ref={setNodeRef}
       className={`flex justify-center items-center my-2 transition-all duration-200 ${isOver ? 'bg-emerald-100 border-2 border-emerald-400 rounded-xl min-h-[48px]' : 'min-h-[24px]'}`}
       style={{ height: isOver ? 48 : 24, zIndex: isOver ? 40 : undefined }}
     >
-      {isOver && <span className="text-emerald-600 font-semibold">Drop to add question here</span>}
+      {isOver && <span className="text-emerald-600 font-semibold">{t('surveyCreator.dropToAddQuestionHere')}</span>}
     </div>
   );
 }
 
 // --- DropZoneWithHook: wrapper to use useDroppable for each drop zone ---
-function DropZoneWithHook({ index, dropZoneIds, draggedType }: { index: number, dropZoneIds: string[], draggedType: any }) {
+function DropZoneWithHook({ index, dropZoneIds, draggedType, t }: { index: number, dropZoneIds: string[], draggedType: any, t: (key: string) => string }) {
   const { isOver, setNodeRef } = useDroppable({ id: dropZoneIds[index] });
   // Only show if dragging a type
   if (!draggedType) return null;
-  return <QuestionDropZone index={index} isOver={isOver} setNodeRef={setNodeRef} />;
+  return <QuestionDropZone index={index} isOver={isOver} setNodeRef={setNodeRef} t={t} />;
 }
 
 export default function SurveyCreator() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { t } = useTranslation();
+  const { currentLocale } = useLocale();
   const editSurveyId = searchParams.get('edit');
   
   const [activeTab, setActiveTab] = useState("designer");
@@ -391,10 +400,10 @@ export default function SurveyCreator() {
 
   // Add a mapping for question type display names and icons
   const QUESTION_TYPE_LABELS: Record<string, string> = {
-    multiple_choice: "Multiple Choice",
-    single_answer: "Single Answer",
-    open_text: "Open Text",
-    percentage: "Rating Scale (1-5)",
+    multiple_choice: t('surveyCreator.questionTypes.multipleChoice'),
+    single_answer: t('surveyCreator.questionTypes.singleAnswer'),
+    open_text: t('surveyCreator.questionTypes.openText'),
+    percentage: t('surveyCreator.questionTypes.percentage'),
   };
   const QUESTION_TYPE_ICONS: Record<string, React.ReactNode> = {
     multiple_choice: <CheckSquare className="h-5 w-5 text-emerald-500 mr-2" />,
@@ -422,14 +431,20 @@ export default function SurveyCreator() {
           QuestionTypeService.getQuestionTypes()
         ]);
         
-        if (Array.isArray(departmentsData)) setDepartments(departmentsData);
-        else if (departmentsData && Array.isArray(departmentsData.data)) setDepartments(departmentsData.data);
+        if (Array.isArray(departmentsData)) {
+          setDepartments(departmentsData);
+        } else if (departmentsData && typeof departmentsData === 'object' && departmentsData !== null) {
+          const deptData = departmentsData as any;
+          if (deptData.data && Array.isArray(deptData.data)) {
+            setDepartments(deptData.data);
+          }
+        }
         
         setQuestionTypes(questionTypesData);
       } catch (error: any) {
         toast({
-          title: "Error",
-          description: error.message || "Failed to fetch data",
+          title: t('common.error', currentLocale),
+          description: error.message || t('errors.failedToFetchData', currentLocale),
           variant: "destructive"
         });
       } finally {
@@ -503,8 +518,8 @@ export default function SurveyCreator() {
         
       } catch (error: any) {
         toast({
-          title: "Error",
-          description: error.message || "Failed to load survey for editing",
+          title: t('common.error', currentLocale),
+          description: error.message || t('errors.failedToLoadSurveyForEditing', currentLocale),
           variant: "destructive"
         });
       } finally {
@@ -522,13 +537,13 @@ export default function SurveyCreator() {
       let defaultOptions: any[] = [];
       if (type.typeName === 'multiple_choice') {
         defaultOptions = [
-          { id: 1, text: '', checked: false },
-          { id: 2, text: '', checked: false },
+          { id: Date.now() + 1, text: '', checked: false },
+          { id: Date.now() + 2, text: '', checked: false },
         ];
       } else if (type.typeName === 'single_answer') {
         defaultOptions = [
-          { id: 1, text: '', value: 'option1' },
-          { id: 2, text: '', value: 'option2' },
+          { id: Date.now() + 1, text: '', value: 'option1' },
+          { id: Date.now() + 2, text: '', value: 'option2' },
         ];
       }
       const newQ = {
@@ -609,21 +624,21 @@ export default function SurveyCreator() {
     try {
       if (!metadata.title.trim()) {
         toast({
-          title: "Survey title is required",
+          title: t('surveyCreator.surveyTitleRequired', currentLocale),
           variant: "destructive",
         });
         return;
       }
       if (!metadata.description.trim()) {
         toast({
-          title: "Survey description is required",
+          title: t('surveyCreator.surveyDescriptionRequired', currentLocale),
           variant: "destructive",
         });
         return;
       }
       if (questions.length === 0) {
         toast({
-          title: "Please add at least one question",
+          title: t('surveyCreator.pleaseAddAtLeastOneQuestion', currentLocale),
           variant: "destructive",
         });
         return;
@@ -631,7 +646,7 @@ export default function SurveyCreator() {
       const emptyQuestions = questions.filter(q => !q.questionText.trim());
       if (emptyQuestions.length > 0) {
         toast({
-          title: "Please fill in all question title",
+          title: t('surveyCreator.pleaseFillInAllQuestionTitle', currentLocale),
           variant: "destructive",
         });
         return;
@@ -642,7 +657,7 @@ export default function SurveyCreator() {
       );
       if (questionsMissingOptions.length > 0) {
         toast({
-          title: "All multiple choice and single answer questions must have at least one option",
+          title: t('surveyCreator.allMultipleChoiceQuestionsMustHaveOptions', currentLocale),
           variant: "destructive",
         });
         return;
@@ -658,8 +673,8 @@ export default function SurveyCreator() {
       
       if (questionsWithEmptyOptions.length > 0) {
         toast({
-          title: "Question choices cannot be empty",
-          description: "Please fill in all option titles for multiple choice and single answer questions",
+          title: t('surveyCreator.questionChoicesCannotBeEmpty', currentLocale),
+          description: t('surveyCreator.fillInAllOptionTitles', currentLocale),
           variant: "destructive",
         });
         return;
@@ -667,7 +682,7 @@ export default function SurveyCreator() {
       // Validate at least one academic year selected
       if (!metadata.targetAcademicYears || metadata.targetAcademicYears.length === 0 || metadata.targetAcademicYears[0] === "") {
         toast({
-          title: "Please select at least one academic year",
+          title: t('surveyCreator.pleaseSelectAtLeastOneAcademicYear', currentLocale),
           variant: "destructive",
         });
         return;
@@ -675,7 +690,7 @@ export default function SurveyCreator() {
       // Validate at least one department selected
       if (!metadata.targetDepartmentIds || metadata.targetDepartmentIds.length === 0 || metadata.targetDepartmentIds[0] === "") {
         toast({
-          title: "Please select at least one department",
+          title: t('surveyCreator.pleaseSelectAtLeastOneDepartment', currentLocale),
           variant: "destructive",
         });
         return;
@@ -689,7 +704,7 @@ export default function SurveyCreator() {
         let response;
         if (isEditMode && editSurveyId) {
           // Update existing survey
-          response = await SurveyService.updateAdminSurveyWithQuestions(parseInt(editSurveyId), surveyData);
+          response = await SurveyService.updateTeacherSurveyWithQuestions(parseInt(editSurveyId), surveyData);
         } else {
           // Create new survey
           response = await SurveyService.teacherCreateSurveyWithQuestions(surveyData);
@@ -698,13 +713,13 @@ export default function SurveyCreator() {
         setIsSaving(false);
         if (response.success) {
           let message = isEditMode 
-            ? (response.message || "Survey updated successfully!")
-            : (response.message || "Survey created successfully!");
+            ? t('success.surveyUpdated', currentLocale)
+            : t('success.surveyCreated', currentLocale);
           
           if (response.data && response.data.surveyId) {
             message = isEditMode
-              ? `Survey updated successfully! Survey ID: ${response.data.surveyId}`
-              : `Survey submitted successfully! Survey ID: ${response.data.surveyId}`;
+              ? `${t('success.surveyUpdated', currentLocale)} Survey ID: ${response.data.surveyId}`
+              : `${t('success.surveyCreated', currentLocale)} Survey ID: ${response.data.surveyId}`;
           }
           
           toast({
@@ -717,21 +732,21 @@ export default function SurveyCreator() {
           }, 1500);
         } else {
           toast({
-            title: response.message || (isEditMode ? "Failed to update survey" : "Failed to create survey"),
+            title: response.message || (isEditMode ? t('errors.failedToUpdateSurvey', currentLocale) : t('errors.failedToCreateSurvey', currentLocale)),
             variant: "destructive",
           });
         }
       } catch (error: any) {
         setIsSaving(false);
         toast({
-          title: error.message || (isEditMode ? "An error occurred while updating the survey" : "An error occurred while saving the survey"),
+          title: error.message || (isEditMode ? t('errors.failedToUpdateSurvey', currentLocale) : t('errors.failedToCreateSurvey', currentLocale)),
           variant: "destructive",
         });
       }
     } catch (error: any) {
       setIsSaving(false);
       toast({
-        title: error.message || "An error occurred while saving the survey",
+        title: error.message || t('errors.failedToCreateSurvey', currentLocale),
         variant: "destructive",
       });
     }
@@ -749,8 +764,8 @@ export default function SurveyCreator() {
   const handleGenerateQuestionsWithAI = async () => {
     if (!metadata.title.trim() || !metadata.description.trim()) {
       toast({
-        title: "Survey title and description are required",
-        description: "Please fill in the survey title and description before generating questions.",
+        title: t('surveyCreator.surveyTitleAndDescriptionRequired', currentLocale),
+        description: t('surveyCreator.fillInSurveyTitleAndDescription', currentLocale),
         variant: "destructive"
       });
       return;
@@ -758,8 +773,8 @@ export default function SurveyCreator() {
 
     if (aiGenerationConfig.questionTypes.length === 0) {
       toast({
-        title: "No question types selected",
-        description: "Please select at least one question type to generate.",
+        title: t('surveyCreator.noQuestionTypesSelected', currentLocale),
+        description: t('surveyCreator.selectAtLeastOneQuestionType', currentLocale),
         variant: "destructive"
       });
       return;
@@ -788,7 +803,7 @@ export default function SurveyCreator() {
           isRequired: q.isRequired,
           questionOrder: index,
           options: q.options ? q.options.map((opt: any, optIndex: number) => ({
-            id: optIndex + 1,
+            id: Date.now() + index * 1000 + optIndex, // Generate unique IDs for options
             text: opt.optionText,
             order: opt.optionOrder
           })) : []
@@ -798,18 +813,18 @@ export default function SurveyCreator() {
         setQuestions(prev => [...prev, ...generatedQuestions]);
         
         toast({
-          title: "Questions generated successfully!",
-          description: `${generatedQuestions.length} questions have been added to your survey.`,
+          title: t('surveyCreator.questionsGeneratedSuccessfully', currentLocale),
+          description: `${generatedQuestions.length} ${t('surveyCreator.questionsHaveBeenAdded', currentLocale)}`,
         });
         
         setShowAIGenerationDialog(false);
       } else {
-        throw new Error(response.message || 'Failed to generate questions');
+        throw new Error(response.message || t('surveyCreator.failedToGenerateQuestions', currentLocale));
       }
     } catch (error: any) {
       toast({
-        title: "Error generating questions",
-        description: error.message || "Failed to generate questions. Please try again.",
+        title: t('surveyCreator.errorGeneratingQuestions', currentLocale),
+        description: error.message || t('surveyCreator.failedToGenerateQuestions', currentLocale),
         variant: "destructive"
       });
     } finally {
@@ -871,11 +886,20 @@ export default function SurveyCreator() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading survey for editing...</p>
+          <p className="text-gray-600">{t('surveyCreator.loadingSurveyForEdit')}</p>
         </div>
       </div>
     );
   }
+
+  // Add this mapping at the top of the component (after hooks):
+  const yearKeyMap: Record<string, string> = {
+    "1": "first",
+    "2": "second",
+    "3": "third",
+    "4": "fourth",
+    "5": "fifth"
+  };
 
   return (
     <TooltipProvider>
@@ -897,10 +921,10 @@ export default function SurveyCreator() {
         {/* Left Sidebar - Question Types - Fixed */}
         <div className="w-72 bg-white border-r border-gray-200 overflow-y-auto fixed left-0 top-16 pt-8 bottom-0 shadow-sm z-20">
           <div className="space-y-1 px-2 py-4">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 pl-2">Question Types</h3>
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 pl-2">{t('surveyCreator.questionTypesLabel')}</h3>
             {questionTypes.map((type, index) => (
               <DraggableQuestionType
-                key={type.typeId}
+                key={type.typeId || `type-${index}`}
                 type={type}
                 icon={QUESTION_TYPE_ICONS[type.typeName] || <HelpCircle className="h-5 w-5 text-gray-400" />}
                 label={QUESTION_TYPE_LABELS[type.typeName] || type.typeName}
@@ -939,13 +963,13 @@ export default function SurveyCreator() {
               }}
               onDragCancel={() => setActiveDragId(null)}
             >
-              <SortableContext items={questions.map(q => q.id)} strategy={verticalListSortingStrategy}>
+              <SortableContext items={questions.map((q, idx) => q.id || `question-${idx}`)} strategy={verticalListSortingStrategy}>
                 <div className="px-2 pb-4">
-                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 pl-2">Questions</h4>
+                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 pl-2">{t('surveyCreator.questions')}</h4>
                   <div className="space-y-2">
                     {questions.map((q, idx) => (
                       <SortableSidebarQuestion
-                        key={q.id}
+                        key={q.id || `question-${idx}`}
                         q={q}
                         idx={idx}
                         activeQuestionId={activeQuestionId}
@@ -953,6 +977,7 @@ export default function SurveyCreator() {
                         activeDragId={activeDragId}
                         setQuestions={setQuestions}
                         QUESTION_TYPE_ICONS={QUESTION_TYPE_ICONS}
+                        t={t}
                       />
                     ))}
                   </div>
@@ -965,6 +990,7 @@ export default function SurveyCreator() {
                     if (!q) return null;
                     return (
                       <SortableSidebarQuestion
+                        key={`drag-overlay-${q.id || 'unknown'}`}
                         q={q}
                         idx={q.questionOrder}
                         activeQuestionId={activeQuestionId}
@@ -972,6 +998,7 @@ export default function SurveyCreator() {
                         activeDragId={activeDragId}
                         setQuestions={setQuestions}
                         QUESTION_TYPE_ICONS={QUESTION_TYPE_ICONS}
+                        t={t}
                       />
                     );
                   })()
@@ -983,14 +1010,14 @@ export default function SurveyCreator() {
 
         {/* Main Content Area - Scrollable with fixed margins */}
         <div className="flex-1 flex flex-col ml-72 mr-96">
-          <SortableContext items={questions.map(q => q.id)} strategy={verticalListSortingStrategy}>
+          <SortableContext items={questions.map((q, idx) => q.id || `question-${idx}`)} strategy={verticalListSortingStrategy}>
             <div className="p-4 space-y-4 pb-20">
               <AnimatePresence>
                 {/* Drop zone at the top */}
-                <DropZoneWithHook index={0} dropZoneIds={dropZoneIds} draggedType={draggedType} />
+                <DropZoneWithHook index={0} dropZoneIds={dropZoneIds} draggedType={draggedType} t={t} />
                 {/* Questions List - Animated */}
                 {questions.map((question, index) => (
-                  <React.Fragment key={question.id}>
+                  <React.Fragment key={question.id != null ? String(question.id) : `question-fallback-${index}-${Math.random()}` }>
                     <SortableQuestionCard
                       question={question}
                       index={index}
@@ -1013,19 +1040,19 @@ export default function SurveyCreator() {
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-500">Required</span>
+                            <span className="text-sm text-gray-500">{t('common.required')}</span>
                             <Switch
                               checked={question.isRequired}
                               onCheckedChange={(checked: boolean) => setQuestions(questions.map(q => q.id === question.id ? { ...q, isRequired: checked } : q))}
-                              aria-label="Toggle required"
-                              className="data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500 focus-visible:ring-emerald-400"
+                              aria-label={t('common.required')}
+                              className={`data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500 focus-visible:ring-emerald-400 ${currentLocale === 'ar' ? 'rtl-switch' : ''}`}
                             />
                           </div>
                         </div>
                         <Input
                           type="text"
-                          placeholder="Add your question title"
-                          aria-label="Enter your question"
+                          placeholder={t('surveyCreator.addQuestionTitle')}
+                          aria-label={t('surveyCreator.addQuestionTitle')}
                           className="text-xl font-semibold mb-6 bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:border-emerald-400 transition-all"
                           value={question.questionText}
                           onChange={(e) => updateQuestionText(question.id, e.target.value)}
@@ -1043,16 +1070,16 @@ export default function SurveyCreator() {
                       </div>
                       <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 opacity-0 translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 z-10 items-center">
                         <button
-                          aria-label="Delete question"
-                          title="Delete question"
+                          aria-label={t('surveyCreator.deleteQuestion')}
+                          title={t('surveyCreator.deleteQuestion')}
                           onClick={() => removeQuestion(index)}
                           className="h-10 w-10 flex items-center justify-center rounded-full bg-white border border-red-200 text-red-500 shadow transition-all duration-200 hover:bg-red-50 hover:text-red-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-red-300"
                         >
                           <Trash2 className="h-5 w-5" />
                         </button>
                         <button
-                          aria-label="Duplicate question"
-                          title="Duplicate question"
+                          aria-label={t('surveyCreator.duplicateQuestion')}
+                          title={t('surveyCreator.duplicateQuestion')}
                           onClick={() => {
                             const q = questions[index];
                             const newQ = {
@@ -1061,7 +1088,11 @@ export default function SurveyCreator() {
                               questionOrder: index + 1,
                               typeId: q.typeId,
                               typeName: q.typeName,
-                              options: q.options.map((opt: any, i: number) => ({ ...opt, order: i })),
+                              options: q.options.map((opt: any, i: number) => ({ 
+                                ...opt, 
+                                id: Date.now() + i + 1, // Generate unique IDs for options
+                                order: i 
+                              })),
                             };
                             const newQuestions = [
                               ...questions.slice(0, index + 1),
@@ -1077,7 +1108,7 @@ export default function SurveyCreator() {
                       </div>
                     </SortableQuestionCard>
                     {/* Drop zone between questions */}
-                    <DropZoneWithHook index={index + 1} dropZoneIds={dropZoneIds} draggedType={draggedType} />
+                    <DropZoneWithHook index={index + 1} dropZoneIds={dropZoneIds} draggedType={draggedType} t={t} />
                     {/* Plus button between cards */}
                     {index < questions.length - 1 && (
                       <div className="flex justify-center my-2">
@@ -1092,12 +1123,12 @@ export default function SurveyCreator() {
                               {loadingQuestionTypes ? (
                                 <div className="flex items-center justify-center py-4">
                                   <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent"></div>
-                                  <span className="ml-2 text-sm text-gray-500">Loading question types...</span>
+                                  <span className="ml-2 text-sm text-gray-500">{t('surveyCreator.loadingQuestionTypes')}</span>
                                 </div>
                               ) : (
-                                questionTypes.map((type) => (
+                                questionTypes.map((type, typeIndex) => (
                                   <button
-                                    key={type.typeId}
+                                    key={type.typeId || `type-${typeIndex}`}
                                     className="flex items-center w-full px-3 py-2 text-sm rounded-lg hover:bg-emerald-50 transition-colors"
                                     onClick={() => {
                                       handleAddQuestion(type.typeId, index + 1);
@@ -1119,6 +1150,7 @@ export default function SurveyCreator() {
                 {/* Empty State - Animated */}
                 {questions.length === 0 && (
                   <motion.div
+                    key="empty-state"
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.5 }}
@@ -1133,14 +1165,14 @@ export default function SurveyCreator() {
                         />
                       </div>
                       <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                        Your survey is empty
+                        {t('surveyCreator.surveyIsEmpty')}
                       </h2>
                       <div className="flex gap-4">
                         <Popover open={showTypePicker} onOpenChange={setShowTypePicker}>
                           <PopoverTrigger asChild>
                             <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 text-white" onClick={() => setShowTypePicker(true)}>
                               <Plus className="h-5 w-5 mr-2" />
-                              Add Your First Question
+                              {t('surveyCreator.addYourFirstQuestion')}
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent align="center" className="w-64 p-2">
@@ -1148,12 +1180,12 @@ export default function SurveyCreator() {
                               {loadingQuestionTypes ? (
                                 <div className="flex items-center justify-center py-4">
                                   <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent"></div>
-                                  <span className="ml-2 text-sm text-gray-500">Loading question types...</span>
+                                  <span className="ml-2 text-sm text-gray-500">{t('surveyCreator.loadingQuestionTypes')}</span>
                                 </div>
                               ) : (
-                                questionTypes.map((type) => (
+                                questionTypes.map((type, typeIndex) => (
                                   <button
-                                    key={type.typeId}
+                                    key={type.typeId || `type-${typeIndex}`}
                                     className="flex items-center w-full px-3 py-2 text-sm rounded-lg hover:bg-emerald-50 transition-colors"
                                     onClick={() => {
                                       handleAddQuestion(type.typeId);
@@ -1184,32 +1216,32 @@ export default function SurveyCreator() {
                                 }
                               }}
                               disabled={false}
-                              title="Survey title and description required"
+                              title={t('surveyCreator.surveyTitleAndDescriptionRequired')}
                             >
                               <BarChart2 className="h-5 w-5 mr-2" />
-                              Generate with AI
+                              {t('surveyCreator.generateWithAI')}
                             </Button>
                             {/* Custom Tooltip */}
                             <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
                               <div className="bg-white border border-gray-200 shadow-lg rounded-lg p-3 w-80">
                                 <div className="space-y-2">
-                                  <p className="font-medium text-gray-900">Survey title and description required</p>
+                                  <p className="font-medium text-gray-900">{t('surveyCreator.surveyTitleAndDescriptionRequired')}</p>
                                   <div className="text-sm space-y-1">
                                     {!metadata.title.trim() && (
                                       <p className="flex items-center gap-1 text-red-600">
                                         <span className="w-2 h-2 bg-red-400 rounded-full"></span>
-                                        Add survey title
+                                        {t('surveyCreator.addSurveyTitle')}
                                       </p>
                                     )}
                                     {!metadata.description.trim() && (
                                       <p className="flex items-center gap-1 text-red-600">
                                         <span className="w-2 h-2 bg-red-400 rounded-full"></span>
-                                        Add survey description
+                                        {t('surveyCreator.addSurveyDescription')}
                                       </p>
                                     )}
                                   </div>
                                   <p className="text-xs text-gray-500">
-                                    Fill in the survey details in the right sidebar first
+                                    {t('surveyCreator.fillInSurveyDetailsFirst')}
                                   </p>
                                 </div>
                                 {/* Arrow */}
@@ -1225,7 +1257,7 @@ export default function SurveyCreator() {
                             disabled={false}
                           >
                             <BarChart2 className="h-5 w-5 mr-2" />
-                            Generate with AI
+                            {t('surveyCreator.generateWithAI')}
                           </Button>
                         )}
                       </div>
@@ -1236,26 +1268,26 @@ export default function SurveyCreator() {
                           <div className="text-sm text-gray-500 bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md mx-auto">
                             <div className="flex items-center justify-center gap-2 mb-2">
                               <span className="text-yellow-600">💡</span>
-                              <span className="font-medium text-yellow-800">Get Started with AI</span>
+                              <span className="font-medium text-yellow-800">{t('surveyCreator.getStartedWithAI.title')}</span>
                             </div>
                             <p className="text-yellow-700 mb-2">
-                              To use AI question generation, first add a survey title and description in the right sidebar.
+                              {t('surveyCreator.getStartedWithAI.description')}
                             </p>
                             <p className="text-xs text-yellow-600">
-                              The AI will create relevant questions based on your survey topic and description.
+                              {t('surveyCreator.getStartedWithAI.aiWillCreateRelevantQuestions')}
                             </p>
                           </div>
                         ) : (
                           <div className="text-sm text-gray-500 bg-purple-50 border border-purple-200 rounded-lg p-4 max-w-md mx-auto">
                             <div className="flex items-center justify-center gap-2 mb-2">
                               <span className="text-purple-600">🚀</span>
-                              <span className="font-medium text-purple-800">Ready for AI Generation!</span>
+                              <span className="font-medium text-purple-800">{t('surveyCreator.readyForAIGeneration.title')}</span>
                             </div>
                             <p className="text-purple-700 mb-2">
-                              Your survey is ready! Use AI to quickly generate relevant questions based on your topic.
+                              {t('surveyCreator.readyForAIGeneration.description')}
                             </p>
                             <p className="text-xs text-purple-600">
-                              Choose question types and counts, then let AI create your questions automatically.
+                              {t('surveyCreator.readyForAIGeneration.chooseQuestionTypesAndCounts')}
                             </p>
                           </div>
                         )}
@@ -1275,7 +1307,7 @@ export default function SurveyCreator() {
                     <PopoverTrigger asChild>
                       <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 text-white" onClick={() => setShowTypePicker(true)}>
                         <Plus className="h-5 w-5 mr-2" />
-                        Add Question
+                        {t('surveyCreator.addQuestion')}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent align="center" className="w-64 p-2">
@@ -1283,18 +1315,18 @@ export default function SurveyCreator() {
                         {loadingQuestionTypes ? (
                           <div className="flex items-center justify-center py-4">
                             <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent"></div>
-                            <span className="ml-2 text-sm text-gray-500">Loading question types...</span>
+                            <span className="ml-2 text-sm text-gray-500">{t('surveyCreator.loadingQuestionTypes')}</span>
                           </div>
                         ) : (
-                          questionTypes.map((type) => (
-                            <button
-                              key={type.typeId}
-                              className="flex items-center w-full px-3 py-2 text-sm rounded-lg hover:bg-emerald-50 transition-colors"
-                              onClick={() => {
-                                handleAddQuestion(type.typeId);
-                                setShowTypePicker(false);
-                              }}
-                            >
+                                                          questionTypes.map((type, typeIndex) => (
+                                  <button
+                                    key={type.typeId || `type-${typeIndex}`}
+                                    className="flex items-center w-full px-3 py-2 text-sm rounded-lg hover:bg-emerald-50 transition-colors"
+                                    onClick={() => {
+                                      handleAddQuestion(type.typeId);
+                                      setShowTypePicker(false);
+                                    }}
+                                  >
                               <span className="mr-2">{QUESTION_TYPE_ICONS[type.typeName]}</span>
                               <span>{QUESTION_TYPE_LABELS[type.typeName] || type.typeName}</span>
                             </button>
@@ -1319,32 +1351,32 @@ export default function SurveyCreator() {
                           }
                         }}
                         disabled={false}
-                        title="Survey title and description required"
+                        title={t('surveyCreator.surveyTitleAndDescriptionRequired')}
                       >
                         <BarChart2 className="h-5 w-5 mr-2" />
-                        Generate with AI
+                        {t('surveyCreator.generateWithAI')}
                       </Button>
                       {/* Custom Tooltip */}
                       <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
                         <div className="bg-white border border-gray-200 shadow-lg rounded-lg p-3 w-80">
                           <div className="space-y-2">
-                            <p className="font-medium text-gray-900">Survey title and description required</p>
+                            <p className="font-medium text-gray-900">{t('surveyCreator.surveyTitleAndDescriptionRequired')}</p>
                             <div className="text-sm space-y-1">
                               {!metadata.title.trim() && (
                                 <p className="flex items-center gap-1 text-red-600">
                                   <span className="w-2 h-2 bg-red-400 rounded-full"></span>
-                                  Add survey title
+                                  {t('surveyCreator.addSurveyTitle')}
                                 </p>
                               )}
                               {!metadata.description.trim() && (
                                 <p className="flex items-center gap-1 text-red-600">
                                   <span className="w-2 h-2 bg-red-400 rounded-full"></span>
-                                  Add survey description
+                                  {t('surveyCreator.addSurveyDescription')}
                                 </p>
                               )}
                             </div>
                             <p className="text-xs text-gray-500">
-                              Fill in the survey details in the right sidebar first
+                              {t('surveyCreator.fillInSurveyDetailsFirst')}
                             </p>
                           </div>
                           {/* Arrow */}
@@ -1360,7 +1392,7 @@ export default function SurveyCreator() {
                       disabled={false}
                     >
                       <BarChart2 className="h-5 w-5 mr-2" />
-                      Generate with AI
+                      {t('surveyCreator.generateWithAI')}
                     </Button>
                   )}
                   
@@ -1375,15 +1407,17 @@ export default function SurveyCreator() {
                 const q = questions.find(q => q.id === activeDragId);
                 if (!q) return null;
                 return (
-                  <SortableSidebarQuestion
-                    q={q}
-                    idx={q.questionOrder}
-                    activeQuestionId={activeQuestionId}
-                    setActiveQuestionId={setActiveQuestionId}
-                    activeDragId={activeDragId}
-                    setQuestions={setQuestions}
-                    QUESTION_TYPE_ICONS={QUESTION_TYPE_ICONS}
-                  />
+                                        <SortableSidebarQuestion
+                        key={`main-drag-overlay-${q.id || 'unknown'}`}
+                        q={q}
+                        idx={q.questionOrder}
+                        activeQuestionId={activeQuestionId}
+                        setActiveQuestionId={setActiveQuestionId}
+                        activeDragId={activeDragId}
+                        setQuestions={setQuestions}
+                        QUESTION_TYPE_ICONS={QUESTION_TYPE_ICONS}
+                        t={t}
+                      />
                 );
               })()
             ) : null}
@@ -1394,47 +1428,47 @@ export default function SurveyCreator() {
           {/* Survey Details (moved here) */}
           <div className="h-full flex flex-col">
             <div className="p-4 pl-6 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="font-bold text-lg">Survey Details</h3>
+              <h3 className="font-bold text-lg">{t('surveyCreator.surveyDetails')}</h3>
             </div>
             <div className="flex-1 overflow-y-auto">
               <div className="p-6">
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <label htmlFor="title" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      Survey Title
+                      {t('surveyCreator.surveyTitle')}
                       <span className="text-red-500">*</span>
                       {!metadata.title.trim() && (
                         <span className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded">
-                          Required for AI
+                          {t('surveyCreator.requiredForAI')}
                         </span>
                       )}
                     </label>
                     <Input
                       id="title"
-                      placeholder="Enter survey title"
+                      placeholder={t('surveyCreator.enterSurveyTitle')}
                       value={metadata.title}
                       onChange={(e) => handleMetadataChange("title", e.target.value)}
                       className={!metadata.title.trim() ? "border-red-300 focus:border-red-500" : ""}
                     />
                     {!metadata.title.trim() && (
                       <p className="text-xs text-red-500">
-                        Survey title is required to generate AI questions
+                        {t('surveyCreator.surveyTitleRequiredForAI')}
                       </p>
                     )}
                   </div>
                   <div className="space-y-2">
                     <label htmlFor="description" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      Description
+                      {t('surveyCreator.surveyDescription')}
                       <span className="text-red-500">*</span>
                       {!metadata.description.trim() && (
                         <span className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded">
-                          Required for AI
+                          {t('surveyCreator.requiredForAI')}
                         </span>
                       )}
                     </label>
                     <Textarea
                       id="description"
-                      placeholder="Enter survey description"
+                      placeholder={t('surveyCreator.enterSurveyDescription')}
                       value={metadata.description}
                       onChange={(e) => handleMetadataChange("description", e.target.value)}
                       className={`min-h-[100px] resize-none break-words ${
@@ -1443,37 +1477,37 @@ export default function SurveyCreator() {
                     />
                     {!metadata.description.trim() && (
                       <p className="text-xs text-red-500">
-                        Survey description is required to generate AI questions
+                        {t('surveyCreator.surveyDescriptionRequiredForAI')}
                       </p>
                     )}
                   </div>
                   <div className="space-y-2">
                     <label htmlFor="pointsReward" className="text-sm font-medium text-gray-700">
-                      Points Reward
+                      {t('surveyCreator.pointsReward')}
                     </label>
                     <Input
                       id="pointsReward"
                       type="number"
-                      placeholder="Enter points"
+                      placeholder={t('surveyCreator.enterPoints')}
                       value={metadata.pointsReward}
                       onChange={(e) => handleMetadataChange("pointsReward", parseInt(e.target.value))}
                     />
                   </div>
                   <div className="space-y-2">
                     <label htmlFor="requiredParticipants" className="text-sm font-medium text-gray-700">
-                      Required Participants
+                      {t('surveyCreator.requiredParticipants')}
                     </label>
                     <Input
                       id="requiredParticipants"
                       type="number"
-                      placeholder="Enter number"
+                      placeholder={t('surveyCreator.enterNumber')}
                       value={metadata.requiredParticipants}
                       onChange={(e) => handleMetadataChange("requiredParticipants", parseInt(e.target.value))}
                     />
                   </div>
                   <div className="space-y-2">
                     <label htmlFor="startDate" className="text-sm font-medium text-gray-700">
-                      Start Date
+                      {t('surveyCreator.startDate')}
                     </label>
                     <Input
                       id="startDate"
@@ -1484,7 +1518,7 @@ export default function SurveyCreator() {
                   </div>
                   <div className="space-y-2">
                     <label htmlFor="endDate" className="text-sm font-medium text-gray-700">
-                      End Date
+                      {t('surveyCreator.endDate')}
                     </label>
                     <Input
                       id="endDate"
@@ -1495,7 +1529,7 @@ export default function SurveyCreator() {
                   </div>
                   <div className="space-y-2">
                     <label htmlFor="targetAcademicYear" className="text-sm font-medium text-gray-700">
-                      Target Academic Year
+                      {t('surveyCreator.targetAcademicYear')}
                     </label>
                     <CustomSelect
                       value={metadata.targetAcademicYears.join(",")}
@@ -1507,19 +1541,23 @@ export default function SurveyCreator() {
                           setMetadata((prev) => ({ ...prev, targetAcademicYears: selected }));
                         }
                       }}
-                      placeholder="Select Academic Years"
+                      placeholder={t('surveyCreator.selectAcademicYears')}
                       multiple
                     >
-                      {ACADEMIC_YEARS_SELECT.map((year) => (
-                        <CustomSelectOption key={year.value} value={year.value.toString()}>
-                          {year.label}
+                      {ACADEMIC_YEARS_SELECT.map((year, yearIndex) => (
+                        <CustomSelectOption key={year.value || `year-${yearIndex}`} value={year.value.toString()}>
+                          {year.value === 'all'
+                            ? t('common.all', currentLocale)
+                            : yearKeyMap[year.value.toString()]
+                              ? t(`common.academicYears.${yearKeyMap[year.value.toString()]}`, currentLocale)
+                              : year.label}
                         </CustomSelectOption>
                       ))}
                     </CustomSelect>
                   </div>
                   <div className="space-y-2">
                     <label htmlFor="targetDepartment" className="text-sm font-medium text-gray-700">
-                      Target Department
+                      {t('surveyCreator.targetDepartment')}
                     </label>
                     <CustomSelect
                       value={metadata.targetDepartmentIds.join(",")}
@@ -1531,12 +1569,12 @@ export default function SurveyCreator() {
                           setMetadata((prev) => ({ ...prev, targetDepartmentIds: selected }));
                         }
                       }}
-                      placeholder="Select Departments"
+                      placeholder={t('surveyCreator.selectDepartments')}
                       multiple
                     >
-                      <CustomSelectOption key="all" value="all">All</CustomSelectOption>
-                      {departments.map((dept) => (
-                        <CustomSelectOption key={dept.id} value={dept.id.toString()}>
+                      <CustomSelectOption key="all" value="all">{t('common.all', currentLocale)}</CustomSelectOption>
+                      {departments.map((dept, deptIndex) => (
+                        <CustomSelectOption key={dept.id || `dept-${deptIndex}`} value={dept.id.toString()}>
                           {dept.name}
                         </CustomSelectOption>
                       ))}
@@ -1544,23 +1582,21 @@ export default function SurveyCreator() {
                   </div>
                   <div className="space-y-2">
                     <label htmlFor="targetGender" className="text-sm font-medium text-gray-700">
-                      Target Gender
+                      {t('surveyCreator.targetGender')}
                     </label>
                     <CustomSelect
                       value={metadata.targetGender}
                       onChange={(value) => setMetadata((prev) => ({ ...prev, targetGender: value }))}
-                      placeholder="Select Gender"
+                      placeholder={t('surveyCreator.selectGender')}
                     >
-                      {TARGET_GENDER_SELECT.map((gender) => (
-                        <CustomSelectOption key={gender.value} value={gender.value.toString()}>
-                          {gender.label}
-                        </CustomSelectOption>
-                      ))}
+                      <CustomSelectOption key="all" value="all">{t('common.all', currentLocale)}</CustomSelectOption>
+                      <CustomSelectOption key="male" value="male">{t('common.male', currentLocale)}</CustomSelectOption>
+                      <CustomSelectOption key="female" value="female">{t('common.female', currentLocale)}</CustomSelectOption>
                     </CustomSelect>
                   </div>
                   <div className="space-y-2 flex items-center justify-between">
                     <label className="text-sm font-medium text-gray-700">
-                      Publish Immediately
+                      {t('surveyCreator.publishImmediately')}
                     </label>
                     <Switch
                       checked={Boolean(metadata.publishImmediately)}
@@ -1599,7 +1635,7 @@ export default function SurveyCreator() {
                         console.log('Final state verification completed');
                       }}
                       disabled={isEditMode}
-                      className="data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500 focus-visible:ring-emerald-400"
+                      className={`data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500 focus-visible:ring-emerald-400 ${currentLocale === 'ar' ? 'rtl-switch' : ''}`}
                     />
                   </div>
                   {/* <div className="text-xs text-gray-500 text-center">
@@ -1619,7 +1655,7 @@ export default function SurveyCreator() {
                   </div> */}
                   {isEditMode && (
                     <p className="text-xs text-gray-500 text-center">
-                      Publish Immediately is disabled in edit mode
+                      {t('surveyCreator.publishImmediatelyDisabledInEditMode')}
                     </p>
                   )}
                 </div>
@@ -1638,12 +1674,12 @@ export default function SurveyCreator() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
                       </svg>
-                      {isEditMode ? 'Updating...' : 'Saving...'}
+                      {isEditMode ? t('surveyCreator.updating') : t('surveyCreator.saving')}
                     </span>
                   ) : (
                     <>
                       <Save className="h-5 w-5 mr-2" />
-                      {isEditMode ? 'Update Survey' : 'Save Survey'}
+                      {isEditMode ? t('surveyCreator.updateSurvey') : t('surveyCreator.saveSurvey')}
                     </>
                   )}
                 </Button>
@@ -1653,7 +1689,7 @@ export default function SurveyCreator() {
                   variant="outline"
                   onClick={() => setShowJsonDialog(true)}
                 >
-                  Show JSON
+                  {t('surveyCreator.showJSON')}
                 </Button>
                 <Dialog open={showJsonDialog} onOpenChange={(open) => {
                   setShowJsonDialog(open);
@@ -1663,11 +1699,11 @@ export default function SurveyCreator() {
                     setJsonDirty(false);
                   }
                 }}>
-                  <DialogContent className="max-w-2xl">
+                  <DialogContent className="max-w-2xl" dir="ltr">
                     <DialogHeader>
-                      <DialogTitle>Edit Survey JSON</DialogTitle>
+                      <DialogTitle>{t('surveyCreator.editSurveyJSON')}</DialogTitle>
                       <DialogDescription>
-                        You can edit the JSON directly. Changes will update the survey details and questions.
+                        {t('surveyCreator.jsonDescription')}
                       </DialogDescription>
                     </DialogHeader>
                     <Textarea
@@ -1680,9 +1716,10 @@ export default function SurveyCreator() {
                       }}
                       rows={20}
                       spellCheck={false}
+                      dir="ltr"
                     />
                     {jsonError && (
-                      <div className="text-red-600 text-xs mt-2">{jsonError}</div>
+                      <div className="text-red-600 text-xs mt-2" dir="ltr">{jsonError}</div>
                     )}
                     <DialogFooter>
                       <Button
@@ -1694,7 +1731,7 @@ export default function SurveyCreator() {
                         }}
                         disabled={!jsonDirty}
                       >
-                        Refresh
+                        {t('common.refresh')}
                       </Button>
                       <Button
                         className="bg-emerald-500 hover:bg-emerald-600 text-white"
@@ -1730,17 +1767,17 @@ export default function SurveyCreator() {
                             setShowJsonDialog(false);
                             setJsonError(null);
                             setJsonDirty(false);
-                            toast({ title: "Survey updated from JSON!" });
+                            toast({ title: t('surveyCreator.surveyUpdatedFromJSON', currentLocale) });
                           } catch (err: any) {
                             setJsonError(err.message);
-                            toast({ title: "Invalid JSON", description: err.message, variant: "destructive" });
+                            toast({ title: t('surveyCreator.invalidJSON', currentLocale), description: err.message, variant: "destructive" });
                           }
                         }}
                       >
-                        Save
+                        {t('common.save')}
                       </Button>
                       <DialogClose asChild>
-                        <Button variant="outline">Cancel</Button>
+                        <Button variant="outline">{t('common.cancel')}</Button>
                       </DialogClose>
                     </DialogFooter>
                   </DialogContent>
@@ -1750,10 +1787,10 @@ export default function SurveyCreator() {
             {/* Survey Summary */}
             <div className="p-2 text-center">
               <h3 className="text-lg font-medium mb-2">
-                Survey Summary
+                {t('surveyCreator.surveySummary')}
               </h3>
               <p className="text-sm text-gray-500 mb-4">
-                Total Questions: {questions.length}
+                {t('surveyCreator.totalQuestions')}: {questions.length}
               </p>
             </div>
           </div>
@@ -1766,38 +1803,37 @@ export default function SurveyCreator() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <BarChart2 className="h-5 w-5 text-purple-500" />
-              Generate Questions with AI
+              {t('surveyCreator.aiGenerationConfig.title')}
             </DialogTitle>
             <DialogDescription>
-              Configure AI to generate questions based on your survey title and description. 
-              The AI will create relevant questions for each selected question type.
+              {t('surveyCreator.aiGenerationConfig.description')}
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-6">
             {/* Survey Info Display */}
             <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="font-semibold text-gray-900 mb-2">Survey Information</h4>
+              <h4 className="font-semibold text-gray-900 mb-2">{t('surveyCreator.aiGenerationConfig.surveyInformation')}</h4>
               <div className="space-y-2 text-sm">
                 <div>
-                  <span className="font-medium text-gray-700">Title:</span> {metadata.title || "Not set"}
+                  <span className="font-medium text-gray-700">{t('surveyCreator.surveyTitle')}:</span> {metadata.title || "Not set"}
                 </div>
                 <div>
-                  <span className="font-medium text-gray-700">Description:</span> {metadata.description || "Not set"}
+                  <span className="font-medium text-gray-700">{t('surveyCreator.surveyDescription')}:</span> {metadata.description || "Not set"}
                 </div>
               </div>
             </div>
 
             {/* Question Types Configuration */}
             <div className="space-y-4">
-              <h4 className="font-semibold text-gray-900">Question Types & Counts</h4>
+              <h4 className="font-semibold text-gray-900">{t('surveyCreator.aiGenerationConfig.questionTypesAndCounts')}</h4>
               <div className="space-y-3">
-                {questionTypes.map((type) => {
+                {questionTypes.map((type, typeIndex) => {
                   const config = aiGenerationConfig.questionTypes.find(qt => qt.typeId === type.typeId);
                   const count = config?.count || 0;
                   
                   return (
-                    <div key={type.typeId} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                    <div key={type.typeId || `type-${typeIndex}`} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
                       <div className="flex items-center gap-3">
                         {QUESTION_TYPE_ICONS[type.typeName]}
                         <span className="font-medium text-gray-700">
@@ -1848,11 +1884,11 @@ export default function SurveyCreator() {
             {/* Additional Details */}
             <div className="space-y-2">
               <label htmlFor="additionalDetails" className="text-sm font-medium text-gray-700">
-                Additional Details (Optional)
+                {t('surveyCreator.aiGenerationConfig.additionalDetails')}
               </label>
               <Textarea
                 id="additionalDetails"
-                placeholder="Provide additional context or specific requirements for the AI to generate more relevant questions..."
+                placeholder={t('surveyCreator.aiGenerationConfig.additionalDetailsPlaceholder')}
                 value={aiGenerationConfig.additionalDetails}
                 onChange={(e) => setAIGenerationConfig(prev => ({ ...prev, additionalDetails: e.target.value }))}
                 rows={3}
@@ -1863,7 +1899,7 @@ export default function SurveyCreator() {
             {/* Default Options */}
             <div className="space-y-2">
               <label htmlFor="defaultOptions" className="text-sm font-medium text-gray-700">
-                Default Options Count
+                {t('surveyCreator.aiGenerationConfig.defaultOptionsCount')}
               </label>
               <Input
                 id="defaultOptions"
@@ -1875,14 +1911,14 @@ export default function SurveyCreator() {
                 className="w-32"
               />
               <p className="text-xs text-gray-500">
-                Number of options to generate for multiple choice and single answer questions (2-10)
+                {t('surveyCreator.aiGenerationConfig.defaultOptionsDescription')}
               </p>
             </div>
           </div>
 
           <DialogFooter className="gap-2">
             <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
+              <Button variant="outline">{t('common.cancel')}</Button>
             </DialogClose>
             <Button
               onClick={handleGenerateQuestionsWithAI}
@@ -1892,12 +1928,12 @@ export default function SurveyCreator() {
               {isGeneratingQuestions ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Generating...
+                  {t('surveyCreator.aiGenerationConfig.generating')}
                 </>
               ) : (
                 <>
                   <BarChart2 className="h-4 w-4 mr-2" />
-                  Generate Questions
+                  {t('surveyCreator.aiGenerationConfig.generateQuestions')}
                 </>
               )}
             </Button>

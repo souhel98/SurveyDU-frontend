@@ -6,6 +6,109 @@ body {
   font-family: var(--font-cairo), Cairo, sans-serif;
 }
 
+/* RTL Support */
+.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+.ltr {
+  direction: ltr;
+  text-align: left;
+}
+
+/* RTL-specific adjustments */
+.rtl .ml-4 {
+  margin-left: 0 !important;
+  margin-right: 1rem !important;
+}
+
+.rtl .mr-2 {
+  margin-right: 0 !important;
+  margin-left: 0.5rem !important;
+}
+.rtl .mr-1 {
+  margin-right: 0 !important;
+  margin-left: 0.25rem !important;
+}
+
+.rtl .mr-3 {
+  margin-right: 0 !important;
+  margin-left: 0.75rem !important;
+}
+.rtl .mr-4 {
+  margin-right: 0 !important;
+  margin-left: 1rem !important;
+}
+
+.rtl .ml-8 {
+  margin-left: 0 !important;
+  margin-right: 2rem !important;
+}
+
+.rtl .ml-2 {
+  margin-left: 0 !important;
+  margin-right: 0.5rem !important;
+}
+
+.rtl .space-x-1 > * + * {
+  margin-left: 0 !important;
+  margin-right: 0.25rem !important;
+}
+
+.rtl .space-x-4 > * + * {
+  margin-left: 0 !important;
+  margin-right: 1rem !important;
+}
+
+.rtl .space-x-6 > * + * {
+  margin-left: 0 !important;
+  margin-right: 1.5rem !important;
+}
+
+.rtl .space-x-2 > * + * {
+  margin-left: 0 !important;
+  margin-right: 0.5rem !important;
+}
+
+.rtl .gap-2 {
+  gap: 0.5rem !important;
+}
+
+.rtl .gap-3 {
+  gap: 0.75rem !important;
+}
+
+.rtl .gap-4 {
+  gap: 1rem !important;
+}
+
+/* LTR-specific adjustments */
+.ltr .mr-2 {
+  margin-right: 0.5rem !important;
+  margin-left: 0 !important;
+}
+
+.ltr .mr-3 {
+  margin-right: 0.75rem !important;
+  margin-left: 0 !important;
+}
+
+.ltr .ml-4 {
+  margin-left: 1rem !important;
+  margin-right: 0 !important;
+}
+
+.ltr .ml-8 {
+  margin-left: 2rem !important;
+  margin-right: 0 !important;
+}
+
+.ltr .ml-2 {
+  margin-left: 0.5rem !important;
+  margin-right: 0 !important;
+}
+
 @layer components {
   /* Global Button Color Classes */
   .btn-emerald {

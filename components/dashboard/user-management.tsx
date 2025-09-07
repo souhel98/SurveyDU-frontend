@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { AdminService } from "@/lib/services/admin-service";
@@ -13,6 +13,8 @@ import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { DepartmentService } from "@/lib/services/department-service";
 import { AuthService } from "@/lib/services/auth-service";
 import { Eye, Pencil, Trash2, Plus } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
+import { useLocale } from "@/components/ui/locale-provider";
 
 interface User {
   id: string;
@@ -34,6 +36,8 @@ interface Department {
 }
 
 export default function UserManagement() {
+  const { t } = useTranslation();
+  const { currentLocale } = useLocale();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,7 +67,7 @@ export default function UserManagement() {
         setLoading(false);
       })
       .catch((err) => {
-        setError("Failed to load users");
+        setError(t('userManagement.failedToLoadUsers'));
         setLoading(false);
       });
     
@@ -72,11 +76,11 @@ export default function UserManagement() {
         setDepartments(data);
       })
       .catch(() => {
-        toast({ title: "Error", description: "Failed to load departments", variant: "destructive" });
+        toast({ title: t('common.error'), description: t('userManagement.failedToLoadDepartments'), variant: "destructive" });
       });
 
     setCurrentUser(AuthService.getCurrentUser());
-  }, [toast]);
+  }, [toast, t]);
 
   const openUserDetails = async (id: string, mode: 'view' | 'edit' = 'view') => {
     setDetailsLoading(true);
@@ -91,7 +95,7 @@ export default function UserManagement() {
         departmentId: user.departmentId ?? null,
       });
     } catch {
-      toast({ title: "Error", description: "Failed to fetch user details", variant: "destructive" });
+      toast({ title: t('common.error'), description: t('userManagement.failedToFetchUserDetails'), variant: "destructive" });
       setShowDialog(false);
     } finally {
       setDetailsLoading(false);
@@ -110,11 +114,11 @@ export default function UserManagement() {
     if (!selectedUser) return;
     // Validation
     if (!editData.firstName || !editData.lastName) {
-      toast({ title: "Validation Error", description: "First and last names are required.", variant: "destructive" });
+      toast({ title: t('userManagement.validationError'), description: t('userManagement.firstNameRequired'), variant: "destructive" });
       return;
     }
     if (selectedUser.userType !== 'Admin' && !editData.departmentId) {
-      toast({ title: "Validation Error", description: "Department is required for students and teachers.", variant: "destructive" });
+      toast({ title: t('userManagement.validationError'), description: t('userManagement.departmentRequired'), variant: "destructive" });
       return;
     }
     setSaving(true);
@@ -123,7 +127,7 @@ export default function UserManagement() {
         ? { firstName: editData.firstName, lastName: editData.lastName }
         : { firstName: editData.firstName, lastName: editData.lastName, departmentId: editData.departmentId };
       await AdminService.updateUser(selectedUser.id, updateData);
-      toast({ title: "Success", description: "User updated successfully" });
+      toast({ title: t('common.success'), description: t('userManagement.userUpdatedSuccessfully') });
       setShowDialog(false);
       // Refresh user list
       setLoading(true);
@@ -139,7 +143,7 @@ export default function UserManagement() {
         window.dispatchEvent(new Event('profile-updated'));
       }
     } catch {
-      toast({ title: "Error", description: "Failed to update user", variant: "destructive" });
+      toast({ title: t('common.error'), description: t('userManagement.failedToUpdateUser'), variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -154,7 +158,7 @@ export default function UserManagement() {
     setDeleting(true);
     try {
       await AdminService.deleteUser(selectedUser.id);
-      toast({ title: "Success", description: "User deleted successfully" });
+      toast({ title: t('common.success'), description: t('userManagement.userDeletedSuccessfully') });
       setShowDialog(false);
       // Refresh user list
       setLoading(true);
@@ -162,7 +166,7 @@ export default function UserManagement() {
       setUsers(data);
       setLoading(false);
     } catch {
-      toast({ title: "Error", description: "Failed to delete user", variant: "destructive" });
+      toast({ title: t('common.error'), description: t('userManagement.failedToDeleteUser'), variant: "destructive" });
     } finally {
       setDeleting(false);
     }
@@ -178,7 +182,7 @@ export default function UserManagement() {
   const handleRegisterTeacher = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!registerData.firstName || !registerData.lastName || !registerData.email || !registerData.departmentId) {
-      toast({ title: "Validation Error", description: "All fields are required.", variant: "destructive" });
+      toast({ title: t('userManagement.validationError'), description: t('userManagement.allFieldsRequired'), variant: "destructive" });
       return;
     }
     setRegisterLoading(true);
@@ -189,7 +193,7 @@ export default function UserManagement() {
         email: registerData.email,
         departmentId: Number(registerData.departmentId),
       });
-      toast({ title: "Success", description: "Teacher registration successful" });
+      toast({ title: t('common.success'), description: t('userManagement.teacherRegistrationSuccessful') });
       setShowRegisterModal(false);
       setRegisterData({ firstName: "", lastName: "", email: "", departmentId: "" });
       // Refresh user list
@@ -198,7 +202,7 @@ export default function UserManagement() {
       setUsers(data);
       setLoading(false);
     } catch {
-      toast({ title: "Error", description: "Failed to register teacher", variant: "destructive" });
+      toast({ title: t('common.error'), description: t('userManagement.failedToRegisterTeacher'), variant: "destructive" });
     } finally {
       setRegisterLoading(false);
     }
@@ -210,7 +214,7 @@ export default function UserManagement() {
   const handleRegisterAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!registerAdminData.firstName || !registerAdminData.lastName || !registerAdminData.email) {
-      toast({ title: "Validation Error", description: "All fields are required.", variant: "destructive" });
+      toast({ title: t('userManagement.validationError'), description: t('userManagement.allFieldsRequired'), variant: "destructive" });
       return;
     }
     setRegisterAdminLoading(true);
@@ -220,7 +224,7 @@ export default function UserManagement() {
         lastName: registerAdminData.lastName,
         email: registerAdminData.email,
       });
-      toast({ title: "Success", description: "Admin registration successful" });
+      toast({ title: t('common.success'), description: t('userManagement.adminRegistrationSuccessful') });
       setShowRegisterAdminModal(false);
       setRegisterAdminData({ firstName: '', lastName: '', email: '' });
       // Refresh user list
@@ -229,13 +233,13 @@ export default function UserManagement() {
       setUsers(data);
       setLoading(false);
     } catch {
-      toast({ title: "Error", description: "Failed to register admin", variant: "destructive" });
+      toast({ title: t('common.error'), description: t('userManagement.failedToRegisterAdmin'), variant: "destructive" });
     } finally {
       setRegisterAdminLoading(false);
     }
   };
 
-  if (loading) return <div className="p-8 text-center">Loading users...</div>;
+  if (loading) return <div className="p-8 text-center">{t('userManagement.loadingUsers')}</div>;
   if (error) return <div className="p-8 text-center text-red-500">{error}</div>;
 
   // Filter users based on role filter
@@ -251,16 +255,16 @@ export default function UserManagement() {
         <div className="hidden sm:flex justify-between items-center">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <label htmlFor="roleFilter" className="text-sm font-medium text-gray-700 whitespace-nowrap">Filter by Role:</label>
+              <label htmlFor="roleFilter" className="text-sm font-medium text-gray-700 whitespace-nowrap">{t('userManagement.filterByRole')}</label>
               <Select value={roleFilter} onValueChange={setRoleFilter}>
                 <SelectTrigger className="w-40">
-                  <SelectValue placeholder="All Roles" />
+                  <SelectValue placeholder={t('userManagement.allRoles')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="Admin">Admin</SelectItem>
-                  <SelectItem value="Teacher">Teacher</SelectItem>
-                  <SelectItem value="Student">Student</SelectItem>
+                  <SelectItem value="all">{t('userManagement.allRoles')}</SelectItem>
+                  <SelectItem value="Admin">{t('userManagement.roles.Admin', currentLocale)}</SelectItem>
+                  <SelectItem value="Teacher">{t('userManagement.roles.Teacher', currentLocale)}</SelectItem>
+                  <SelectItem value="Student">{t('userManagement.roles.Student', currentLocale)}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -271,19 +275,19 @@ export default function UserManagement() {
                 onClick={() => setRoleFilter('all')}
                 className="text-gray-600 hover:text-gray-800"
               >
-                Clear Filter
+                {t('userManagement.clearFilter')}
               </Button>
             )}
             <span className="text-sm text-gray-500">
-              Showing {filteredUsers.length} of {users.length} users
+              {t('userManagement.showingUsers').replace('{count}', filteredUsers.length.toString()).replace('{total}', users.length.toString())}
             </span>
           </div>
           <div className="flex gap-2">
             <Button onClick={() => setShowRegisterModal(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
-              <Plus className="h-4 w-4" /> Register Teacher
+              <Plus className="h-4 w-4" /> {t('userManagement.registerTeacher')}
             </Button>
             <Button onClick={() => setShowRegisterAdminModal(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 focus:ring-2 focus:ring-emerald-300 active:bg-emerald-800 disabled:bg-emerald-400">
-              <Plus className="h-4 w-4" /> Register Admin
+              <Plus className="h-4 w-4" /> {t('userManagement.registerAdmin')}
             </Button>
           </div>
         </div>
@@ -292,25 +296,25 @@ export default function UserManagement() {
         <div className="sm:hidden space-y-4">
           <div className="flex flex-col gap-2">
             <Button onClick={() => setShowRegisterModal(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 w-full">
-              <Plus className="h-4 w-4" /> Register Teacher
+              <Plus className="h-4 w-4" /> {t('userManagement.registerTeacher')}
             </Button>
             <Button onClick={() => setShowRegisterAdminModal(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 focus:ring-2 focus:ring-emerald-300 active:bg-emerald-800 disabled:bg-emerald-400 w-full">
-              <Plus className="h-4 w-4" /> Register Admin
+              <Plus className="h-4 w-4" /> {t('userManagement.registerAdmin')}
             </Button>
           </div>
           
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-3">
-              <label htmlFor="roleFilter" className="text-sm font-medium text-gray-700 whitespace-nowrap">Filter by Role:</label>
+              <label htmlFor="roleFilter" className="text-sm font-medium text-gray-700 whitespace-nowrap">{t('userManagement.filterByRole')}</label>
               <Select value={roleFilter} onValueChange={setRoleFilter}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="All Roles" />
+                  <SelectValue placeholder={t('userManagement.allRoles')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="Admin">Admin</SelectItem>
-                  <SelectItem value="Teacher">Teacher</SelectItem>
-                  <SelectItem value="Student">Student</SelectItem>
+                  <SelectItem value="all">{t('userManagement.allRoles')}</SelectItem>
+                  <SelectItem value="Admin">{t('userManagement.roles.Admin', currentLocale)}</SelectItem>
+                  <SelectItem value="Teacher">{t('userManagement.roles.Teacher', currentLocale)}</SelectItem>
+                  <SelectItem value="Student">{t('userManagement.roles.Student', currentLocale)}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -321,34 +325,34 @@ export default function UserManagement() {
                 onClick={() => setRoleFilter('all')}
                 className="text-gray-600 hover:text-gray-800 w-full"
               >
-                Clear Filter
+                {t('userManagement.clearFilter')}
               </Button>
             )}
             <div className="text-sm text-gray-500">
-              Showing {filteredUsers.length} of {users.length} users
+              {t('userManagement.showingUsers').replace('{count}', filteredUsers.length.toString()).replace('{total}', users.length.toString())}
             </div>
           </div>
         </div>
       </div>
       {/* Responsive Table: Desktop only */}
       <div className="hidden lg:block overflow-x-auto">
-        <Table>
+        <Table  dir={currentLocale === 'ar' ? 'rtl' : 'ltr'}>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Department</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead className="text-left">{t('userManagement.name')}</TableHead>
+              <TableHead className="text-left">{t('userManagement.email')}</TableHead>
+              <TableHead className="text-left">{t('userManagement.department')}</TableHead>
+              <TableHead className="text-left">{t('userManagement.role')}</TableHead>
+              <TableHead className="text-left">{t('userManagement.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredUsers.map((user) => (
               <TableRow key={user.id}>
-                <TableCell>{user.firstName} {user.lastName}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{user.departmentName || "N/A"}</TableCell>
-                <TableCell>
+                <TableCell className="text-left">{user.firstName} {user.lastName}</TableCell>
+                <TableCell className="text-left">{user.email}</TableCell>
+                <TableCell className="text-left">{user.departmentName || t('userManagement.notAvailable')}</TableCell>
+                <TableCell className="text-left">
                   <Badge
                     className={
                       `px-3 py-1 rounded-full font-semibold ` +
@@ -359,19 +363,21 @@ export default function UserManagement() {
                         : 'bg-green-100 text-green-700')
                     }
                   >
-                    {user.userType}
+                    {user.userType === 'Admin' ? t('userManagement.roles.Admin', currentLocale) : user.userType === 'Teacher' ? t('userManagement.roles.Teacher', currentLocale) : t('userManagement.roles.Student', currentLocale)}
                   </Badge>
                 </TableCell>
-                <TableCell className="space-x-2">
-                  <Button size="icon" variant="outline" onClick={() => openUserDetails(user.id, 'view')} title="View">
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                  <Button size="icon" variant="outline" onClick={() => openUserDetails(user.id, 'edit')} title="Edit">
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button size="icon" variant="destructive" onClick={() => { setSelectedUser(user); setShowDeleteConfirm(true); }} title="Delete" disabled={user.id === currentUser?.userId}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                <TableCell className="text-left">
+                  <div className={`flex gap-2 ${currentLocale === 'ar' ? 'justify-end' : 'justify-start'}`}>
+                    <Button size="icon" variant="outline" onClick={() => openUserDetails(user.id, 'view')} title={t('userManagement.view')}>
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button size="icon" variant="outline" onClick={() => openUserDetails(user.id, 'edit')} title={t('userManagement.edit')}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button size="icon" variant="destructive" onClick={() => { setSelectedUser(user); setShowDeleteConfirm(true); }} title={t('userManagement.delete')} disabled={user.id === currentUser?.userId}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -386,24 +392,24 @@ export default function UserManagement() {
               <div>
                 <h4 className="font-semibold text-gray-900">{user.firstName} {user.lastName}</h4>
                 <p className="text-sm text-gray-600 mt-1">{user.email}</p>
-                <p className="text-sm text-gray-600 mt-1">Department: {user.departmentName || 'N/A'}</p>
-                <p className="text-sm text-gray-600 mt-1 flex items-center gap-2">Role: <Badge className={
+                <p className="text-sm text-gray-600 mt-1">{t('userManagement.department')}: {user.departmentName || t('userManagement.notAvailable')}</p>
+                <p className="text-sm text-gray-600 mt-1 flex items-center gap-2">{t('userManagement.role')}: <Badge className={
                   `px-2 py-0.5 rounded-full font-semibold text-xs ` +
                   (user.userType === 'Admin'
                     ? 'bg-red-100 text-red-700'
                     : user.userType === 'Teacher'
                     ? 'bg-blue-100 text-blue-700'
                     : 'bg-green-100 text-green-700')
-                }>{user.userType}</Badge></p>
+                }>{user.userType === 'Admin' ? t('userManagement.roles.Admin', currentLocale) : user.userType === 'Teacher' ? t('userManagement.roles.Teacher', currentLocale) : t('userManagement.roles.Student', currentLocale)}</Badge></p>
               </div>
               <div className="flex flex-col gap-2 ml-4">
-                <Button size="icon" variant="outline" onClick={() => openUserDetails(user.id, 'view')} title="View">
+                <Button size="icon" variant="outline" onClick={() => openUserDetails(user.id, 'view')} title={t('userManagement.view')}>
                   <Eye className="h-4 w-4" />
                 </Button>
-                <Button size="icon" variant="outline" onClick={() => openUserDetails(user.id, 'edit')} title="Edit">
+                <Button size="icon" variant="outline" onClick={() => openUserDetails(user.id, 'edit')} title={t('userManagement.edit')}>
                   <Pencil className="h-4 w-4" />
                 </Button>
-                <Button size="icon" variant="destructive" onClick={() => { setSelectedUser(user); setShowDeleteConfirm(true); }} title="Delete" disabled={user.id === currentUser?.userId}>
+                <Button size="icon" variant="destructive" onClick={() => { setSelectedUser(user); setShowDeleteConfirm(true); }} title={t('userManagement.delete')} disabled={user.id === currentUser?.userId}>
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -415,32 +421,32 @@ export default function UserManagement() {
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="w-full p-4 max-h-[90vh] overflow-y-auto sm:max-w-md sm:p-6">
           <DialogHeader>
-            <DialogTitle>User Details</DialogTitle>
+            <DialogTitle>{t('userManagement.userDetails')}</DialogTitle>
           </DialogHeader>
           {detailsLoading ? (
-            <div className="p-4 text-center">Loading...</div>
+            <div className="p-4 text-center">{t('common.loading')}</div>
           ) : selectedUser && (
             <div className="space-y-4">
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex-1">
-                  <label className="block text-sm font-medium mb-1">First Name</label>
+                  <label className="block text-sm font-medium mb-1">{t('userManagement.firstName')}</label>
                   <Input name="firstName" value={editData.firstName} onChange={handleEditChange} disabled={modalMode === 'view'} />
                 </div>
                 <div className="flex-1">
-                  <label className="block text-sm font-medium mb-1">Last Name</label>
+                  <label className="block text-sm font-medium mb-1">{t('userManagement.lastName')}</label>
                   <Input name="lastName" value={editData.lastName} onChange={handleEditChange} disabled={modalMode === 'view'} />
                 </div>
               </div>
               {selectedUser && selectedUser.userType !== 'Admin' && (
                 <div>
-                  <label className="block text-sm font-medium mb-1">Department</label>
+                  <label className="block text-sm font-medium mb-1">{t('userManagement.department')}</label>
                   <Select
                     value={editData.departmentId ? String(editData.departmentId) : ""}
                     onValueChange={handleDepartmentChange}
                     disabled={modalMode === 'view'}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select department" />
+                      <SelectValue placeholder={t('userManagement.selectDepartment')} />
                     </SelectTrigger>
                     <SelectContent>
                       {departments.map((dept) => (
@@ -451,30 +457,30 @@ export default function UserManagement() {
                 </div>
               )}
               <div>
-                <label className="block text-sm font-medium mb-1">Email</label>
+                <label className="block text-sm font-medium mb-1">{t('userManagement.email')}</label>
                 <Input value={selectedUser.email} disabled />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Role</label>
-                <Input value={selectedUser.userType} disabled />
+                <label className="block text-sm font-medium mb-1">{t('userManagement.role')}</label>
+                <Input value={selectedUser.userType === 'Admin' ? t('userManagement.roles.Admin', currentLocale) : selectedUser.userType === 'Teacher' ? t('userManagement.roles.Teacher', currentLocale) : t('userManagement.roles.Student', currentLocale)} disabled />
               </div>
               {/* Show extra fields for students */}
               {selectedUser.userType === 'Student' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Academic Year</label>
+                    <label className="block text-sm font-medium mb-1">{t('userManagement.academicYear')}</label>
                     <Input value={selectedUser.academicYear || ''} disabled />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Gender</label>
+                    <label className="block text-sm font-medium mb-1">{t('userManagement.gender')}</label>
                     <Input value={selectedUser.gender ? (selectedUser.gender.charAt(0).toUpperCase() + selectedUser.gender.slice(1)) : ''} disabled />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Date of Birth</label>
+                    <label className="block text-sm font-medium mb-1">{t('userManagement.dateOfBirth')}</label>
                     <Input value={selectedUser.dateOfBirth ? String(selectedUser.dateOfBirth).split('T')[0] : ''} disabled />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">University ID Number</label>
+                    <label className="block text-sm font-medium mb-1">{t('userManagement.universityIdNumber')}</label>
                     <Input value={selectedUser.universityIdNumber || ''} disabled />
                   </div>
                 </div>
@@ -483,7 +489,7 @@ export default function UserManagement() {
           )}
           <DialogFooter className="flex flex-col md:flex-row gap-2 mt-4">
             {modalMode === 'edit' && (
-              <Button onClick={handleSave} disabled={saving || detailsLoading} className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white">Save</Button>
+              <Button onClick={handleSave} disabled={saving || detailsLoading} className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white">{t('common.save')}</Button>
             )}
             {modalMode === 'edit' && (
               <Button
@@ -492,7 +498,7 @@ export default function UserManagement() {
                 variant="destructive"
                 className="w-full md:w-auto"
               >
-                Delete
+                {t('userManagement.delete')}
               </Button>
             )}
           </DialogFooter>
@@ -503,35 +509,35 @@ export default function UserManagement() {
         open={showDeleteConfirm}
         onOpenChange={setShowDeleteConfirm}
         onConfirm={confirmDelete}
-        title="Are you sure you want to delete this user?"
-        description="This action cannot be undone. This will permanently delete the user and all associated data."
+        title={t('userManagement.deleteUserConfirmTitle')}
+        description={t('userManagement.deleteUserConfirmDescription')}
       />
       {/* Register Teacher Modal */}
       <Dialog open={showRegisterModal} onOpenChange={setShowRegisterModal}>
         <DialogContent className="w-full p-4 max-h-[90vh] overflow-y-auto sm:max-w-md sm:p-6">
           <DialogHeader>
-            <DialogTitle>Register New Teacher</DialogTitle>
+            <DialogTitle>{t('userManagement.registerNewTeacher')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleRegisterTeacher} className="space-y-4">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1">
-                <label className="block text-sm font-medium mb-1">First Name</label>
+                <label className="block text-sm font-medium mb-1">{t('userManagement.firstName')}</label>
                 <Input name="firstName" value={registerData.firstName} onChange={handleRegisterChange} />
               </div>
               <div className="flex-1">
-                <label className="block text-sm font-medium mb-1">Last Name</label>
+                <label className="block text-sm font-medium mb-1">{t('userManagement.lastName')}</label>
                 <Input name="lastName" value={registerData.lastName} onChange={handleRegisterChange} />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Email</label>
+              <label className="block text-sm font-medium mb-1">{t('userManagement.email')}</label>
               <Input name="email" type="email" value={registerData.email} onChange={handleRegisterChange} />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Department</label>
+              <label className="block text-sm font-medium mb-1">{t('userManagement.department')}</label>
               <Select value={registerData.departmentId} onValueChange={handleRegisterDepartment}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select department" />
+                  <SelectValue placeholder={t('userManagement.selectDepartment')} />
                 </SelectTrigger>
                 <SelectContent>
                   {departments.map((dept) => (
@@ -541,7 +547,7 @@ export default function UserManagement() {
               </Select>
             </div>
             <DialogFooter className="flex flex-col md:flex-row gap-2 mt-4">
-              <Button type="submit" disabled={registerLoading} className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white">Register</Button>
+              <Button type="submit" disabled={registerLoading} className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white">{t('userManagement.register')}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -550,29 +556,29 @@ export default function UserManagement() {
       <Dialog open={showRegisterAdminModal} onOpenChange={setShowRegisterAdminModal}>
         <DialogContent className="w-full p-4 max-h-[90vh] overflow-y-auto sm:max-w-md sm:p-6">
           <DialogHeader>
-            <DialogTitle>Register New Admin</DialogTitle>
+            <DialogTitle>{t('userManagement.registerNewAdmin')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleRegisterAdmin} className="space-y-4">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1">
-                <label className="block text-sm font-medium mb-1">First Name</label>
+                <label className="block text-sm font-medium mb-1">{t('userManagement.firstName')}</label>
                 <Input name="firstName" value={registerAdminData.firstName} onChange={handleRegisterAdminChange} />
               </div>
               <div className="flex-1">
-                <label className="block text-sm font-medium mb-1">Last Name</label>
+                <label className="block text-sm font-medium mb-1">{t('userManagement.lastName')}</label>
                 <Input name="lastName" value={registerAdminData.lastName} onChange={handleRegisterAdminChange} />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Email</label>
+              <label className="block text-sm font-medium mb-1">{t('userManagement.email')}</label>
               <Input name="email" type="email" value={registerAdminData.email} onChange={handleRegisterAdminChange} />
             </div>
             <DialogFooter className="flex flex-col md:flex-row gap-2 mt-4">
-              <Button type="submit" disabled={registerAdminLoading} className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white">Register</Button>
+              <Button type="submit" disabled={registerAdminLoading} className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white">{t('userManagement.register')}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
     </div>
   );
-} 
+}

@@ -29,10 +29,15 @@ import { GENDERS, ACADEMIC_YEARS } from "@/lib/constants";
 import { Eye, EyeOff } from "lucide-react";
 import { CustomSelect, CustomSelectOption } from "@/components/ui/custom-select";
 import GoogleLogin from "./GoogleLogin";
+import LanguageSwitcher from "@/components/ui/language-switcher";
+import { useTranslation } from "@/hooks/useTranslation";
+import { useLocale } from "@/components/ui/locale-provider";
 
 export default function StudentSignup() {
   const router = useRouter();
   const { toast } = useToast();
+  const { t } = useTranslation();
+  const { currentLocale, setCurrentLocale } = useLocale();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [departments, setDepartments] = useState<{ id: number; name: string }[]>([]);
   const [formData, setFormData] = useState({
@@ -67,11 +72,51 @@ export default function StudentSignup() {
   const initialFormKeys = Object.keys(initialFormData) as (keyof typeof initialFormData)[];
   const isDirty = initialFormKeys.some(key => formData[key] !== initialFormData[key]);
 
+  // Function to translate error messages
+  const translateError = (errorMessage: string) => {
+    if (errorMessage.includes('do not match')) {
+      return t('auth.passwordsDontMatch', currentLocale)
+    } else if (errorMessage.includes('must be a string or array type with a minimum length of') || errorMessage.includes('must be at least')) {
+      return t('auth.passwordMinLength', currentLocale)
+    } else if (errorMessage.includes('already exists') || errorMessage.includes('already exist')) {
+      return t('auth.emailAlreadyExists', currentLocale)
+    } else if (errorMessage.includes('required')) {
+      return t('auth.fieldRequired', currentLocale)
+    } else if (errorMessage.includes('must be a string')) {
+      return t('auth.fieldMustBeString', currentLocale)
+    } else if (errorMessage.includes('minimum length')) {
+      return t('auth.fieldMinLength', currentLocale)
+    } else if (errorMessage.includes('invalid email')) {
+      return t('auth.invalidEmail', currentLocale)
+    } else if (errorMessage.includes('invalid format')) {
+      return t('auth.invalidFormat', currentLocale)
+    } else if (errorMessage.includes('too short')) {
+      return t('auth.tooShort', currentLocale)
+    } else if (errorMessage.includes('too long')) {
+      return t('auth.tooLong', currentLocale)
+    } else if (errorMessage.includes('invalid date')) {
+      return t('auth.invalidDate', currentLocale)
+    } else if (errorMessage.includes('invalid number')) {
+      return t('auth.invalidNumber', currentLocale)
+    } else if (errorMessage.includes('must be unique')) {
+      return t('auth.mustBeUnique', currentLocale)
+    } else if (errorMessage.includes('not found')) {
+      return t('auth.notFound', currentLocale)
+    } else if (errorMessage.includes('invalid gender')) {
+      return t('auth.invalidGender', currentLocale)
+    } else if (errorMessage.includes('invalid academic year')) {
+      return t('auth.invalidAcademicYear', currentLocale)
+    } else if (errorMessage.includes('invalid department')) {
+      return t('auth.invalidDepartment', currentLocale)
+    }
+    return errorMessage // Return original message if no translation found
+  }
+
   useEffect(() => {
     RegistrationService.getDepartments().then(setDepartments).catch(() => {
-      toast({ title: "Error", description: "Failed to load departments", variant: "destructive" });
+      toast({ title: t('common.error', currentLocale), description: t('auth.failedToLoadDepartments', currentLocale), variant: "destructive" });
     });
-  }, [toast]);
+  }, [toast, t, currentLocale]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -91,8 +136,8 @@ export default function StudentSignup() {
     if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
       age--;
     }
-    if (age < 18) return "You must be at least 18 years old.";
-    if (age > 35) return "You must be no older than 35 years old.";
+    if (age < 18) return t('auth.mustBe18', currentLocale);
+    if (age > 35) return t('auth.mustBeUnder35', currentLocale);
     return true;
   };
 
@@ -123,8 +168,25 @@ export default function StudentSignup() {
       const res = await RegistrationService.registerStudent(payload);
       router.push("/auth/registration-success");
     } catch (err: any) {
-      if (err.errors) setErrors(err.errors);
-      toast({ title: "Registration Failed", description: err.message || "Please check your input.", variant: "destructive" });
+      if (err.errors) {
+        // Translate error messages
+        const translatedErrors: any = {};
+        Object.keys(err.errors).forEach(key => {
+          if (Array.isArray(err.errors[key])) {
+            translatedErrors[key] = err.errors[key].map((msg: string) => translateError(msg));
+          } else {
+            translatedErrors[key] = translateError(err.errors[key]);
+          }
+        });
+        setErrors(translatedErrors);
+      }
+      // Translate the main error message as well
+      const translatedMessage = translateError(err.message || t('auth.checkInput', currentLocale));
+      toast({ 
+        title: t('auth.registrationFailed', currentLocale), 
+        description: translatedMessage, 
+        variant: "destructive" 
+      });
     } finally {
       setIsLoading(false);
     }
@@ -138,14 +200,15 @@ export default function StudentSignup() {
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <Link href="/" className="flex items-center group">
-                <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white p-3 rounded-xl mr-3 shadow-lg group-hover:shadow-xl transition-all duration-300">
-                  <span className="font-bold text-lg">SurveyDU</span>
+                <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white p-2 sm:p-3 rounded-xl mr-2 sm:mr-3 shadow-lg group-hover:shadow-xl transition-all duration-300">
+                  <span className="font-bold text-base sm:text-lg">SurveyDU</span>
                 </div>
               </Link>
             </div>
 
-            {/* Mobile menu button */}
-            <div className="md:hidden">
+            {/* Mobile navigation */}
+            <div className="md:hidden flex items-center space-x-2">
+              <LanguageSwitcher currentLocale={currentLocale} onLocaleChange={setCurrentLocale} />
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="text-gray-500 hover:text-gray-600 focus:outline-none transition-colors"
@@ -162,14 +225,15 @@ export default function StudentSignup() {
 
             {/* Desktop navigation */}
             <nav className="hidden md:flex items-center space-x-6">
+              <LanguageSwitcher currentLocale={currentLocale} onLocaleChange={setCurrentLocale} />
               <Link href="/" className="text-gray-600 hover:text-emerald-500 px-4 py-2 rounded-lg transition-all duration-300 hover:bg-emerald-50">
-                Home
+                {t('navigation.home', currentLocale)}
               </Link>
               <Button
                 onClick={() => router.push("/auth/signin")}
                 className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
               >
-                Sign In
+                {t('navigation.signin', currentLocale)}
               </Button>
             </nav>
           </div>
@@ -181,13 +245,13 @@ export default function StudentSignup() {
                 href="/"
                 className="block px-4 py-3 text-gray-600 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all duration-300"
               >
-                Home
+                {t('navigation.home', currentLocale)}
               </Link>
               <Button
                 onClick={() => router.push("/auth/signin")}
                 className="w-full mt-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
               >
-                Sign In
+                {t('navigation.signin', currentLocale)}
               </Button>
             </div>
           )}
@@ -198,9 +262,9 @@ export default function StudentSignup() {
       <div className="flex-1 flex items-center justify-center p-4">
         <Card className="w-full max-w-2xl">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Student Sign Up</CardTitle>
+            <CardTitle className="text-2xl">{t('auth.studentSignUp', currentLocale)}</CardTitle>
             <CardDescription>
-              Create your student account to participate in surveys
+              {t('auth.studentSignUpDescription', currentLocale)}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -209,18 +273,18 @@ export default function StudentSignup() {
               <GoogleLogin />
               <div className="flex items-center my-4">
                 <div className="flex-grow border-t border-gray-200"></div>
-                <span className="mx-2 text-gray-400 text-xs uppercase">or</span>
+                <span className="mx-2 text-gray-400 text-xs uppercase">{t('auth.or', currentLocale)}</span>
                 <div className="flex-grow border-t border-gray-200"></div>
               </div>
             </div>
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Personal Information */}
               <div className="space-y-4">
-                <h3 className="text-lg font-medium text-gray-900 border-b pb-2">Personal Information</h3>
+                <h3 className="text-lg font-medium text-gray-900 border-b pb-2">{t('auth.personalInformation', currentLocale)}</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="firstName">{t('auth.firstName', currentLocale)}</Label>
                   <Input
                     id="firstName"
                     name="firstName"
@@ -230,7 +294,7 @@ export default function StudentSignup() {
                   />
                 </div>
                   <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
+                  <Label htmlFor="lastName">{t('auth.lastName', currentLocale)}</Label>
                   <Input
                     id="lastName"
                     name="lastName"
@@ -242,7 +306,7 @@ export default function StudentSignup() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('auth.email', currentLocale)}</Label>
                 <Input
                   id="email"
                   name="email"
@@ -255,21 +319,21 @@ export default function StudentSignup() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="gender">Gender</Label>
+                    <Label htmlFor="gender">{t('auth.gender', currentLocale)}</Label>
                     <CustomSelect
                       value={formData.gender}
                       onChange={value => handleSelectChange("gender", value)}
-                      placeholder="Select gender"
+                      placeholder={t('auth.selectGender', currentLocale)}
                     >
                       {GENDERS.map((g) => (
-                        <CustomSelectOption key={g.value} value={String(g.value)}>{g.label}</CustomSelectOption>
+                        <CustomSelectOption key={g.value} value={String(g.value)}>{t(`common.${g.label.toLowerCase()}`, currentLocale)}</CustomSelectOption>
                       ))}
                     </CustomSelect>
                     {errors.Gender && <p className="text-sm text-red-500">{errors.Gender[0]}</p>}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                    <Label htmlFor="dateOfBirth">{t('auth.dateOfBirth', currentLocale)}</Label>
                     <Input
                       id="dateOfBirth"
                       name="dateOfBirth"
@@ -289,14 +353,14 @@ export default function StudentSignup() {
 
               {/* Academic Information */}
               <div className="space-y-4">
-                <h3 className="text-lg font-medium text-gray-900 border-b pb-2">Academic Information</h3>
+                <h3 className="text-lg font-medium text-gray-900 border-b pb-2">{t('auth.academicInformation', currentLocale)}</h3>
 
               <div className="space-y-2">
-                <Label htmlFor="departmentId">Department</Label>
+                <Label htmlFor="departmentId">{t('auth.department', currentLocale)}</Label>
                 <CustomSelect
                   value={formData.departmentId}
                   onChange={value => handleSelectChange("departmentId", value)}
-                  placeholder="Select department"
+                  placeholder={t('auth.selectDepartment', currentLocale)}
                 >
                   {departments.map((dept) => (
                     <CustomSelectOption key={dept.id} value={String(dept.id)}>{dept.name}</CustomSelectOption>
@@ -307,21 +371,21 @@ export default function StudentSignup() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="academicYear">Academic Year</Label>
+                  <Label htmlFor="academicYear">{t('auth.academicYear', currentLocale)}</Label>
                   <CustomSelect
                     value={formData.academicYear}
                     onChange={value => handleSelectChange("academicYear", value)}
-                    placeholder="Select academic year"
+                    placeholder={t('auth.selectAcademicYear', currentLocale)}
                   >
                     {ACADEMIC_YEARS.map((year) => (
-                      <CustomSelectOption key={year.value} value={String(year.value)}>{year.label}</CustomSelectOption>
+                      <CustomSelectOption key={year.value} value={String(year.value)}>{t(`common.academicYears.${year.label.toLowerCase()}`, currentLocale)}</CustomSelectOption>
                     ))}
                   </CustomSelect>
                   {errors.AcademicYear && <p className="text-sm text-red-500">{errors.AcademicYear[0]}</p>}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="universityIdNumber">University ID Number</Label>
+                  <Label htmlFor="universityIdNumber">{t('auth.universityIdNumber', currentLocale)}</Label>
                   <Input
                     id="universityIdNumber"
                     name="universityIdNumber"
@@ -335,10 +399,10 @@ export default function StudentSignup() {
 
               {/* Account Security */}
               <div className="space-y-4">
-                <h3 className="text-lg font-medium text-gray-900 border-b pb-2">Account Security</h3>
+                <h3 className="text-lg font-medium text-gray-900 border-b pb-2">{t('auth.accountSecurity', currentLocale)}</h3>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t('auth.password', currentLocale)}</Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -350,19 +414,19 @@ export default function StudentSignup() {
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                    className={`absolute top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none ${currentLocale === 'ar' ? 'left-3' : 'right-3'}`}
                     onClick={() => setShowPassword((prev) => !prev)}
                     tabIndex={-1}
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-label={showPassword ? t('auth.hidePassword', currentLocale) : t('auth.showPassword', currentLocale)}
                   >
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
-                {errors.Password && <p className="text-sm text-red-500">{errors.Password[0]}</p>}
+                {errors.Password && <p className="text-sm text-red-500">{Array.isArray(errors.Password) ? errors.Password[0] : errors.Password}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label htmlFor="confirmPassword">{t('auth.confirmPassword', currentLocale)}</Label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
@@ -374,15 +438,15 @@ export default function StudentSignup() {
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                    className={`absolute top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none ${currentLocale === 'ar' ? 'left-3' : 'right-3'}`}
                     onClick={() => setShowConfirmPassword((prev) => !prev)}
                     tabIndex={-1}
-                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                    aria-label={showConfirmPassword ? t('auth.hidePassword', currentLocale) : t('auth.showPassword', currentLocale)}
                   >
                     {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
-                {errors.ConfirmPassword && <p className="text-sm text-red-500">{errors.ConfirmPassword[0]}</p>}
+                {errors.ConfirmPassword && <p className="text-sm text-red-500">{Array.isArray(errors.ConfirmPassword) ? errors.ConfirmPassword[0] : errors.ConfirmPassword}</p>}
                 </div>
               </div>
 
@@ -392,18 +456,18 @@ export default function StudentSignup() {
                 disabled={!isDirty || isLoading}
               >
                 {isLoading ? <span className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full inline-block align-middle"></span> : null}
-                {isLoading ? "Registering..." : "Sign Up"}
+                {isLoading ? t('auth.registering', currentLocale) : t('navigation.signup', currentLocale)}
               </Button>
             </form>
           </CardContent>
           <CardFooter className="flex justify-center border-t pt-6">
             <p className="text-sm text-gray-500">
-              Already have an account?{" "}
+              {t('auth.alreadyHaveAccount', currentLocale)}{" "}
               <Link
                 href="/auth/signin"
                 className="text-emerald-500 hover:underline font-medium"
               >
-                Sign In
+                {t('navigation.signin', currentLocale)}
               </Link>
             </p>
           </CardFooter>

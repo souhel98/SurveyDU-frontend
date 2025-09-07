@@ -8,9 +8,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { getApiConfig } from "@/lib/config/api-config";
+import { useTranslation } from "@/hooks/useTranslation";
+import { useLocale } from "@/components/ui/locale-provider";
+import LanguageSwitcher from "@/components/ui/language-switcher";
 
 export default function ForgotPassword() {
   const { toast } = useToast();
+  const { t } = useTranslation();
+  const { currentLocale, setCurrentLocale } = useLocale();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -28,14 +33,14 @@ export default function ForgotPassword() {
       });
       const data = await response.json();
       toast({
-        title: "Password Reset",
-        description: data.message || "If your email is registered, you will receive a password reset link.",
+        title: t('auth.passwordReset', currentLocale),
+        description: t('auth.passwordResetEmailSent', currentLocale),
       });
       setSuccess(true);
     } catch {
       toast({
-        title: "Error",
-        description: "Failed to send password reset email.",
+        title: t('common.error', currentLocale),
+        description: t('auth.failedToSendResetEmail', currentLocale),
         variant: "destructive",
       });
     } finally {
@@ -44,31 +49,61 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50 p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Header */}
+      <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Link href="/" className="flex items-center group">
+                <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white p-2 sm:p-3 rounded-xl mr-2 sm:mr-3 shadow-lg group-hover:shadow-xl transition-all duration-300">
+                  <span className="font-bold text-base sm:text-lg">SurveyDU</span>
+                </div>
+              </Link>
+            </div>
+            <nav className="flex items-center space-x-2 sm:space-x-6">
+              <LanguageSwitcher currentLocale={currentLocale} onLocaleChange={setCurrentLocale} />
+              <Link href="/" className="hidden sm:block text-gray-600 hover:text-emerald-500 px-4 py-2 rounded-lg transition-all duration-300 hover:bg-emerald-50">
+                {t('navigation.home', currentLocale)}
+              </Link>
+              <Button
+                asChild
+                className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-3 py-2 sm:px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm sm:text-base"
+              >
+                <Link href="/auth/signin">
+                  <span className="hidden sm:inline">{t('auth.backToSignIn', currentLocale)}</span>
+                  <span className="sm:hidden">{t('auth.signIn', currentLocale)}</span>
+                </Link>
+              </Button>
+            </nav>
+          </div>
+        </div>
+      </header>
+
+      {/* Form Card */}
+      <div className="flex-1 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Forgot Password</CardTitle>
-          <CardDescription>Enter your email to receive a password reset link.</CardDescription>
+          <CardTitle>{t('auth.forgotPassword', currentLocale)}</CardTitle>
+          <CardDescription>{t('auth.forgotPasswordDescription', currentLocale)}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               type="email"
-              placeholder="Enter your email"
+              placeholder={t('auth.enterYourEmail', currentLocale)}
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
               disabled={isLoading || success}
             />
             <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" disabled={isLoading || success}>
-              {isLoading ? "Sending..." : "Send Reset Link"}
+              {isLoading ? t('auth.sending', currentLocale) : t('auth.sendResetLink', currentLocale)}
             </Button>
           </form>
-          <div className="mt-4 text-center">
-            <Link href="/auth/signin" className="text-emerald-600 hover:underline">Back to Sign In</Link>
-          </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 } 

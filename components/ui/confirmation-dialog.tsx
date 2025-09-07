@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface ConfirmationDialogProps {
   open: boolean;
@@ -7,9 +8,12 @@ interface ConfirmationDialogProps {
   onConfirm: () => void;
   title: string;
   description: string;
+  locale?: string;
 }
 
-export function ConfirmationDialog({ open, onOpenChange, onConfirm, title, description }: ConfirmationDialogProps) {
+export function ConfirmationDialog({ open, onOpenChange, onConfirm, title, description, locale = 'ar' }: ConfirmationDialogProps) {
+  const { t } = useTranslation();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -18,8 +22,12 @@ export function ConfirmationDialog({ open, onOpenChange, onConfirm, title, descr
         </DialogHeader>
         <div className="py-4">{description}</div>
         <DialogFooter className="flex gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button variant="destructive" onClick={onConfirm}>Confirm</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            {t('common.cancel', locale)}
+          </Button>
+          <Button variant="destructive" onClick={onConfirm}>
+            {t('common.confirm', locale)}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

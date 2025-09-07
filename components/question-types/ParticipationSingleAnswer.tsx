@@ -1,6 +1,7 @@
 import React from 'react';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { useLocale } from "@/components/ui/locale-provider";
 
 interface Option {
   optionId: number;
@@ -19,6 +20,8 @@ export default function ParticipationSingleAnswer({
   selectedOption, 
   onSelectionChange 
 }: ParticipationSingleAnswerProps) {
+  const { currentLocale } = useLocale()
+  
   return (
     <RadioGroup
       value={selectedOption || ""}
@@ -26,7 +29,7 @@ export default function ParticipationSingleAnswer({
       className="space-y-3 mt-4"
     >
       {options?.map((option) => (
-        <div key={option.optionId} className="flex items-center space-x-2">
+        <div key={option.optionId} className={`flex items-center ${currentLocale === 'ar' ? 'flex-row-reverse space-x-reverse space-x-2' : 'space-x-2'}`}>
           <RadioGroupItem value={option.optionId.toString()} id={`option-${option.optionId}`} />
           <Label htmlFor={`option-${option.optionId}`} className="cursor-pointer">
             {option.optionText}

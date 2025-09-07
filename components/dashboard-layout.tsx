@@ -4,11 +4,14 @@ import type React from "react"
 import { useRouter } from "next/navigation"
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
-import { ChevronDown, ShoppingCart, User, PlusCircle, Award, ArrowLeft, LogOut, History, TrendingUp, Menu, X } from "lucide-react"
+import { ChevronDown, ShoppingCart, User, PlusCircle, Award, ArrowLeft, LogOut, History, TrendingUp, Menu, X, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { AuthService } from "@/lib/services/auth-service"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { UserService } from "@/lib/services/user-service";
+import LanguageSwitcher from "@/components/ui/language-switcher";
+import { useTranslation } from "@/hooks/useTranslation";
+import { useLocale } from "@/components/ui/locale-provider";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [activeTab, setActiveTab] = useState("surveys")
@@ -18,6 +21,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [pointsDropdownOpen, setPointsDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { currentLocale, setCurrentLocale } = useLocale();
+  const { t } = useTranslation();
 
   useEffect(() => {
     // Helper to get cookie value
@@ -103,14 +108,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   let title = '';
   let subtitle = '';
   if (role === 'Admin') {
-    title = 'Admin Dashboard';
-    subtitle = 'Full access to all system data and user management';
+    title = t('dashboard.admin.title', currentLocale);
+    subtitle = t('dashboard.admin.subtitle', currentLocale);
   } else if (role === 'Teacher') {
-    title = 'Teacher Dashboard';
-            subtitle = 'Manage your surveys and view statistics';
+    title = t('dashboard.teacher.title', currentLocale);
+    subtitle = t('dashboard.teacher.subtitle', currentLocale);
   } else {
-    title = 'Student Dashboard';
-    subtitle = 'Browse and participate in surveys';
+    title = t('dashboard.student.title', currentLocale);
+    subtitle = t('dashboard.student.subtitle', currentLocale);
   }
 
   // Dynamic button links based on role
@@ -218,7 +223,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
         <span className="inline-block h-16 w-16 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent shadow-lg mb-6" />
-        <span className="text-gray-600 text-lg">Checking authentication...</span>
+        <span className="text-gray-600 text-lg">{t('common.loading', currentLocale)}</span>
       </div>
     );
   }
@@ -242,6 +247,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <nav className="hidden md:flex ml-8 space-x-1"></nav>
           </div>
           <div className="flex items-center space-x-4">
+            {/* Language Switcher */}
+            <LanguageSwitcher currentLocale={currentLocale} onLocaleChange={setCurrentLocale} />
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center space-x-4">
               {/* Admin Buttons */}
@@ -265,7 +272,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     } 
                     asChild
                   >
-                    <Link href={allSurveysLink}> All Surveys</Link>
+                    <Link href={allSurveysLink}>{t('dashboard.admin.allSurveys', currentLocale)}</Link>
                   </Button>
                   <Button 
                     variant={isActive(userManagementLink) ? undefined : "outline"} 
@@ -275,7 +282,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     } 
                     asChild
                   >
-                    <Link href={userManagementLink}>User Management</Link>
+                    <Link href={userManagementLink}>{t('dashboard.admin.userManagement', currentLocale)}</Link>
                   </Button>
                   <Button 
                     variant={isActive('/dashboard/admin/departments') ? undefined : "outline"} 
@@ -285,7 +292,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     } 
                     asChild
                   >
-                    <Link href="/dashboard/admin/departments">Departments</Link>
+                    <Link href="/dashboard/admin/departments">{t('dashboard.admin.departments', currentLocale)}</Link>
                   </Button>
                   {/* User Profile Dropdown (Custom) */}
                   <div
@@ -310,7 +317,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </Button>
                     {dropdownOpen && (
                       <div
-                        className="absolute right-0 mt-2 w-36 rounded-lg shadow-xl bg-gradient-to-b from-orange-50 to-amber-50 border border-orange-200 z-50 max-h-[60vh] overflow-y-auto"
+                        className={`absolute right-0 mt-2 ${currentLocale === 'ar' ? 'w-48' : 'w-36'} rounded-lg shadow-xl bg-gradient-to-b from-orange-50 to-amber-50 border border-orange-200 z-50 max-h-[60vh] overflow-y-auto`}
                         onMouseEnter={handleMouseEnter}
                         onMouseLeave={handleMouseLeave}
                       >
@@ -321,14 +328,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                           }}
                         >
                           <User className="h-4 w-4 text-orange-600" />
-                          Profile
+                          {t('navigation.profile', currentLocale)}
                         </button>
                         <button
                           className="w-full text-left px-4 py-3 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 text-orange-800 hover:text-orange-900 flex items-center gap-2 font-semibold transition-all duration-200"
                           onMouseDown={handleLogout}
                         >
                           <LogOut className="h-4 w-4 text-orange-600" />
-                          Logout
+                          {t('navigation.logout', currentLocale)}
                         </button>
                       </div>
                     )}
@@ -346,7 +353,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     } 
                     asChild
                   >
-                    <Link href={createSurveyLink}><PlusCircle className="h-4 w-4" /> Create Survey</Link>
+                    <Link href={createSurveyLink}><PlusCircle className="h-4 w-4" /> {t('dashboard.teacher.createSurvey', currentLocale)}</Link>
                   </Button>
                   {/* User Profile Dropdown (Custom) - always last */}
                   <div
@@ -371,7 +378,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </Button>
                     {dropdownOpen && (
                       <div
-                        className="absolute right-0 mt-2 w-36 rounded-lg shadow-xl bg-gradient-to-b from-orange-50 to-amber-50 border border-orange-200 z-50 max-h-[60vh] overflow-y-auto"
+                        className={`absolute right-0 mt-2 ${currentLocale === 'ar' ? 'w-48' : 'w-36'} rounded-lg shadow-xl bg-gradient-to-b from-orange-50 to-amber-50 border border-orange-200 z-50 max-h-[60vh] overflow-y-auto`}
                         onMouseEnter={handleMouseEnter}
                         onMouseLeave={handleMouseLeave}
                       >
@@ -382,14 +389,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                           }}
                         >
                           <User className="h-4 w-4 text-orange-600" />
-                          Profile
+                          {t('navigation.profile', currentLocale)}
                         </button>
                         <button
                           className="w-full text-left px-4 py-3 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 text-orange-800 hover:text-orange-900 flex items-center gap-2 font-semibold transition-all duration-200"
                           onMouseDown={handleLogout}
                         >
                           <LogOut className="h-4 w-4 text-orange-600" />
-                          Logout
+                          {t('navigation.logout', currentLocale)}
                         </button>
                       </div>
                     )}
@@ -407,7 +414,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     } 
                     asChild
                   >
-                    <Link href="/dashboard/student/participation-history"><History className="h-4 w-4" /> Participation History</Link>
+                    <Link href="/dashboard/student/participation-history"><History className="h-4 w-4" /> {t('dashboard.student.participationHistory', currentLocale)}</Link>
                   </Button>
                   <div 
                     className="relative"
@@ -427,7 +434,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         ) : pointsError ? (
                           <span className="text-red-500">{pointsError}</span>
                         ) : (
-                          <span>{studentPoints} Points</span>
+                          <span>{studentPoints} {t('points.title', currentLocale)}</span>
                         )}
                       </Link>
                     </Button>
@@ -439,8 +446,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       >
                         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 border-b border-blue-100">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-blue-800">Current Balance</span>
-                            <span className="text-lg font-bold text-blue-900">{studentPoints} points</span>
+                            <span className="text-sm font-medium text-blue-800">{t('points.currentBalance', currentLocale)}</span>
+                            <span className="text-lg font-bold text-blue-900">{studentPoints} {t('points.title', currentLocale).toLowerCase()}</span>
                           </div>
                         </div>
                         <Link 
@@ -451,8 +458,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             <TrendingUp className="h-4 w-4 text-emerald-600" />
                           </div>
                           <div>
-                            <p className="font-semibold text-gray-900 group-hover:text-emerald-700">Points History</p>
-                            <p className="text-sm text-gray-600">View transaction history</p>
+                            <p className="font-semibold text-gray-900 group-hover:text-emerald-700">{t('points.pointsHistory', currentLocale)}</p>
+                            <p className="text-sm text-gray-600">{t('points.viewTransactionHistory', currentLocale)}</p>
                           </div>
                         </Link>
                       </div>
@@ -481,7 +488,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </Button>
                     {dropdownOpen && (
                       <div
-                        className="absolute right-0 mt-2 w-36 rounded-lg shadow-xl bg-gradient-to-b from-orange-50 to-amber-50 border border-orange-200 z-50 max-h-[60vh] overflow-y-auto"
+                        className={`absolute right-0 mt-2 ${currentLocale === 'ar' ? 'w-48' : 'w-36'} rounded-lg shadow-xl bg-gradient-to-b from-orange-50 to-amber-50 border border-orange-200 z-50 max-h-[60vh] overflow-y-auto`}
                         onMouseEnter={handleMouseEnter}
                         onMouseLeave={handleMouseLeave}
                       >
@@ -492,14 +499,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                           }}
                         >
                           <User className="h-4 w-4 text-orange-600" />
-                          Profile
+                          {t('navigation.profile', currentLocale)}
                         </button>
                         <button
                           className="w-full text-left px-4 py-3 hover:bg-gradient-to-r hover:from-orange-100 hover:to-amber-100 text-orange-800 hover:text-orange-900 flex items-center gap-2 font-semibold transition-all duration-200"
                           onMouseDown={handleLogout}
                         >
                           <LogOut className="h-4 w-4 text-orange-600" />
-                          Logout
+                          {t('navigation.logout', currentLocale)}
                         </button>
                       </div>
                     )}
@@ -518,7 +525,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     role === 'Teacher' ? '/dashboard/teacher' :
                     '/dashboard/student'
                   }>
-                    <ArrowLeft className="h-4 w-4" /> Back to Dashboard
+                     {t('dashboard.admin.backToDashboard', currentLocale)} {currentLocale === 'ar' ? <ArrowLeft className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
                   </Link>
                 </Button>
               )}
@@ -541,34 +548,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Mobile menu panel */}
       {mobileMenuOpen && (
         <div className="md:hidden fixed top-20 left-0 w-full bg-white border-b border-gray-200 z-40 shadow-lg">
-          <div className="container mx-auto px-4 py-4 space-y-3">
+          <div className={`container mx-auto px-4 py-4 space-y-3 ${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>
             {role === 'Admin' && (
               <>
-                <Link href={allSurveysLink} onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg font-medium transition-colors ${isActive(allSurveysLink) ? 'bg-emerald-100 text-emerald-800' : 'text-gray-700 hover:bg-gray-50'}`}>All Surveys</Link>
-                <Link href={userManagementLink} onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg font-medium transition-colors ${isActive(userManagementLink) ? 'bg-blue-100 text-blue-800' : 'text-gray-700 hover:bg-gray-50'}`}>User Management</Link>
-                <Link href="/dashboard/admin/departments" onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg font-medium transition-colors ${isActive('/dashboard/admin/departments') ? 'bg-purple-100 text-purple-800' : 'text-gray-700 hover:bg-gray-50'}`}>Departments</Link>
+                <Link href={allSurveysLink} onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg font-medium transition-colors ${isActive(allSurveysLink) ? 'bg-emerald-100 text-emerald-800' : 'text-gray-700 hover:bg-gray-50'}`}>{t('dashboard.admin.allSurveys', currentLocale)}</Link>
+                <Link href={userManagementLink} onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg font-medium transition-colors ${isActive(userManagementLink) ? 'bg-blue-100 text-blue-800' : 'text-gray-700 hover:bg-gray-50'}`}>{t('dashboard.admin.userManagement', currentLocale)}</Link>
+                <Link href="/dashboard/admin/departments" onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg font-medium transition-colors ${isActive('/dashboard/admin/departments') ? 'bg-purple-100 text-purple-800' : 'text-gray-700 hover:bg-gray-50'}`}>{t('dashboard.admin.departments', currentLocale)}</Link>
                 <div className="h-px bg-gray-200 my-3" />
-                <Link href={profileLink} onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg font-medium transition-colors ${isActive(profileLink) ? 'bg-orange-100 text-orange-800' : 'text-gray-700 hover:bg-gray-50'}`}>Profile</Link>
-                <button onClick={() => { setMobileMenuOpen(false); handleLogout(); }} className="block w-full text-left px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors">Logout</button>
+                <Link href={profileLink} onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg font-medium transition-colors ${isActive(profileLink) ? 'bg-orange-100 text-orange-800' : 'text-gray-700 hover:bg-gray-50'}`}>{t('navigation.profile', currentLocale)}</Link>
+                <button onClick={() => { setMobileMenuOpen(false); handleLogout(); }} className={`block w-full px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors ${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>{t('navigation.logout', currentLocale)}</button>
               </>
             )}
             {role === 'Teacher' && (
               <>
-                <Link href={createSurveyLink} onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg font-medium transition-colors ${isActive(createSurveyLink) ? 'bg-emerald-100 text-emerald-800' : 'text-gray-700 hover:bg-gray-50'}`}>Create Survey</Link>
+                <Link href={createSurveyLink} onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg font-medium transition-colors ${isActive(createSurveyLink) ? 'bg-emerald-100 text-emerald-800' : 'text-gray-700 hover:bg-gray-50'}`}>{t('dashboard.teacher.createSurvey', currentLocale)}</Link>
                 <div className="h-px bg-gray-200 my-3" />
-                <Link href={profileLink} onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg font-medium transition-colors ${isActive(profileLink) ? 'bg-orange-100 text-orange-800' : 'text-gray-700 hover:bg-gray-50'}`}>Profile</Link>
-                <button onClick={() => { setMobileMenuOpen(false); handleLogout(); }} className="block w-full text-left px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors">Logout</button>
+                <Link href={profileLink} onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg font-medium transition-colors ${isActive(profileLink) ? 'bg-orange-100 text-orange-800' : 'text-gray-700 hover:bg-gray-50'}`}>{t('navigation.profile', currentLocale)}</Link>
+                <button onClick={() => { setMobileMenuOpen(false); handleLogout(); }} className={`block w-full px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors ${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>{t('navigation.logout', currentLocale)}</button>
               </>
             )}
             {role === 'Student' && (
               <>
-                <Link href="/dashboard/student/participation-history" onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg font-medium transition-colors ${isActive('/dashboard/student/participation-history') ? 'bg-emerald-100 text-emerald-800' : 'text-gray-700 hover:bg-gray-50'}`}>Participation History</Link>
+                <Link href="/dashboard/student/participation-history" onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg font-medium transition-colors ${isActive('/dashboard/student/participation-history') ? 'bg-emerald-100 text-emerald-800' : 'text-gray-700 hover:bg-gray-50'}`}>{t('dashboard.student.participationHistory', currentLocale)}</Link>
                 <Link href="/dashboard/student/points-history" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-                  Points History {pointsLoading ? '(...)' : pointsError ? '(Error)' : typeof studentPoints === 'number' ? `(${studentPoints})` : ''}
+                  {t('dashboard.student.pointsHistory', currentLocale)} {pointsLoading ? '(...)' : pointsError ? '(Error)' : typeof studentPoints === 'number' ? `(${studentPoints})` : ''}
                 </Link>
                 <div className="h-px bg-gray-200 my-3" />
-                <Link href={profileLink} onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg font-medium transition-colors ${isActive(profileLink) ? 'bg-orange-100 text-orange-800' : 'text-gray-700 hover:bg-gray-50'}`}>Profile</Link>
-                <button onClick={() => { setMobileMenuOpen(false); handleLogout(); }} className="block w-full text-left px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors">Logout</button>
+                <Link href={profileLink} onClick={() => setMobileMenuOpen(false)} className={`block px-4 py-3 rounded-lg font-medium transition-colors ${isActive(profileLink) ? 'bg-orange-100 text-orange-800' : 'text-gray-700 hover:bg-gray-50'}`}>{t('navigation.profile', currentLocale)}</Link>
+                <button onClick={() => { setMobileMenuOpen(false); handleLogout(); }} className={`block w-full px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors ${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>{t('navigation.logout', currentLocale)}</button>
               </>
             )}
             {!isDashboardMainPage && (
@@ -576,7 +583,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 role === 'Admin' ? '/dashboard/admin' :
                 role === 'Teacher' ? '/dashboard/teacher' :
                 '/dashboard/student'
-              } onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors">Back to Dashboard</Link>
+              } onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors">{t('dashboard.admin.backToDashboard', currentLocale)}</Link>
             )}
           </div>
         </div>

@@ -6,11 +6,15 @@ import { DepartmentService } from "@/lib/services/department-service";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Building, Users, BarChart3, Settings, TrendingUp, Award, FileText, Activity, PlusCircle, Calendar, ChevronRight } from "lucide-react";
+import { Building, Users, BarChart3, Settings, TrendingUp, Award, FileText, Activity, PlusCircle, Calendar, ChevronRight, ChevronLeft } from "lucide-react";
 import axios from "@/lib/api/axios";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { useTranslation } from "@/hooks/useTranslation";
+import { useLocale } from "@/components/ui/locale-provider";
 
 export default function AdminDashboard() {
+  const { t } = useTranslation();
+  const { currentLocale } = useLocale();
   const [dashboard, setDashboard] = useState<any>(null);
   const [totalDepartments, setTotalDepartments] = useState<number>(0);
   const [usersByDepartment, setUsersByDepartment] = useState<any[]>([]);
@@ -87,7 +91,7 @@ export default function AdminDashboard() {
         setAdminCount(adminCount);
         setLoading(false);
       } catch (err) {
-        setError("Failed to load dashboard data");
+        setError(t('dashboard.admin.failedToLoadDashboardData', currentLocale));
         setLoading(false);
       }
     };
@@ -183,7 +187,7 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 flex items-center justify-center">
       <div className="text-center">
         <div className="inline-block h-16 w-16 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent shadow-lg mb-4" />
-        <p className="text-gray-600 text-lg">Loading admin dashboard...</p>
+        <p className="text-gray-600 text-lg">{t('dashboard.admin.loadingAdminDashboard', currentLocale)}</p>
       </div>
     </div>
   );
@@ -192,7 +196,7 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 flex items-center justify-center">
       <div className="text-center">
         <div className="text-red-500 text-6xl mb-4">⚠️</div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Dashboard</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('dashboard.admin.errorLoadingDashboard', currentLocale)}</h2>
         <p className="text-gray-600">{error}</p>
       </div>
     </div>
@@ -214,14 +218,14 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-blue-800 text-lg">All Users</CardTitle>
+                <CardTitle className="text-blue-800 text-lg">{t('dashboard.admin.allUsers', currentLocale)}</CardTitle>
                 <div className="text-3xl font-bold text-blue-900">{dashboard.totalUsers}</div>
               </div>
-              <CardDescription className="text-blue-600">All registered users</CardDescription>
+              <CardDescription className="text-blue-600">{t('dashboard.admin.allRegisteredUsers', currentLocale)}</CardDescription>
             </CardHeader>
             <CardContent className="relative">
               <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200">
-                <Link href="/dashboard/admin/users">View Users</Link>
+                <Link href="/dashboard/admin/users">{t('dashboard.admin.viewUsers', currentLocale)}</Link>
               </Button>
             </CardContent>
           </Card>
@@ -235,14 +239,14 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-purple-800 text-lg">All Departments</CardTitle>
+                <CardTitle className="text-purple-800 text-lg">{t('dashboard.admin.allDepartments', currentLocale)}</CardTitle>
                 <div className="text-3xl font-bold text-purple-900">{totalDepartments}</div>
               </div>
-              <CardDescription className="text-purple-600">All university departments</CardDescription>
+              <CardDescription className="text-purple-600">{t('dashboard.admin.allUniversityDepartments', currentLocale)}</CardDescription>
             </CardHeader>
             <CardContent className="relative">
               <Button asChild className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200">
-                <Link href="/dashboard/admin/departments">View Departments</Link>
+                <Link href="/dashboard/admin/departments">{t('dashboard.admin.viewDepartments', currentLocale)}</Link>
               </Button>
             </CardContent>
           </Card>
@@ -256,14 +260,14 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-green-800 text-lg">All Surveys</CardTitle>
+                <CardTitle className="text-green-800 text-lg">{t('dashboard.admin.allSurveys', currentLocale)}</CardTitle>
                 <div className="text-3xl font-bold text-green-900">{dashboard.totalSurveys}</div>
               </div>
-              <CardDescription className="text-green-600">All surveys in the system</CardDescription>
+              <CardDescription className="text-green-600">{t('dashboard.admin.allSurveysInSystem', currentLocale)}</CardDescription>
             </CardHeader>
             <CardContent className="relative">
               <Button asChild className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200">
-                <Link href="/dashboard/admin/all-surveys">View All Surveys</Link>
+                <Link href="/dashboard/admin/all-surveys">{t('dashboard.admin.viewAllSurveys', currentLocale)}</Link>
               </Button>
             </CardContent>
           </Card>
@@ -277,14 +281,14 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-green-800 text-lg">My Surveys</CardTitle>
+                <CardTitle className="text-green-800 text-lg">{t('dashboard.admin.mySurveys', currentLocale)}</CardTitle>
                 <div className="text-3xl font-bold text-green-900">{mySurveysCount}</div>
               </div>
-              <CardDescription className="text-green-600">Surveys created by you</CardDescription>
+              <CardDescription className="text-green-600">{t('dashboard.admin.surveysCreatedByYou', currentLocale)}</CardDescription>
             </CardHeader>
             <CardContent className="relative">
               <Button asChild className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200">
-                <Link href="/dashboard/admin/create-survey">Create Survey</Link>
+                <Link href="/dashboard/admin/create-survey">{t('dashboard.admin.createSurvey', currentLocale)}</Link>
               </Button>
             </CardContent>
           </Card>
@@ -299,8 +303,8 @@ export default function AdminDashboard() {
                   <BarChart3 className="h-5 w-5 text-emerald-600" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl">Survey Start Timeline</CardTitle>
-                  <CardDescription>Number of surveys with status</CardDescription>
+                  <CardTitle className="text-xl">{t('dashboard.admin.surveyStartTimeline', currentLocale)}</CardTitle>
+                  <CardDescription>{t('dashboard.admin.numberOfSurveysWithStatus', currentLocale)}</CardDescription>
                 </div>
               </div>
               <div className="flex space-x-2">
@@ -310,7 +314,7 @@ export default function AdminDashboard() {
                   onClick={() => handleTimeframeChange('week')}
                   className={chartTimeframe === 'week' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}
                 >
-                  Week
+                  {t('dashboard.admin.week', currentLocale)}
                 </Button>
                 <Button
                   variant={chartTimeframe === 'month' ? 'default' : 'outline'}
@@ -318,7 +322,7 @@ export default function AdminDashboard() {
                   onClick={() => handleTimeframeChange('month')}
                   className={chartTimeframe === 'month' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}
                 >
-                  Month
+                  {t('dashboard.admin.month', currentLocale)}
                 </Button>
               </div>
             </div>
@@ -372,27 +376,27 @@ export default function AdminDashboard() {
                       }}
                       labelStyle={{ color: '#374151', fontWeight: '600' }}
                     />
-                    <Bar dataKey="active" stackId="a" fill="#10b981" name="Active" isAnimationActive={false} minPointSize={2} />
-                    <Bar dataKey="draft" stackId="a" fill="#f59e42" name="Draft" isAnimationActive={false} minPointSize={2} />
-                    <Bar dataKey="completed" stackId="a" fill="#6366f1" name="Completed" isAnimationActive={false} minPointSize={2} />
-                    <Bar dataKey="inactive" stackId="a" fill="#ef4444" name="Inactive" isAnimationActive={false} minPointSize={2} />
-                    <Bar dataKey="expired" stackId="a" fill="#a855f7" name="Expired" isAnimationActive={false} minPointSize={2} />
+                    <Bar dataKey="active" stackId="a" fill="#10b981" name={t('common.active', currentLocale)} isAnimationActive={false} minPointSize={2} />
+                    <Bar dataKey="draft" stackId="a" fill="#f59e42" name={t('common.draft', currentLocale)} isAnimationActive={false} minPointSize={2} />
+                    <Bar dataKey="completed" stackId="a" fill="#6366f1" name={t('common.completed', currentLocale)} isAnimationActive={false} minPointSize={2} />
+                    <Bar dataKey="inactive" stackId="a" fill="#ef4444" name={t('common.inactive', currentLocale)} isAnimationActive={false} minPointSize={2} />
+                    <Bar dataKey="expired" stackId="a" fill="#a855f7" name={t('common.expired', currentLocale)} isAnimationActive={false} minPointSize={2} />
                   </BarChart>
                 </ResponsiveContainer>
                 <div className="flex justify-center mt-4 space-x-6 text-sm">
-                  <div className="flex items-center"><div className="w-3 h-3 bg-emerald-500 rounded mr-2"></div><span className="text-gray-600">Active</span></div>
-                  <div className="flex items-center"><div className="w-3 h-3 bg-[#f59e42] rounded mr-2"></div><span className="text-gray-600">Draft</span></div>
-                  <div className="flex items-center"><div className="w-3 h-3 bg-[#6366f1] rounded mr-2"></div><span className="text-gray-600">Completed</span></div>
-                  <div className="flex items-center"><div className="w-3 h-3 bg-[#ef4444] rounded mr-2"></div><span className="text-gray-600">Inactive</span></div>
-                  <div className="flex items-center"><div className="w-3 h-3 bg-[#a855f7] rounded mr-2"></div><span className="text-gray-600">Expired</span></div>
+                  <div className="flex items-center"><div className="w-3 h-3 bg-emerald-500 rounded mr-2"></div><span className="text-gray-600">{t('common.active', currentLocale)}</span></div>
+                  <div className="flex items-center"><div className="w-3 h-3 bg-[#f59e42] rounded mr-2"></div><span className="text-gray-600">{t('common.draft', currentLocale)}</span></div>
+                  <div className="flex items-center"><div className="w-3 h-3 bg-[#6366f1] rounded mr-2"></div><span className="text-gray-600">{t('common.completed', currentLocale)}</span></div>
+                  <div className="flex items-center"><div className="w-3 h-3 bg-[#ef4444] rounded mr-2"></div><span className="text-gray-600">{t('common.inactive', currentLocale)}</span></div>
+                  <div className="flex items-center"><div className="w-3 h-3 bg-[#a855f7] rounded mr-2"></div><span className="text-gray-600">{t('common.expired', currentLocale)}</span></div>
                 </div>
               </div>
             ) : (
               <div className="h-80 flex items-center justify-center text-gray-500">
                 <div className="text-center">
                   <Calendar className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                  <p>No survey starts found in the selected period</p>
-                  <p className="text-sm">Create or schedule surveys to see them here</p>
+                  <p>{t('dashboard.admin.noSurveyStartsFound', currentLocale)}</p>
+                  <p className="text-sm">{t('dashboard.admin.createOrScheduleSurveys', currentLocale)}</p>
                 </div>
               </div>
             )}
@@ -408,28 +412,28 @@ export default function AdminDashboard() {
                 <div className="bg-blue-100 p-2 rounded-lg mr-3">
                   <Users className="h-5 w-5 text-blue-600" />
                 </div>
-                Users by Type
+                {t('dashboard.admin.usersByType', currentLocale)}
               </CardTitle>
-              <CardDescription>Breakdown by user role</CardDescription>
+              <CardDescription>{t('dashboard.admin.breakdownByUserRole', currentLocale)}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4 overflow-y-auto pr-2" style={{ height: '19rem' }}>
                 {adminCount > 0 && (
                   <div className="p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-300 hover:border-gray-400 transition-all duration-200 flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center gap-1 space-x-3">
                       <div className="w-3 h-3 rounded-full bg-gray-700" />
-                      <span className="font-semibold text-gray-800">Admins</span>
+                      <span className="font-semibold text-gray-800">{t('dashboard.admin.admins', currentLocale)}</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <span className="text-lg font-bold text-gray-900">{adminCount}</span>
-                      <span className="text-xs text-gray-500">total</span>
+                      <span className="text-xs text-gray-500">{t('dashboard.admin.total', currentLocale)}</span>
                     </div>
                   </div>
                 )}
                 {usersByDepartment.length > 0 ? (
                   usersByDepartment.map((dept: any, index: number) => (
                     <div key={dept.departmentName} className="p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-300 hover:border-gray-400 transition-all duration-200">
-                      <div className="flex items-center space-x-3 mb-3">
+                      <div className="flex items-center gap-1 space-x-3 mb-3">
                         <div className={`w-3 h-3 rounded-full ${
                           index === 0 ? 'bg-blue-500' : 
                           index === 1 ? 'bg-emerald-500' : 
@@ -442,25 +446,25 @@ export default function AdminDashboard() {
                         <div className="flex items-center space-x-4">
                           <div className="flex items-center space-x-2">
                             <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                            <span className="text-sm text-gray-600">Teachers:</span>
+                            <span className="text-sm text-gray-600">{t('dashboard.admin.teachers', currentLocale)}:</span>
                             <span className="font-semibold text-emerald-600">{dept.teachers}</span>
                           </div>
                           <div className="flex items-center space-x-2">
                             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                            <span className="text-sm text-gray-600">Students:</span>
+                            <span className="text-sm text-gray-600">{t('dashboard.admin.students', currentLocale)}:</span>
                             <span className="font-semibold text-blue-600">{dept.students}</span>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
                           <div className="text-lg font-bold text-gray-900">{dept.teachers + dept.students}</div>
-                          <div className="text-xs text-gray-500">total</div>
+                          <div className="text-xs text-gray-500">{t('dashboard.admin.total', currentLocale)}</div>
                         </div>
                       </div>
                     </div>
                   ))
                 ) : (
                   <div className="text-center py-8 text-gray-500">
-                    No users found in departments
+                    {t('dashboard.admin.noUsersFoundInDepartments', currentLocale)}
                   </div>
                 )}
               </div>
@@ -474,9 +478,9 @@ export default function AdminDashboard() {
                 <div className="bg-emerald-100 p-2 rounded-lg mr-3">
                   <Settings className="h-5 w-5 text-emerald-600" />
                 </div>
-                Quick Actions
+                {t('dashboard.admin.quickActions', currentLocale)}
               </CardTitle>
-              <CardDescription>Manage system components</CardDescription>
+              <CardDescription>{t('dashboard.admin.manageSystemComponents', currentLocale)}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <Button asChild className="w-full py-7 mt-3 justify-between bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 group">
@@ -485,10 +489,14 @@ export default function AdminDashboard() {
                     <span className="mr-3 rounded-lg bg-white/20 p-2">
                       <Users className="h-4 w-4" />
                     </span>
-                    <span>User Management</span>
+                    <span>{t('dashboard.admin.userManagement', currentLocale)}</span>
                   </span>
+                  {   currentLocale === 'ar' ? 
+                  <ChevronLeft className="h-4 w-4 opacity-90 transition-transform duration-200 group-hover:translate-x-0.5" /> 
+                  :
                   <ChevronRight className="h-4 w-4 opacity-90 transition-transform duration-200 group-hover:translate-x-0.5" />
-                </Link>
+                  }
+                  </Link>
               </Button>
               
               <Button asChild className="w-full py-7 justify-between bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 group">
@@ -497,10 +505,14 @@ export default function AdminDashboard() {
                     <span className="mr-3 rounded-lg bg-white/20 p-2">
                       <Building className="h-4 w-4" />
                     </span>
-                    <span>Departments</span>
+                    <span>{t('dashboard.admin.departments', currentLocale)}</span>
                   </span>
+                  {   currentLocale === 'ar' ? 
+                  <ChevronLeft className="h-4 w-4 opacity-90 transition-transform duration-200 group-hover:translate-x-0.5" /> 
+                  :
                   <ChevronRight className="h-4 w-4 opacity-90 transition-transform duration-200 group-hover:translate-x-0.5" />
-                </Link>
+                  }
+                  </Link>
               </Button>
 
               <Button asChild className="w-full py-7 justify-between bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 group">
@@ -509,10 +521,14 @@ export default function AdminDashboard() {
                     <span className="mr-3 rounded-lg bg-white/20 p-2">
                       <FileText className="h-4 w-4" />
                     </span>
-                    <span>All Surveys</span>
+                    <span>{t('dashboard.admin.allSurveys', currentLocale)}</span>
                   </span>
+                  {   currentLocale === 'ar' ? 
+                  <ChevronLeft className="h-4 w-4 opacity-90 transition-transform duration-200 group-hover:translate-x-0.5" /> 
+                  :
                   <ChevronRight className="h-4 w-4 opacity-90 transition-transform duration-200 group-hover:translate-x-0.5" />
-                </Link>
+                  }
+                  </Link>
               </Button>
 
               <Button asChild className="w-full py-7 justify-between bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 group">
@@ -521,10 +537,14 @@ export default function AdminDashboard() {
                     <span className="mr-3 rounded-lg bg-white/20 p-2">
                       <PlusCircle className="h-4 w-4" />
                     </span>
-                    <span>Create Survey</span>
+                    <span>{t('dashboard.admin.createSurvey', currentLocale)}</span>
                   </span>
+                  {   currentLocale === 'ar' ? 
+                  <ChevronLeft className="h-4 w-4 opacity-90 transition-transform duration-200 group-hover:translate-x-0.5" /> 
+                  :
                   <ChevronRight className="h-4 w-4 opacity-90 transition-transform duration-200 group-hover:translate-x-0.5" />
-                </Link>
+                  }
+                  </Link>
               </Button>
             </CardContent>
           </Card>

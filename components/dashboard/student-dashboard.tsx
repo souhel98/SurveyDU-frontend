@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DepartmentService } from "@/lib/services/department-service"
 import { UserService } from "@/lib/services/user-service"
 import api from "@/lib/api/axios"
+import { useTranslation } from "@/hooks/useTranslation"
+import { useLocale } from "@/components/ui/locale-provider"
 
 // Helper to format date
 function formatDate(dateStr?: string) {
@@ -22,6 +24,9 @@ function formatDate(dateStr?: string) {
 }
 
 export default function StudentDashboard() {
+  const { t } = useTranslation();
+  const { currentLocale } = useLocale();
+  
   // State
   const [surveys, setSurveys] = useState<any[]>([])
   const [departments, setDepartments] = useState<{ id: number; name: string }[]>([])
@@ -136,33 +141,32 @@ export default function StudentDashboard() {
 
   // Profile summary fields
   const profileFields = [
-    { label: "Department", value: profile?.department },
-    { label: "Academic Year", value: profile?.academicYear },
-    { label: "Gender", value: profile?.gender },
+    { label: t('profile.department', currentLocale), value: profile?.department },
+    { label: t('profile.academicYear', currentLocale), value: profile?.academicYear },
+    { label: t('profile.gender', currentLocale), value: profile?.gender },
   ].filter((f) => f.value)
 
   return (
     <div className="bg-gray-50">
-      <main className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
         {/* Profile summary */}
         {profile && (
-          <Card className="mb-6">
-            <CardHeader className="flex flex-row items-center gap-4 pb-2">
-              <User className="h-8 w-8 text-emerald-600" />
-              <div>
-                <CardTitle className="text-lg">
+          <Card className="mb-4 sm:mb-6">
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 pb-2">
+              <User className="h-6 w-6 sm:h-8 sm:w-8 text-emerald-600" />
+              <div className="min-w-0 flex-1">
+                <CardTitle className="text-base sm:text-lg truncate">
                   {profile.firstName} {profile.lastName}
                 </CardTitle>
-                <CardDescription>{profile.email}</CardDescription>
+                <CardDescription className="text-sm truncate">{profile.email}</CardDescription>
               </div>
             </CardHeader>
-            <CardContent className="flex flex-wrap gap-4 pt-0">
+            <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 pt-0">
               {profileFields.map((f) => (
                 <div key={f.label} className="text-sm text-gray-700">
                   <span className="font-medium text-gray-900">{f.label}:</span> {f.value}
                 </div>
               ))}
-
             </CardContent>
           </Card>
         )}
@@ -179,16 +183,16 @@ export default function StudentDashboard() {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-amber-800 mb-2">
-                    Complete Your Profile
+                    {t('auth.personalInformation', currentLocale)}
                   </h3>
                   <p className="text-amber-700 mb-4">
-                    Your profile is incomplete. Please complete your profile to access all features and participate in surveys.
+                    {t('auth.fillAllFields', currentLocale)}
                   </p>
                   
                   {/* Show what's missing */}
                   {profileRequirements.missingFields && profileRequirements.missingFields.length > 0 && (
                     <div className="mb-4">
-                      <p className="text-sm font-medium text-amber-700 mb-2">Missing information:</p>
+                      <p className="text-sm font-medium text-amber-700 mb-2">{t('auth.fillAllFields', currentLocale)}:</p>
                       <div className="flex flex-wrap gap-2">
                         {profileRequirements.missingFields.map((field: string, index: number) => (
                           <Badge key={index} variant="outline" className="border-amber-300 text-amber-700 bg-amber-100">
@@ -204,14 +208,14 @@ export default function StudentDashboard() {
                       onClick={() => window.location.href = '/auth/student/complete-profile'}
                       className="bg-amber-600 hover:bg-amber-700 text-white"
                     >
-                      Complete Profile Now
+                      {t('profile.updateProfile', currentLocale)}
                     </Button>
                     <Button 
                       variant="outline" 
                       className="border-amber-300 text-amber-700 hover:bg-amber-100"
                       onClick={() => setCheckingProfile(true)}
                     >
-                      Check Again
+                      {t('common.refresh', currentLocale)}
                     </Button>
                   </div>
                 </div>
@@ -221,11 +225,11 @@ export default function StudentDashboard() {
         )}
 
         {/* Search */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4 mb-4 sm:mb-6">
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Search surveys..."
+              placeholder={t('surveys.management.searchSurveys', currentLocale)}
               className="pl-10"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -239,44 +243,44 @@ export default function StudentDashboard() {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Available Surveys</h2>
-              <p className="text-gray-600">Surveys you can participate in to earn points</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{t('dashboard.student.availableSurveys', currentLocale)}</h2>
+              <p className="text-sm sm:text-base text-gray-600">{t('dashboard.student.surveysYouCanParticipate', currentLocale)}</p>
             </div>
           </div>
             {loading ? (
-              <div className="text-center py-12 text-gray-500">Loading...</div>
+              <div className="text-center py-12 text-gray-500">{t('common.loading', currentLocale)}</div>
             ) : error ? (
               <div className="text-center py-12 text-red-500">{error}</div>
             ) : filteredSurveys.length > 0 ? (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredSurveys.map((survey) => (
-                  <Card key={survey.surveyId} className="group overflow-hidden hover:shadow-lg transition-all duration-300 border-0 shadow-sm bg-gradient-to-br from-white to-gray-50/50">
+                  <Card key={survey.surveyId} className="w-full group overflow-hidden hover:shadow-lg transition-all duration-300 border-0 shadow-sm bg-gradient-to-br from-white to-gray-50/50">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-blue-500"></div>
                     
-                    <CardHeader className="pb-4 pt-6">
-                      <div className="flex justify-between items-start gap-3">
-                        <CardTitle className="text-xl font-semibold text-gray-900 group-hover:text-emerald-700 transition-colors">
+                    <CardHeader className="pb-3 sm:pb-4 pt-4 sm:pt-6">
+                      <div className="flex justify-between items-start gap-2 sm:gap-3">
+                        <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900 group-hover:text-emerald-700 transition-colors line-clamp-2">
                           {survey.title}
                         </CardTitle>
-                        <Badge className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white border-0 px-3 py-1 text-sm font-medium shadow-sm">
+                        <Badge className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white border-0 px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium shadow-sm flex-shrink-0">
                           {survey.pointsReward} pts
                         </Badge>
                       </div>
-                      <CardDescription className="text-gray-600 mt-2 line-clamp-2 leading-relaxed">
+                      <CardDescription className="text-sm sm:text-base text-gray-600 mt-2 line-clamp-2 leading-relaxed">
                         {survey.description}
                       </CardDescription>
                     </CardHeader>
                     
-                    <CardContent className="pb-4">
-                      <div className="space-y-4">
+                    <CardContent className="pb-3 sm:pb-4">
+                      <div className="space-y-3 sm:space-y-4">
                         {/* Owner Info */}
-                        <div className="flex items-center p-3 bg-gray-50/70 rounded-lg">
-                          <div className="p-2 bg-emerald-100 rounded-full mr-3">
-                            <User className="h-4 w-4 text-emerald-600" />
+                        <div className="flex items-center p-2 sm:p-3 bg-gray-50/70 rounded-lg">
+                          <div className="p-1.5 sm:p-2 bg-emerald-100 rounded-full mr-2 sm:mr-3">
+                            <User className="h-3 w-3 sm:h-4 sm:w-4 text-emerald-600" />
                           </div>
-                          <div>
-                            <p className="text-xs text-gray-500 font-medium">Created by</p>
-                            <p className="text-sm text-gray-900 font-medium">{survey.ownerName}</p>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs text-gray-500 font-medium">{t('surveyView.createdBy', currentLocale)}</p>
+                            <p className="text-sm text-gray-900 font-medium truncate">{survey.ownerName}</p>
                           </div>
                         </div>
 
@@ -284,12 +288,12 @@ export default function StudentDashboard() {
                         <div className="grid grid-cols-2 gap-3">
                           <div className="text-center p-3 bg-blue-50/70 rounded-lg">
                             <Calendar className="h-4 w-4 text-blue-600 mx-auto mb-1" />
-                            <p className="text-xs text-gray-500 font-medium">Start Date</p>
+                            <p className="text-xs text-gray-500 font-medium">{t('common.startDate', currentLocale)}</p>
                             <p className="text-sm text-gray-900 font-medium">{formatDate(survey.startDate)}</p>
                           </div>
                           <div className="text-center p-3 bg-orange-50/70 rounded-lg">
                             <Calendar className="h-4 w-4 text-orange-600 mx-auto mb-1" />
-                            <p className="text-xs text-gray-500 font-medium">End Date</p>
+                            <p className="text-xs text-gray-500 font-medium">{t('common.endDate', currentLocale)}</p>
                             <p className="text-sm text-gray-900 font-medium">{formatDate(survey.endDate)}</p>
                           </div>
                         </div>
@@ -297,7 +301,7 @@ export default function StudentDashboard() {
                         {/* Participants Progress */}
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-gray-700">Participants</span>
+                            <span className="text-sm font-medium text-gray-700">{t('common.participants', currentLocale)}</span>
                             <span className="text-sm font-semibold text-emerald-600">
                               {survey.currentParticipants}/{survey.requiredParticipants}
                             </span>
@@ -323,7 +327,7 @@ export default function StudentDashboard() {
                       >
                         <Link href={`/dashboard/student/surveys/${survey.surveyId}`}>
                           <BookOpen className="h-4 w-4 mr-2" />
-                          Take Survey
+                          {t('common.participate', currentLocale)}
                         </Link>
                       </Button>
                     </CardFooter>
@@ -335,8 +339,8 @@ export default function StudentDashboard() {
                 <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                   <Search className="h-8 w-8 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-1">No surveys found</h3>
-                <p className="text-gray-500">There is currently no survey directed to you.</p>
+                <h3 className="text-lg font-medium text-gray-900 mb-1">{t('surveys.management.noSurveysFound', currentLocale)}</h3>
+                <p className="text-gray-500">{t('surveys.management.tryAdjustingSearch', currentLocale)}</p>
               </div>
             )}
         </div>

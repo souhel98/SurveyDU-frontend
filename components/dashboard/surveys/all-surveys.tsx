@@ -45,9 +45,13 @@ import { ACADEMIC_YEARS, TARGET_GENDER_SELECT, SURVEY_STATUS_LABELS } from "@/li
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { useTranslation } from "@/hooks/useTranslation"
+import { useLocale } from "@/components/ui/locale-provider"
 
 export default function AllSurveys() {
   const { toast } = useToast();
+  const { t } = useTranslation();
+  const { currentLocale } = useLocale();
   // NEW: Separate state for all and admin surveys
   const [allSurveys, setAllSurveys] = useState<any[]>([]);
   const [adminSurveys, setAdminSurveys] = useState<any[]>([]);
@@ -98,6 +102,8 @@ export default function AllSurveys() {
     }
   }, []);
 
+
+
   // Fetch both lists on mount
   useEffect(() => {
     setLoading(true);
@@ -113,7 +119,7 @@ export default function AllSurveys() {
         setSurveys(adminOnly ? mine : all);
         setLoading(false);
       } catch (err: any) {
-        toast({ title: err.message || "Failed to fetch surveys", variant: "destructive" });
+        toast({ title: err.message || t('surveys.management.failedToFetchSurveys', currentLocale), variant: "destructive" });
         setLoading(false);
       }
     };
@@ -241,8 +247,8 @@ export default function AllSurveys() {
       const duplicatedSurvey = await SurveyService.duplicateAdminSurvey(surveyId);
       
       toast({
-        title: "Success",
-        description: "Survey duplicated successfully!",
+        title: t('surveys.management.success', currentLocale),
+        description: t('surveys.management.surveyDuplicatedSuccessfully', currentLocale),
       })
       
       // Refresh both lists to update badges
@@ -259,8 +265,8 @@ export default function AllSurveys() {
       
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to duplicate survey",
+        title: t('surveys.management.error', currentLocale),
+        description: error.message || t('surveys.management.failedToDuplicateSurvey', currentLocale),
         variant: "destructive"
       })
     } finally {
@@ -274,8 +280,8 @@ export default function AllSurveys() {
       await SurveyService.publishAdminSurvey(surveyId);
       
       toast({
-        title: "Success",
-        description: "Survey published successfully!",
+        title: t('surveys.management.success', currentLocale),
+        description: t('surveys.management.surveyPublishedSuccessfully', currentLocale),
       })
       
       // Refresh both lists to update badges
@@ -292,8 +298,8 @@ export default function AllSurveys() {
       
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to publish survey",
+        title: t('surveys.management.error', currentLocale),
+        description: error.message || t('surveys.management.failedToPublishSurvey', currentLocale),
         variant: "destructive"
       })
     } finally {
@@ -307,8 +313,8 @@ export default function AllSurveys() {
       await SurveyService.unpublishAdminSurvey(surveyId);
       
       toast({
-        title: "Success",
-        description: "Survey unpublished successfully and returned to draft status!",
+        title: t('surveys.management.success', currentLocale),
+        description: t('surveys.management.surveyUnpublishedSuccessfully', currentLocale),
       })
       
       // Refresh both lists to update badges
@@ -325,8 +331,8 @@ export default function AllSurveys() {
       
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to unpublish survey",
+        title: t('surveys.management.error', currentLocale),
+        description: error.message || t('surveys.management.failedToUnpublishSurvey', currentLocale),
         variant: "destructive"
       })
     } finally {
@@ -362,8 +368,8 @@ export default function AllSurveys() {
       // Validate required participants
       if (editingData.requiredParticipants <= 0) {
         toast({
-          title: "Error",
-          description: "Required participants must be greater than 0",
+          title: t('surveys.management.error', currentLocale),
+          description: t('surveys.management.requiredParticipantsMustBeGreater', currentLocale),
           variant: "destructive"
         });
         return;
@@ -376,8 +382,8 @@ export default function AllSurveys() {
         
         if (startDate >= endDate) {
           toast({
-            title: "Error",
-            description: "End date must be after start date",
+            title: t('surveys.management.error', currentLocale),
+            description: t('surveys.management.endDateMustBeAfterStartDate', currentLocale),
             variant: "destructive"
           });
           return;
@@ -410,8 +416,8 @@ export default function AllSurveys() {
       await SurveyService.updateAdminSurveyDates(surveyId, updateData);
       
       toast({
-        title: "Success",
-        description: "Survey updated successfully!",
+        title: t('surveys.management.success', currentLocale),
+        description: t('surveys.management.surveyUpdatedSuccessfully', currentLocale),
       });
       
       // Refresh both lists to update badges
@@ -439,8 +445,8 @@ export default function AllSurveys() {
       
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update survey",
+        title: t('surveys.management.error', currentLocale),
+        description: error.message || t('surveys.management.failedToUpdateSurvey', currentLocale),
         variant: "destructive"
       });
     } finally {
@@ -458,15 +464,15 @@ export default function AllSurveys() {
   const handleDeleteSurvey = async (survey: any) => {
     const id = survey.surveyId || survey.id;
     if (!id) {
-      toast({ title: "Error", description: "Survey ID not found.", variant: "destructive" });
+      toast({ title: t('surveys.management.error', currentLocale), description: t('surveys.management.surveyIdNotFound', currentLocale), variant: "destructive" });
       return;
     }
     try {
       setDeletingSurveyId(id);
       await SurveyService.deleteAdminSurvey(id);
       toast({
-        title: "Success",
-        description: "Survey deleted successfully!",
+        title: t('surveys.management.success', currentLocale),
+        description: t('surveys.management.surveyDeletedSuccessfully', currentLocale),
       });
       // Refresh both lists
       const [updatedAllSurveys, updatedAdminSurveys] = await Promise.all([
@@ -478,8 +484,8 @@ export default function AllSurveys() {
       setSurveys(adminOnly ? updatedAdminSurveys : updatedAllSurveys);
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete survey",
+        title: t('surveys.management.error', currentLocale),
+        description: error.message || t('surveys.management.failedToDeleteSurvey', currentLocale),
         variant: "destructive"
       });
     } finally {
@@ -508,14 +514,14 @@ export default function AllSurveys() {
                 }
               }}
             >
-              <CardContent className="p-4">
+              <CardContent className="p-2">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center">
                     <div className="bg-blue-100 p-3 rounded-full mr-4">
                       <FileText className="h-6 w-6 text-blue-500" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">All Surveys</p>
+                      <p className="text-sm font-medium text-gray-500">{t('surveys.management.allSurveys', currentLocale)}</p>
                       <h3 className="text-2xl font-bold">{allSurveys.length}</h3>
                     </div>
                   </div>
@@ -539,7 +545,7 @@ export default function AllSurveys() {
                   disabled={!adminOnly}
                 >
                   <FileText className="h-4 w-4" />
-                  {!adminOnly ? "Viewing All Surveys" : "View All Surveys"}
+                  {!adminOnly ? t('surveys.management.viewingAllSurveys', currentLocale) : t('surveys.management.viewAllSurveys', currentLocale)}
                 </Button>
               </CardContent>
             </Card>
@@ -555,14 +561,14 @@ export default function AllSurveys() {
                 }
               }}
             >
-              <CardContent className="p-4">
+              <CardContent className="p-2">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center">
                     <div className="bg-amber-100 p-3 rounded-full mr-4">
                       <UserCheck className="h-6 w-6 text-amber-500" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">My Surveys</p>
+                      <p className="text-sm font-medium text-gray-500">{t('surveys.management.mySurveys', currentLocale)}</p>
                       <h3 className="text-2xl font-bold">{adminSurveys.length}</h3>
                     </div>
                   </div>
@@ -582,7 +588,7 @@ export default function AllSurveys() {
                   disabled={adminOnly}
                 >
                   <UserCheck className="h-4 w-4" />
-                  {adminOnly ? "Viewing My Surveys" : "View My Surveys"}
+                  {adminOnly ? t('surveys.management.viewingMySurveys', currentLocale) : t('surveys.management.viewMySurveys', currentLocale)}
                 </Button>
               </CardContent>
             </Card>
@@ -599,14 +605,14 @@ export default function AllSurveys() {
                 setStatusFilter(newFilter || "all");
               }}
             >
-              <CardContent className="p-4">
+              <CardContent className="p-2">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center">
                     <div className="bg-emerald-100 p-3 rounded-full mr-4">
                       <BarChart2 className="h-6 w-6 text-emerald-500" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">All Responses</p>
+                      <p className="text-sm font-medium text-gray-500">{t('surveys.management.allResponses', currentLocale)}</p>
                       <h3 className="text-2xl font-bold">{(adminOnly ? adminSurveys : allSurveys).reduce((acc: number, s: any) => acc + (s.currentParticipants || 0), 0)}</h3>
                     </div>
                   </div>
@@ -623,7 +629,7 @@ export default function AllSurveys() {
                   }}
                 >
                   <BarChart3 className="h-4 w-4" />
-                  {activeFilter === "responses" ? "Show All" : "View Responses"}
+                  {activeFilter === "responses" ? t('surveys.management.showAll', currentLocale) : t('surveys.management.viewResponses', currentLocale)}
                 </Button>
               </CardContent>
             </Card>
@@ -637,14 +643,14 @@ export default function AllSurveys() {
                 setStatusFilter(newFilter || "all");
               }}
             >
-              <CardContent className="p-4">
+              <CardContent className="p-2">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center">
                     <div className="bg-green-100 p-3 rounded-full mr-4">
                       <Play className="h-6 w-6 text-green-500" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Active Surveys</p>
+                      <p className="text-sm font-medium text-gray-500">{t('surveys.management.activeSurveys', currentLocale)}</p>
                       <h3 className="text-2xl font-bold">{(adminOnly ? adminSurveys : allSurveys).filter((s: any) => s.status === 'active').length}</h3>
                     </div>
                   </div>
@@ -661,7 +667,7 @@ export default function AllSurveys() {
                   }}
                 >
                   <Play className="h-4 w-4" />
-                  {activeFilter === "active" ? "Show All Surveys" : "View Active Surveys"}
+                  {activeFilter === "active" ? t('surveys.management.showAllSurveys', currentLocale) : t('surveys.management.viewActiveSurveys', currentLocale)}
                 </Button>
               </CardContent>
             </Card>
@@ -675,14 +681,14 @@ export default function AllSurveys() {
                 setStatusFilter(newFilter || "all");
               }}
             >
-              <CardContent className="p-4">
+              <CardContent className="p-2">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center">
                     <div className="bg-orange-100 p-3 rounded-full mr-4">
                       <Clock className="h-6 w-6 text-orange-500" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Draft Surveys</p>
+                      <p className="text-sm font-medium text-gray-500">{t('surveys.management.draftSurveys', currentLocale)}</p>
                       <h3 className="text-2xl font-bold">{(adminOnly ? adminSurveys : allSurveys).filter((s: any) => s.status === 'draft').length}</h3>
                     </div>
                   </div>
@@ -699,7 +705,7 @@ export default function AllSurveys() {
                   }}
                 >
                   <Clock className="h-4 w-4" />
-                  {activeFilter === "draft" ? "Show All Surveys" : "View Draft Surveys"}
+                  {activeFilter === "draft" ? t('surveys.management.showAllSurveys', currentLocale) : t('surveys.management.viewDraftSurveys', currentLocale)}
                 </Button>
               </CardContent>
             </Card>
@@ -713,14 +719,14 @@ export default function AllSurveys() {
                 setStatusFilter(newFilter || "all");
               }}
             >
-              <CardContent className="p-4">
+              <CardContent className="p-2">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center">
                     <div className="bg-red-100 p-3 rounded-full mr-4">
                       <AlertCircle className="h-6 w-6 text-red-500" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Inactive Surveys</p>
+                      <p className="text-sm font-medium text-gray-500">{t('surveys.management.inactiveSurveys', currentLocale)}</p>
                       <h3 className="text-2xl font-bold">{(adminOnly ? adminSurveys : allSurveys).filter((s: any) => s.status === 'inactive').length}</h3>
                     </div>
                   </div>
@@ -737,7 +743,7 @@ export default function AllSurveys() {
                   }}
                 >
                   <AlertCircle className="h-4 w-4" />
-                  {activeFilter === "inactive" ? "Show All Surveys" : "View Inactive Surveys"}
+                  {activeFilter === "inactive" ? t('surveys.management.showAllSurveys', currentLocale) : t('surveys.management.viewInactiveSurveys', currentLocale)}
                 </Button>
               </CardContent>
             </Card>
@@ -751,14 +757,14 @@ export default function AllSurveys() {
                 setStatusFilter(newFilter || "all");
               }}
             >
-              <CardContent className="p-4">
+              <CardContent className="p-2">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center">
                     <div className="bg-purple-100 p-3 rounded-full mr-4">
                       <Clock className="h-6 w-6 text-purple-500" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Expired Surveys</p>
+                      <p className="text-sm font-medium text-gray-500">{t('surveys.management.expiredSurveys', currentLocale)}</p>
                       <h3 className="text-2xl font-bold">{(adminOnly ? adminSurveys : allSurveys).filter((s: any) => s.status === 'expired').length}</h3>
                     </div>
                   </div>
@@ -775,7 +781,7 @@ export default function AllSurveys() {
                   }}
                 >
                   <Clock className="h-4 w-4" />
-                  {activeFilter === "expired" ? "Show All Surveys" : "View Expired Surveys"}
+                  {activeFilter === "expired" ? t('surveys.management.showAllSurveys', currentLocale) : t('surveys.management.viewExpiredSurveys', currentLocale)}
                 </Button>
               </CardContent>
             </Card>
@@ -789,14 +795,14 @@ export default function AllSurveys() {
                 setStatusFilter(newFilter || "all");
               }}
             >
-              <CardContent className="p-4">
+              <CardContent className="p-2">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center">
                     <div className="bg-indigo-100 p-3 rounded-full mr-4">
                       <CheckCircle className="h-6 w-6 text-indigo-500" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Completed Surveys</p>
+                      <p className="text-sm font-medium text-gray-500">{t('surveys.management.completedSurveys', currentLocale)}</p>
                       <h3 className="text-2xl font-bold">{(adminOnly ? adminSurveys : allSurveys).filter((s: any) => s.status === 'completed').length}</h3>
                     </div>
                   </div>
@@ -813,7 +819,7 @@ export default function AllSurveys() {
                   }}
                 >
                   <CheckCircle className="h-4 w-4" />
-                  {activeFilter === "completed" ? "Show All Surveys" : "View Completed Surveys"}
+                  {activeFilter === "completed" ? t('surveys.management.showAllSurveys', currentLocale) : t('surveys.management.viewCompletedSurveys', currentLocale)}
                 </Button>
               </CardContent>
             </Card>
@@ -825,30 +831,30 @@ export default function AllSurveys() {
           <div>
             <div className="pb-2">
               <h1 className="text-3xl font-bold text-gray-900">
-                {adminOnly && activeFilter === "responses" && "My Surveys with Responses"}
-                {adminOnly && activeFilter === "active" && "My Active Surveys"}
-                {adminOnly && activeFilter === "draft" && "My Draft Surveys"}
-                {adminOnly && activeFilter === "inactive" && "My Inactive Surveys"}
-                {adminOnly && activeFilter === "expired" && "My Expired Surveys"}
-                {adminOnly && activeFilter === "completed" && "My Completed Surveys"}
-                {adminOnly && (!activeFilter || activeFilter === "all") && "My Surveys"}
-                {!adminOnly && activeFilter === "responses" && "Surveys with Responses"}
-                {!adminOnly && activeFilter === "active" && "Active Surveys"}
-                {!adminOnly && activeFilter === "draft" && "Draft Surveys"}
-                {!adminOnly && activeFilter === "inactive" && "Inactive Surveys"}
-                {!adminOnly && activeFilter === "expired" && "Expired Surveys"}
-                {!adminOnly && activeFilter === "completed" && "Completed Surveys"}
-                {!adminOnly && (!activeFilter || activeFilter === "all") && "All Surveys"}
+                {adminOnly && activeFilter === "responses" && t('surveys.management.mySurveysWithResponses', currentLocale)}
+                {adminOnly && activeFilter === "active" && t('surveys.management.myActiveSurveys', currentLocale)}
+                {adminOnly && activeFilter === "draft" && t('surveys.management.myDraftSurveys', currentLocale)}
+                {adminOnly && activeFilter === "inactive" && t('surveys.management.myInactiveSurveys', currentLocale)}
+                {adminOnly && activeFilter === "expired" && t('surveys.management.myExpiredSurveys', currentLocale)}
+                {adminOnly && activeFilter === "completed" && t('surveys.management.myCompletedSurveys', currentLocale)}
+                {!adminOnly && activeFilter === "responses" && t('surveys.management.surveysWithResponses', currentLocale)}
+                {!adminOnly && activeFilter === "active" && t('surveys.management.activeSurveys', currentLocale)}
+                {!adminOnly && activeFilter === "draft" && t('surveys.management.draftSurveys', currentLocale)}
+                {!adminOnly && activeFilter === "inactive" && t('surveys.management.inactiveSurveys', currentLocale)}
+                {!adminOnly && activeFilter === "expired" && t('surveys.management.expiredSurveys', currentLocale)}
+                {!adminOnly && activeFilter === "expired" && t('surveys.management.expiredSurveys', currentLocale)}
+                {!adminOnly && activeFilter === "completed" && t('surveys.management.completedSurveys', currentLocale)}
+                {!adminOnly && (!activeFilter || activeFilter === "all") && t('surveys.management.allSurveys', currentLocale)}
               </h1>
               <p className="text-gray-600 mt-1">
-                {adminOnly ? "Manage and analyze your surveys" : "Manage and analyze surveys"}
+                {adminOnly ? t('surveys.management.manageAndAnalyze', currentLocale) : t('surveys.management.manageAndAnalyzeAll', currentLocale)}
               </p>
             </div>
           </div>
           <Link href="/dashboard/admin/create-survey">
             <Button className="bg-emerald-500 hover:bg-emerald-600">
               <PlusCircle className="h-4 w-4 mr-2" />
-              Create New Survey
+              {t('surveys.management.createNew', currentLocale)}
             </Button>
           </Link>
         </div>
@@ -859,7 +865,7 @@ export default function AllSurveys() {
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Search surveys..."
+              placeholder={t('surveys.management.searchSurveys', currentLocale)}
               className="pl-10"
               value={searchQuery}
               onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
@@ -883,10 +889,10 @@ export default function AllSurveys() {
                     setStatusFilter("all");
                   }
                 }}
-                placeholder="Select View"
+                placeholder={t('surveys.management.selectView', currentLocale)}
               >
-                <CustomSelectOption value="all">All Surveys</CustomSelectOption>
-                <CustomSelectOption value="my">My Surveys</CustomSelectOption>
+                <CustomSelectOption value="all">{t('surveys.management.allSurveys', currentLocale)}</CustomSelectOption>
+                <CustomSelectOption value="my">{t('surveys.management.mySurveys', currentLocale)}</CustomSelectOption>
               </CustomSelect>
             </div>
 
@@ -902,26 +908,26 @@ export default function AllSurveys() {
                     setActiveFilter(value);
                   }
                 }}
-                placeholder="Filter by status"
+                placeholder={t('surveys.management.filterByStatus', currentLocale)}
               >
-                <CustomSelectOption value="all">All Statuses</CustomSelectOption>
-                <CustomSelectOption value="responses">Surveys with Responses</CustomSelectOption>
-                <CustomSelectOption value="draft">Draft</CustomSelectOption>
-                <CustomSelectOption value="inactive">Inactive</CustomSelectOption>
-                <CustomSelectOption value="active">Active</CustomSelectOption>
-                <CustomSelectOption value="completed">Completed</CustomSelectOption>
-                <CustomSelectOption value="expired">Expired</CustomSelectOption>
+                <CustomSelectOption value="all">{t('surveys.management.allStatuses', currentLocale)}</CustomSelectOption>
+                <CustomSelectOption value="responses">{t('surveys.management.surveysWithResponses', currentLocale)}</CustomSelectOption>
+                <CustomSelectOption value="draft">{t('common.draft', currentLocale)}</CustomSelectOption>
+                <CustomSelectOption value="inactive">{t('common.inactive', currentLocale)}</CustomSelectOption>
+                <CustomSelectOption value="active">{t('common.active', currentLocale)}</CustomSelectOption>
+                <CustomSelectOption value="completed">{t('common.completed', currentLocale)}</CustomSelectOption>
+                <CustomSelectOption value="expired">{t('common.expired', currentLocale)}</CustomSelectOption>
               </CustomSelect>
             </div>
             <div className="w-full sm:max-w-sm md:w-56">
               <CustomSelect
                 value={departmentFilter}
                 onChange={setDepartmentFilter}
-                placeholder="Filter by departments"
+                placeholder={t('surveys.management.filterByDepartments', currentLocale)}
                 multiple
               >
                 <CustomSelectOption value="all" multiple>
-                  All Departments
+                  {t('surveys.management.allDepartments', currentLocale)}
                 </CustomSelectOption>
                 {departments.map((dep) => (
                   <CustomSelectOption key={dep.id} value={String(dep.id)} multiple>
@@ -934,15 +940,15 @@ export default function AllSurveys() {
               <CustomSelect
                 value={yearFilter}
                 onChange={setYearFilter}
-                placeholder="Filter by academic years"
+                placeholder={t('surveys.management.filterByAcademicYears', currentLocale)}
                 multiple
               >
                 <CustomSelectOption value="all" multiple>
-                  All Academic Years
+                  {t('surveys.management.allAcademicYears', currentLocale)}
                 </CustomSelectOption>
                 {ACADEMIC_YEARS.map((y) => (
                   <CustomSelectOption key={y.value} value={String(y.value)} multiple>
-                    {y.label}
+                    {t(`common.academicYears.${y.value === 1 ? 'first' : y.value === 2 ? 'second' : y.value === 3 ? 'third' : y.value === 4 ? 'fourth' : 'fifth'}`, currentLocale)}
                   </CustomSelectOption>
                 ))}
               </CustomSelect>
@@ -951,12 +957,12 @@ export default function AllSurveys() {
               <CustomSelect
                 value={genderFilter}
                 onChange={setGenderFilter}
-                placeholder="Filter by gender"
+                placeholder={t('surveys.management.filterByGender', currentLocale)}
               >
-                <CustomSelectOption value="all">All Gender</CustomSelectOption>
+                <CustomSelectOption value="all">{t('surveys.management.allGender', currentLocale)}</CustomSelectOption>
                 {TARGET_GENDER_SELECT.filter(g => g.value !== 'all').map((g) => (
                   <CustomSelectOption key={g.value} value={String(g.value)}>
-                    {g.label}
+                    {t(`common.${g.value}`, currentLocale)}
                   </CustomSelectOption>
                 ))}
               </CustomSelect>
@@ -974,10 +980,10 @@ export default function AllSurveys() {
                   setActiveFilter("all");
                 }}
                 className="flex items-center gap-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 w-full sm:w-auto"
-                title="Clear all filters"
+                title={t('surveys.management.clearAllFilters', currentLocale)}
               >
                 <X className="h-4 w-4" />
-                Clear
+                {t('surveys.management.clear', currentLocale)}
               </Button>
             )}
             <div className="flex gap-2 w-full sm:w-auto md:ml-auto justify-center sm:justify-end">
@@ -992,7 +998,7 @@ export default function AllSurveys() {
                 }`}
               >
                 <FileText className="h-4 w-4" />
-                Table
+                {t('surveys.management.table', currentLocale)}
               </Button>
               <Button
                 variant={viewMode === 'cards' ? 'default' : 'outline'}
@@ -1005,7 +1011,7 @@ export default function AllSurveys() {
                 }`}
               >
                 <Grid3X3 className="h-4 w-4" />
-                Grid
+                {t('surveys.management.grid', currentLocale)}
               </Button>
             </div>
           </div>
@@ -1016,31 +1022,31 @@ export default function AllSurveys() {
           <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">
-                  {activeFilter === "responses" && "Surveys with Responses"}
-                  {activeFilter === "all" && "All Surveys"}
-                  {activeFilter === "active" && "Active Surveys"}
-                  {activeFilter === "draft" && "Draft Surveys"}
-                  {activeFilter === "inactive" && "Inactive Surveys"}
-                  {activeFilter === "expired" && "Expired Surveys"}
-                  {activeFilter === "completed" && "Completed Surveys"}
-                  {!activeFilter && viewMode === 'cards' && "All Surveys"}
+                  {activeFilter === "responses" && t('surveys.management.surveysWithResponses', currentLocale)}
+                  {activeFilter === "all" && t('surveys.management.allSurveys', currentLocale)}
+                  {activeFilter === "active" && t('surveys.management.activeSurveys', currentLocale)}
+                  {activeFilter === "draft" && t('surveys.management.draftSurveys', currentLocale)}
+                  {activeFilter === "inactive" && t('surveys.management.inactiveSurveys', currentLocale)}
+                  {activeFilter === "expired" && t('surveys.management.expiredSurveys', currentLocale)}
+                  {activeFilter === "completed" && t('surveys.management.completedSurveys', currentLocale)}
+                  {!activeFilter && viewMode === 'cards' && t('surveys.management.allSurveys', currentLocale)}
                 </h2>
                 <p className="text-gray-600">
-                  {activeFilter === "responses" && "Surveys that have received responses from participants"}
-                  {activeFilter === "all" && "All surveys created by you"}
-                  {activeFilter === "active" && "Surveys that are currently active and accepting responses"}
-                  {activeFilter === "draft" && "Surveys that are in draft status and not yet published"}
-                  {activeFilter === "inactive" && "Surveys that are inactive and not accepting responses"}
-                  {activeFilter === "expired" && "Surveys that have passed their end date and are no longer accepting responses"}
-                  {activeFilter === "completed" && "Surveys that have been completed and are no longer accepting responses"}
-                  {!activeFilter && viewMode === 'cards' && "All surveys created by you"}
+                  {activeFilter === "responses" && t('surveys.management.surveysWithResponsesDesc', currentLocale)}
+                  {activeFilter === "all" && t('surveys.management.allSurveysDesc', currentLocale)}
+                  {activeFilter === "active" && t('surveys.management.activeSurveysDesc', currentLocale)}
+                  {activeFilter === "draft" && t('surveys.management.draftSurveysDesc', currentLocale)}
+                  {activeFilter === "inactive" && t('surveys.management.inactiveSurveysDesc', currentLocale)}
+                  {activeFilter === "expired" && t('surveys.management.expiredSurveysDesc', currentLocale)}
+                  {activeFilter === "completed" && t('surveys.management.completedSurveysDesc', currentLocale)}
+                  {!activeFilter && viewMode === 'cards' && t('surveys.management.allSurveysDesc', currentLocale)}
                 </p>
               </div>
 
             {loading ? (
               <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
-                <p className="mt-4 text-gray-600">Loading surveys...</p>
+                <p className="mt-4 text-gray-600">{t('surveys.management.loadingSurveys', currentLocale)}</p>
               </div>
             ) : filteredSurveys.length > 0 ? (
                             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -1075,28 +1081,28 @@ export default function AllSurveys() {
                         <div className="flex items-center gap-2">
                           {survey.status === "draft" ? (
                             <Badge className="bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-200 transition-colors">
-                              <Clock className="h-3 w-3 mr-1.5" />
-                              {survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
+                              <Clock className={`h-3 w-3 ${currentLocale === 'ar' ? 'ml-1' : 'mr-1'}`} />
+                              {t('common.draft', currentLocale)}
                             </Badge>
                           ) : survey.status === "active" ? (
                             <Badge className="bg-green-100 text-green-700 border-green-200 hover:bg-green-200 transition-colors">
-                              <Play className="h-3 w-3 mr-1.5" />
-                              {SURVEY_STATUS_LABELS[survey.status as keyof typeof SURVEY_STATUS_LABELS] || survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
+                              <Play className={`h-3 w-3 ${currentLocale === 'ar' ? 'ml-1' : 'mr-1'}`} />
+                              {t('common.active', currentLocale)}
                             </Badge>
                           ) : survey.status === "expired" ? (
                             <Badge className="bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200 transition-colors">
-                              <Clock className="h-3 w-3 mr-1.5" />
-                              {SURVEY_STATUS_LABELS[survey.status as keyof typeof SURVEY_STATUS_LABELS] || survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
+                              <Clock className={`h-3 w-3 ${currentLocale === 'ar' ? 'ml-1' : 'mr-1'}`} />
+                              {t('common.expired', currentLocale)}
                             </Badge>
                           ) : (
                             <Badge className={`
                               ${survey.status === "completed" ? "bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200" : ""}
                               ${survey.status === "inactive" ? "bg-red-100 text-red-700 border-red-200 hover:bg-red-200" : ""}
-                              transition-colors
+                              transition-colors whitespace-nowrap
                             `}>
-                              {survey.status === "completed" && <CheckCircle className="h-3 w-3 mr-1.5" />}
-                              {survey.status === "inactive" && <AlertCircle className="h-3 w-3 mr-1.5" />}
-                              {SURVEY_STATUS_LABELS[survey.status as keyof typeof SURVEY_STATUS_LABELS] || survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
+                              {survey.status === "completed" && <CheckCircle className={`h-3 w-3 ${currentLocale === 'ar' ? 'ml-1' : 'mr-1'}`} />}
+                              {survey.status === "inactive" && <AlertCircle className={`h-3 w-3 ${currentLocale === 'ar' ? 'ml-1' : 'mr-1'}`} />}
+                              {survey.status === "completed" ? t('common.completed', currentLocale) : t('common.inactive', currentLocale)}
                             </Badge>
                           )}
                           
@@ -1104,7 +1110,7 @@ export default function AllSurveys() {
                           {adminSurveys.some(adminSurvey => adminSurvey.surveyId === survey.surveyId) && (
                             <Badge className="bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200 transition-colors">
                               <User className="h-3 w-3 mr-1.5" />
-                              My Survey
+                              {t('surveys.management.mySurvey', currentLocale)}
                             </Badge>
                           )}
                         </div>
@@ -1121,7 +1127,7 @@ export default function AllSurveys() {
                       {/* Participants Progress */}
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-700">Participants</span>
+                          <span className="text-sm font-medium text-gray-700">{t('surveys.management.participants', currentLocale)}</span>
                           <span className="text-sm font-bold text-gray-900">{survey.currentParticipants} / {survey.requiredParticipants}</span>
                         </div>
                         <div className="relative">
@@ -1146,34 +1152,40 @@ export default function AllSurveys() {
                         <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
                           <Calendar className="h-4 w-4 text-emerald-500" />
                           <div className="min-w-0">
-                            <p className="text-xs text-gray-500 font-medium">Created</p>
+                            <p className="text-xs text-gray-500 font-medium">{t('surveys.management.created', currentLocale)}</p>
                             <p className="text-gray-700 truncate">{formattedDates[survey.surveyId || survey.id]?.createdAt || "-"}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
                           <Clock className="h-4 w-4 text-orange-500" />
                           <div className="min-w-0">
-                            <p className="text-xs text-gray-500 font-medium">Expires</p>
+                            <p className="text-xs text-gray-500 font-medium">{t('surveys.management.expires', currentLocale)}</p>
                             <p className="text-gray-700 truncate">{formattedDates[survey.surveyId || survey.id]?.expiresAt || "-"}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
                           <Target className="h-4 w-4 text-blue-500" />
                           <div className="min-w-0">
-                            <p className="text-xs text-gray-500 font-medium">Gender</p>
+                            <p className="text-xs text-gray-500 font-medium">{t('surveys.management.gender', currentLocale)}</p>
                             <p className="text-gray-700 truncate">
-                              {TARGET_GENDER_SELECT.find(g => g.value.toLowerCase() === String(survey.targetGender).toLowerCase())?.label || survey.targetGender}
+                              {(() => {
+                                const genderValue = String(survey.targetGender).toLowerCase();
+                                if (genderValue === 'all') return t('common.all', currentLocale);
+                                if (genderValue === 'male') return t('common.male', currentLocale);
+                                if (genderValue === 'female') return t('common.female', currentLocale);
+                                return survey.targetGender;
+                              })()}
                             </p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
                           <GraduationCap className="h-4 w-4 text-purple-500" />
                           <div className="min-w-0">
-                            <p className="text-xs text-gray-500 font-medium">Years</p>
+                            <p className="text-xs text-gray-500 font-medium">{t('surveys.management.years', currentLocale)}</p>
                             {(() => {
                               const academicYearsText = Array.isArray(survey.targetAcademicYears) && survey.targetAcademicYears.length > 0
                                 ? survey.targetAcademicYears.length === ACADEMIC_YEARS.length
-                                  ? "All"
+                                  ? t('common.all', currentLocale)
                                   : survey.targetAcademicYears.map((year: number) => {
                                       const found = ACADEMIC_YEARS.find(y => y.value === year);
                                       return found ? found.label : year;
@@ -1213,11 +1225,11 @@ export default function AllSurveys() {
                       <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
                         <Building className="h-4 w-4 text-indigo-500" />
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs text-gray-500 font-medium">Departments</p>
+                          <p className="text-xs text-gray-500 font-medium">{t('surveys.management.departments', currentLocale)}</p>
                           {(() => {
                             const departmentsText = Array.isArray(survey.targetDepartmentIds) && survey.targetDepartmentIds.length > 0
                               ? survey.targetDepartmentIds.length === departments.length
-                                ? "All"
+                                ? t('common.all', currentLocale)
                                 : survey.targetDepartmentIds.map((id: number) => {
                                     const found = departments.find(dep => dep.id === id);
                                     return found ? found.name : id;
@@ -1256,8 +1268,8 @@ export default function AllSurveys() {
                       <div className="space-y-3 pt-2">
                         <Link href={`/dashboard/admin/surveys/${survey.surveyId}/statistics`}>
                           <Button className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-medium shadow-sm transition-all duration-200">
-                            <BarChart3 className="h-4 w-4 mr-2" />
-                            View Statistics
+                            <BarChart3 className="h-4 w-4 mr-1" />
+                            {t('surveys.management.viewStatistics', currentLocale)}
                           </Button>
                         </Link>
                         
@@ -1265,7 +1277,7 @@ export default function AllSurveys() {
                           <Link href={`/dashboard/admin/surveys/${survey.surveyId}/view`} className="flex-1">
                             <Button variant="outline" size="sm" className="w-full border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 transition-all duration-200">
                               <FileText className="h-3 w-3 mr-1" />
-                              View
+                              {t('surveys.management.view', currentLocale)}
                             </Button>
                           </Link>
                           {(survey.currentParticipants > 0 || survey.status === 'expired') ? (
@@ -1274,10 +1286,10 @@ export default function AllSurveys() {
                               size="sm"
                               disabled
                               className="flex-1 border-gray-200 text-gray-400 cursor-not-allowed"
-                              title={survey.currentParticipants > 0 ? "Edit not available when survey has responses" : "Edit not available for expired surveys"}
+                              title={t('surveys.management.editNotAvailable', currentLocale)}
                             >
                               <Edit className="h-3 w-3 mr-1" />
-                              Edit
+                              {t('surveys.management.edit', currentLocale)}
                             </Button>
                           ) : (
                             // Only show full edit for surveys that belong to the current admin
@@ -1289,7 +1301,7 @@ export default function AllSurveys() {
                                   className="w-full border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200"
                                 >
                                   <Edit className="h-3 w-3 mr-1" />
-                                  Edit
+                                  {t('surveys.management.edit', currentLocale)}
                                 </Button>
                               </Link>
                             ) : (
@@ -1298,10 +1310,10 @@ export default function AllSurveys() {
                                 size="sm"
                                 disabled
                                 className="flex-1 border-gray-200 text-gray-400 cursor-not-allowed"
-                                title="Full edit only available for your own surveys"
+                                title={t('surveys.management.fullEditOnlyAvailable', currentLocale)}
                               >
                                 <Edit className="h-3 w-3 mr-1" />
-                                Edit
+                                {t('surveys.management.edit', currentLocale)}
                               </Button>
                             )
                           )}
@@ -1312,7 +1324,7 @@ export default function AllSurveys() {
                             className="flex-1 border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all duration-200"
                           >
                             <Settings className="h-3 w-3 mr-1" />
-                            Quick Edit
+                            {t('surveys.management.quickEdit', currentLocale)}
                           </Button>
                           <Popover>
                             <PopoverTrigger asChild>
@@ -1322,7 +1334,7 @@ export default function AllSurveys() {
                             </PopoverTrigger>
                             <PopoverContent align="end" className="w-48 p-2">
                               <Link href={`/dashboard/admin/surveys/${survey.surveyId}/view`} className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded">
-                                <FileText className="h-4 w-4 mr-2" /> View
+                                <FileText className="h-4 w-4 mr-2" /> {t('surveys.management.view', currentLocale)}
                               </Link>
                               {/* {(survey.currentParticipants > 0 || survey.status === 'expired') ? (
                                 <div className="flex items-center w-full px-2 py-2 text-gray-400 cursor-not-allowed">
@@ -1341,7 +1353,7 @@ export default function AllSurveys() {
                               {(survey.currentParticipants > 0 || survey.status === 'expired') ? (
                                 
                                   <div className="flex items-center w-full px-2 py-2 text-gray-400 cursor-not-allowed">
-                                      <Edit className="h-4 w-4 mr-2" /> Edit (Not available)
+                                      <Edit className="h-4 w-4 mr-2" /> {t('surveys.management.editNotAvailable', currentLocale)}
                                     </div>
                               ) : (
                                 // Only show full edit for surveys that belong to the current admin
@@ -1350,12 +1362,12 @@ export default function AllSurveys() {
                                       href={`/dashboard/admin/create-survey?edit=${survey.surveyId}`}
                                       className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded text-left"
                                     >
-                                      <Edit className="h-3 w-3 mr-1" />Edit
+                                      <Edit className="h-3 w-3 mr-2" />{t('surveys.management.edit', currentLocale)}
                                   </Link>
                                 ) : (
                                   
                                     <div className="flex items-center w-full px-2 py-2 text-gray-400 cursor-not-allowed">
-                                      <Edit className="h-4 w-4 mr-2" /> Edit (Not available)
+                                      <Edit className="h-4 w-4 mr-2" /> {t('surveys.management.editNotAvailable', currentLocale)}
                                     </div>
                                 )
                               )}
@@ -1363,7 +1375,7 @@ export default function AllSurveys() {
 
 
                               <Link href={`/dashboard/admin/surveys/${survey.surveyId}/statistics`} className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded">
-                                <BarChart2 className="h-4 w-4 mr-2" /> View Statistics
+                                <BarChart2 className="h-4 w-4 mr-2" /> {t('surveys.management.viewStatistics', currentLocale)}
                               </Link>
                               {survey.status === 'draft' && adminSurveys.some(adminSurvey => adminSurvey.surveyId === survey.surveyId) && (
                                 <button 
@@ -1372,7 +1384,7 @@ export default function AllSurveys() {
                                   disabled={publishingSurveyId === survey.surveyId}
                                 >
                                   <Play className="h-4 w-4 mr-2" /> 
-                                  {publishingSurveyId === survey.surveyId ? "Publishing..." : "Publish"}
+                                  {t('surveys.management.publishing', currentLocale)}
                                 </button>
                               )}
                               {survey.status === 'active' && adminSurveys.some(adminSurvey => adminSurvey.surveyId === survey.surveyId) && (
@@ -1386,8 +1398,7 @@ export default function AllSurveys() {
                                   disabled={unpublishingSurveyId === survey.surveyId || survey.currentParticipants > 0}
                                 >
                                   <Pause className="h-4 w-4 mr-2" /> 
-                                  {unpublishingSurveyId === survey.surveyId ? "Unpublishing..." : 
-                                   survey.currentParticipants > 0 ? "Unpublish (Not available)" : "Unpublish"}
+                                  {t('surveys.management.unpublishing', currentLocale)}
                                 </button>
                               )}
                               <button 
@@ -1396,7 +1407,7 @@ export default function AllSurveys() {
                                 disabled={duplicatingSurveyId === survey.surveyId}
                               >
                                 <Copy className="h-4 w-4 mr-2" /> 
-                                {duplicatingSurveyId === survey.surveyId ? "Duplicating..." : "Duplicate"}
+                                {t('surveys.management.duplicate', currentLocale)}
                               </button>
                               <button
                                 className="flex items-center w-full px-2 py-2 hover:bg-red-100 text-red-600 rounded text-left"
@@ -1404,7 +1415,7 @@ export default function AllSurveys() {
                                 disabled={deletingSurveyId === survey.surveyId}
                               >
                                 <X className="h-4 w-4 mr-2" />
-                                {deletingSurveyId === survey.surveyId ? "Deleting..." : "Delete"}
+                                {t('surveys.management.delete', currentLocale)}
                               </button>
                             </PopoverContent>
                           </Popover>
@@ -1420,27 +1431,27 @@ export default function AllSurveys() {
                   <Search className="h-8 w-8 text-gray-400" />
                 </div>
                 <h3 className="text-lg font-medium text-gray-900 mb-1">
-                  {activeFilter === "responses" && "No surveys with responses found"}
-                  {activeFilter === "all" && "No surveys found"}
-                  {activeFilter === "active" && "No active surveys found"}
-                  {activeFilter === "draft" && "No draft surveys found"}
-                  {activeFilter === "inactive" && "No inactive surveys found"}
-                  {activeFilter === "expired" && "No expired surveys found"}
-                  {activeFilter === "completed" && "No completed surveys found"}
+                  {activeFilter === "responses" && t('surveys.management.noSurveysWithResponses', currentLocale)}
+                                      {activeFilter === "all" && t('surveys.management.noSurveysFound', currentLocale)}
+                                      {activeFilter === "active" && t('surveys.management.noActiveSurveys', currentLocale)}
+                                      {activeFilter === "draft" && t('surveys.management.noDraftSurveys', currentLocale)}
+                                      {activeFilter === "inactive" && t('surveys.management.noInactiveSurveys', currentLocale)}
+                                      {activeFilter === "expired" && t('surveys.management.noExpiredSurveys', currentLocale)}
+                                      {activeFilter === "completed" && t('surveys.management.noCompletedSurveys', currentLocale)}
                 </h3>
                 <p className="text-gray-500 mb-4">
-                  {activeFilter === "responses" && "Surveys will appear here once they receive responses from participants"}
-                  {activeFilter === "all" && "Create your first survey to get started"}
-                  {activeFilter === "active" && "No surveys are currently active"}
-                  {activeFilter === "draft" && "No surveys are currently in draft status"}
-                  {activeFilter === "inactive" && "No surveys are currently inactive"}
-                  {activeFilter === "expired" && "No surveys have expired yet"}
-                  {activeFilter === "completed" && "No surveys have been completed yet"}
+                  {activeFilter === "responses" && t('surveys.management.surveysWillAppearHere', currentLocale)}
+                  {activeFilter === "all" && t('surveys.management.createFirstSurvey', currentLocale)}
+                  {activeFilter === "active" && t('surveys.management.noSurveysCurrentlyActive', currentLocale)}
+                  {activeFilter === "draft" && t('surveys.management.noSurveysInDraft', currentLocale)}
+                  {activeFilter === "inactive" && t('surveys.management.noSurveysCurrentlyInactive', currentLocale)}
+                  {activeFilter === "expired" && t('surveys.management.noSurveysExpiredYet', currentLocale)}
+                  {activeFilter === "completed" && t('surveys.management.noSurveysCompletedYet', currentLocale)}
                 </p>
                 <Link href="/dashboard/admin/create-survey">
                   <Button className="bg-emerald-500 hover:bg-emerald-600">
                     <PlusCircle className="h-4 w-4 mr-2" />
-                    Create New Survey
+                    {t('surveys.management.createNew', currentLocale)}
                   </Button>
                 </Link>
               </div>
@@ -1454,40 +1465,40 @@ export default function AllSurveys() {
               {loading || refreshingSurveys ? (
                 <div className="text-center py-12">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto mb-2"></div>
-                  {refreshingSurveys ? "Refreshing surveys..." : "Loading surveys..."}
+                  {refreshingSurveys ? t('surveys.management.refreshingSurveys', currentLocale) : t('surveys.management.loadingSurveys', currentLocale)}
                 </div>
               ) : filteredSurveys.length > 0 ? (
                 <div className="max-md:overflow-x-auto">
-                  <table className="w-full min-w-[900px]">
+                  <table className="w-full min-w-[900px]" dir={currentLocale === 'ar' ? 'rtl' : 'ltr'}>
                     <thead>
                       <tr className="border-b">
-                        <th className="text-left py-3 px-4 font-medium text-gray-500 w-40 max-w-xs">Title</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-500">Status</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-500">Created</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-500">Expires</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-500">Participants</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-500">Target Gender</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-500">Academic Years</th>
-                        <th className="text-right py-3 px-4 font-medium text-gray-500">Actions</th>
+                        <th className={`${currentLocale === 'ar' ? 'text-right' : 'text-left'} py-3 px-4 font-medium text-gray-500 w-40 max-w-xs`}>{t('surveys.management.title', currentLocale)}</th>
+                        <th className={`${currentLocale === 'ar' ? 'text-right' : 'text-left'} py-3 px-4 font-medium text-gray-500`}>{t('surveys.management.status', currentLocale)}</th>
+                        <th className={`${currentLocale === 'ar' ? 'text-right' : 'text-left'} py-3 px-4 font-medium text-gray-500`}>{t('surveys.management.created', currentLocale)}</th>
+                        <th className={`${currentLocale === 'ar' ? 'text-right' : 'text-left'} py-3 px-4 font-medium text-gray-500`}>{t('surveys.management.expires', currentLocale)}</th>
+                        <th className={`${currentLocale === 'ar' ? 'text-right' : 'text-left'} py-3 px-4 font-medium text-gray-500`}>{t('surveys.management.participants', currentLocale)}</th>
+                        <th className={`${currentLocale === 'ar' ? 'text-right' : 'text-left'} py-3 px-4 font-medium text-gray-500`}>{t('surveys.management.targetGender', currentLocale)}</th>
+                        <th className={`${currentLocale === 'ar' ? 'text-right' : 'text-left'} py-3 px-4 font-medium text-gray-500`}>{t('surveys.management.academicYears', currentLocale)}</th>
+                        <th className={`${currentLocale === 'ar' ? 'text-left' : 'text-right'} py-3 px-4 font-medium text-gray-500`}>{t('surveys.management.actions', currentLocale)}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredSurveys.map((survey: any, idx: number) => (
                         <tr key={survey.surveyId} className={`${idx === filteredSurveys.length - 1 ? '' : 'border-b'} hover:bg-gray-50 group`}>
                           {/* Title Column */}
-                          <td className="py-3 px-4 text-left relative">
+                          <td className={`py-3 px-4 ${currentLocale === 'ar' ? 'text-right' : 'text-left'} relative`}>
                             {/* Floating My Survey Badge */}
                             {adminSurveys.some(adminSurvey => adminSurvey.surveyId === survey.surveyId) && (
                               <div
                                 className="absolute z-10 flex items-center gap-1 px-1 py-1 bg-amber-100 text-amber-900 text-xs font-bold rounded-full shadow-lg border border-amber-300 animate-fade-in"
-                                style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)', left: ' -20px', top: 'calc(50% - 14px)' }}
-                                title="This is your survey"
+                                style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)', [currentLocale === 'ar' ? 'right' : 'left']: ' -20px', top: 'calc(50% - 14px)' }}
+                                title={t('surveys.management.thisIsYourSurvey', currentLocale)}
                               >
                                 <User className="h-4 w-4  text-amber-600" />
                               </div>
                             )}
                             <div>
-                              <Link href={`/dashboard/admin/surveys/${survey.surveyId}/view`} className=" -m-2 p-2 rounded transition-colors">
+                              <Link href={`/dashboard/admin/surveys/${survey.surveyId}/view`}>
                                 <div className="flex items-center gap-2">
                                   <div className="font-bold text-lg text-emerald-600 hover:text-emerald-700 cursor-pointer break-words max-w-xs" title={survey.title}>
                                     {survey.title}
@@ -1503,7 +1514,7 @@ export default function AllSurveys() {
                           </td>
                           
                           {/* Status Column */}
-                          <td className="py-3 px-4 text-left">
+                          <td className={`py-3 px-4 ${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>
                             <div className="flex flex-col gap-1">
                               {/* Status Badge */}
                               {survey.status === "draft" ? (
@@ -1511,24 +1522,24 @@ export default function AllSurveys() {
                                   variant="outline"
                                   className="bg-orange-50 text-orange-600 border-orange-200 text-xs w-fit"
                                 >
-                                  <Clock className="h-3 w-3 mr-1" />
-                                  {survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
+                                  <Clock className={`h-3 w-3 ${currentLocale === 'ar' ? 'ml-1' : 'mr-1'}`} />
+                                  {t('common.draft', currentLocale)}
                                 </Badge>
                               ) : survey.status === "active" ? (
                                 <Badge
                                   variant="outline"
                                   className="bg-green-50 text-green-600 border-green-200 text-xs w-fit"
                                 >
-                                  <Play className="h-3 w-3 mr-1" />
-                                  {SURVEY_STATUS_LABELS[survey.status as keyof typeof SURVEY_STATUS_LABELS] || survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
+                                  <Play className={`h-3 w-3 ${currentLocale === 'ar' ? 'ml-1' : 'mr-1'}`} />
+                                  {t('common.active', currentLocale)}
                                 </Badge>
                               ) : survey.status === "expired" ? (
                                 <Badge
                                   variant="outline"
                                   className="bg-purple-50 text-purple-600 border-purple-200 text-xs w-fit"
                                 >
-                                  <Clock className="h-3 w-3 mr-1" />
-                                  {SURVEY_STATUS_LABELS[survey.status as keyof typeof SURVEY_STATUS_LABELS] || survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
+                                  <Clock className={`h-3 w-3 ${currentLocale === 'ar' ? 'ml-1' : 'mr-1'}`} />
+                                  {t('common.expired', currentLocale)}
                                 </Badge>
                               ) : (
                                 <Badge
@@ -1536,25 +1547,29 @@ export default function AllSurveys() {
                                   className={`
                                     ${survey.status === "completed" ? "bg-blue-50 text-blue-600 border-blue-200 text-xs" : ""}
                                     ${survey.status === "inactive" ? "bg-red-100 text-red-600 border-red-200 text-xs" : ""}
-                                    w-fit
+                                    w-fit whitespace-nowrap
                                   `}
                                 >
-                                  {survey.status === "completed" && <CheckCircle className="h-3 w-3 mr-1" />}
-                                  {survey.status === "inactive" && <AlertCircle className="h-3 w-3 mr-1" />}
-                                  {SURVEY_STATUS_LABELS[survey.status as keyof typeof SURVEY_STATUS_LABELS] || survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
+                                  {survey.status === "completed" && <CheckCircle className={`h-3 w-3 ${currentLocale === 'ar' ? 'ml-1' : 'mr-1'}`} />}
+                                  {survey.status === "inactive" && <AlertCircle className={`h-3 w-3 ${currentLocale === 'ar' ? 'ml-1' : 'mr-1'}`} />}
+                                  {survey.status === "completed" ? t('common.completed', currentLocale) : t('common.inactive', currentLocale)}
                                 </Badge>
                               )}
                             </div>
                           </td>
                           
                           {/* Created Date Column */}
-                          <td className="py-3 px-4 text-left text-base">{formattedDates[survey.surveyId]?.createdAt || "-"}</td>
+                          <td className={`py-3 px-4 ${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>
+                            {formattedDates[survey.surveyId]?.createdAt || "-"}
+                          </td>
                           
                           {/* Expires Date Column */}
-                          <td className="py-3 px-4 text-left text-base">{formattedDates[survey.surveyId]?.expiresAt || "-"}</td>
+                          <td className={`py-3 px-4 ${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>
+                            {formattedDates[survey.surveyId]?.expiresAt || "-"}
+                          </td>
                           
                           {/* Participants Column */}
-                          <td className="py-3 px-4 text-left">
+                          <td className={`py-3 px-4 ${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>
                             <div>
                               <div className="font-medium text-base flex items-center gap-2">
                                 {survey.currentParticipants} / {survey.requiredParticipants}
@@ -1574,16 +1589,22 @@ export default function AllSurveys() {
                           </td>
                           
                           {/* Target Gender Column */}
-                          <td className="py-3 px-4 text-left text-base">
-                            {TARGET_GENDER_SELECT.find(g => g.value.toLowerCase() === String(survey.targetGender).toLowerCase())?.label || survey.targetGender}
+                          <td className={`py-3 px-4 ${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>
+                            {(() => {
+                              const genderValue = String(survey.targetGender).toLowerCase();
+                              if (genderValue === 'all') return t('common.all', currentLocale);
+                              if (genderValue === 'male') return t('common.male', currentLocale);
+                              if (genderValue === 'female') return t('common.female', currentLocale);
+                              return survey.targetGender;
+                            })()}
                           </td>
                           
                           {/* Academic Years Column */}
-                          <td className="py-3 px-4 text-left text-base">
+                          <td className={`py-3 px-4 ${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>
                             {(() => {
                               const academicYearsText = Array.isArray(survey.targetAcademicYears) && survey.targetAcademicYears.length > 0
                                 ? survey.targetAcademicYears.length === ACADEMIC_YEARS.length
-                                  ? "All"
+                                  ? t('common.all', currentLocale)
                                   : survey.targetAcademicYears.map((year: number) => {
                                       const found = ACADEMIC_YEARS.find(y => y.value === year);
                                       return found ? found.label : year;
@@ -1616,25 +1637,25 @@ export default function AllSurveys() {
                           </td>
                           
                           {/* Actions Column */}
-                          <td className="py-3 px-4 text-right">
+                          <td className={`py-3 px-4 ${currentLocale === 'ar' ? 'text-left' : 'text-right'}`}>
                             <div className="flex gap-2 justify-end">
-                              <Link href={`/dashboard/admin/surveys/${survey.surveyId}/view`}>
+                              {/* <Link href={`/dashboard/admin/surveys/${survey.surveyId}/view`}>
                                 <Button 
                                   variant="ghost" 
                                   size="sm"
                                   className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                                  title="View Survey"
+                                  title={t('surveys.management.viewSurvey', currentLocale)}
                                 >
                                   <FileText className="h-3 w-3 mr-1" />
-                                  View
+                                  {t('surveys.management.view', currentLocale)}
                                 </Button>
-                              </Link>
+                              </Link> */}
                               <Link href={`/dashboard/admin/surveys/${survey.surveyId}/statistics`}>
                                 <Button 
                                   variant="ghost" 
                                   size="sm"
                                   className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                                  title="View Statistics"
+                                  title={t('surveys.management.viewStatistics', currentLocale)}
                                 >
                                   <BarChart2 className="h-3 w-3 mr-1" />
                                   Statistics
@@ -1645,10 +1666,10 @@ export default function AllSurveys() {
                                 size="sm"
                                 onClick={() => handleStartEdit(survey)}
                                 className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                                title="Quick Edit: Modify dates and participation for any survey"
+                                                                  title={t('surveys.management.quickEditModify', currentLocale)}
                               >
                                 <Settings className="h-3 w-3 mr-1" />
-                                Quick Edit
+                                {t('surveys.management.quickEdit', currentLocale)}
                               </Button>
                               <Popover>
                                 <PopoverTrigger asChild>
@@ -1658,11 +1679,11 @@ export default function AllSurveys() {
                                 </PopoverTrigger>
                                 <PopoverContent align="end" className="w-48 p-2">
                                   <Link href={`/dashboard/admin/surveys/${survey.surveyId}/view`} className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded">
-                                    <FileText className="h-4 w-4 mr-2" /> View
+                                    <FileText className="h-4 w-4 mr-2" /> {t('surveys.management.view', currentLocale)}
                                   </Link>
                                   {(survey.currentParticipants > 0 || survey.status === 'expired') ? (
                                     <div className="flex items-center w-full px-2 py-2 text-gray-400 cursor-not-allowed">
-                                      <Edit className="h-4 w-4 mr-2" /> Edit (Not available)
+                                      <Edit className="h-4 w-4 mr-2" /> {t('surveys.management.editNotAvailable', currentLocale)}
                                     </div>
                                   ) : (
                                     // Only show edit for surveys that belong to the current admin
@@ -1671,16 +1692,16 @@ export default function AllSurveys() {
                                         href={`/dashboard/admin/create-survey?edit=${survey.surveyId}`}
                                         className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded text-left"
                                       >
-                                        <Edit className="h-4 w-4 mr-2" /> Edit
+                                        <Edit className="h-4 w-4 mr-2" /> {t('surveys.management.edit', currentLocale)}
                                       </Link>
                                     ) : (
                                       <div className="flex items-center w-full px-2 py-2 text-gray-400 cursor-not-allowed">
-                                        <Edit className="h-4 w-4 mr-2" /> Edit (Not available)
+                                        <Edit className="h-4 w-4 mr-2" /> {t('surveys.management.editNotAvailable', currentLocale)}
                                       </div>
                                     )
                                   )}
                                   <Link href={`/dashboard/admin/surveys/${survey.surveyId}/statistics`} className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded">
-                                    <BarChart2 className="h-4 w-4 mr-2" /> View Statistics
+                                    <BarChart2 className="h-4 w-4 mr-2" /> {t('surveys.management.viewStatistics', currentLocale)}
                                   </Link>
                                   {survey.status === 'draft' && adminSurveys.some(adminSurvey => adminSurvey.surveyId === survey.surveyId) && (
                                     <button 
@@ -1689,7 +1710,7 @@ export default function AllSurveys() {
                                       disabled={publishingSurveyId === survey.surveyId}
                                     >
                                       <Play className="h-4 w-4 mr-2" /> 
-                                      {publishingSurveyId === survey.surveyId ? "Publishing..." : "Publish"}
+                                      {t('surveys.management.publishing', currentLocale)}
                                     </button>
                                   )}
                                   {survey.status === 'active' && adminSurveys.some(adminSurvey => adminSurvey.surveyId === survey.surveyId) && (
@@ -1703,8 +1724,7 @@ export default function AllSurveys() {
                                       disabled={unpublishingSurveyId === survey.surveyId || survey.currentParticipants > 0}
                                     >
                                       <Pause className="h-4 w-4 mr-2" /> 
-                                      {unpublishingSurveyId === survey.surveyId ? "Unpublishing..." : 
-                                       survey.currentParticipants > 0 ? "Unpublish (Not available)" : "Unpublish"}
+                                      {t('surveys.management.unpublishing', currentLocale)}
                                     </button>
                                   )}
                                   <button 
@@ -1713,7 +1733,7 @@ export default function AllSurveys() {
                                     disabled={duplicatingSurveyId === survey.surveyId}
                                   >
                                     <Copy className="h-4 w-4 mr-2" /> 
-                                    {duplicatingSurveyId === survey.surveyId ? "Duplicating..." : "Duplicate"}
+                                    {t('surveys.management.duplicate', currentLocale)}
                                   </button>
                                   <button
                                     className="flex items-center w-full px-2 py-2 hover:bg-red-100 text-red-600 rounded text-left"
@@ -1721,7 +1741,7 @@ export default function AllSurveys() {
                                     disabled={deletingSurveyId === survey.surveyId}
                                   >
                                     <X className="h-4 w-4 mr-2" />
-                                    {deletingSurveyId === survey.surveyId ? "Deleting..." : "Delete"}
+                                    {t('surveys.management.delete', currentLocale)}
                                   </button>
                                 </PopoverContent>
                               </Popover>
@@ -1737,12 +1757,12 @@ export default function AllSurveys() {
                   <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                     <Search className="h-8 w-8 text-gray-400" />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">No surveys found</h3>
-                  <p className="text-gray-500 mb-4">Try adjusting your search or filter criteria</p>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">{t('surveys.management.noSurveysFound', currentLocale)}</h3>
+                  <p className="text-gray-500 mb-4">{t('surveys.management.tryAdjustingSearch', currentLocale)}</p>
                   <Link href="/dashboard/admin/create-survey">
                     <Button className="bg-emerald-500 hover:bg-emerald-600">
                       <PlusCircle className="h-4 w-4 mr-2" />
-                      Create New Survey
+                      {t('surveys.management.createNew', currentLocale)}
                     </Button>
                   </Link>
                 </div>
@@ -1754,26 +1774,26 @@ export default function AllSurveys() {
 
       {/* Quick Edit Dialog */}
       <Dialog open={quickEditDialogOpen} onOpenChange={setQuickEditDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className={`sm:max-w-[600px] ${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>
           <DialogHeader>
-            <DialogTitle>
-              Quick Edit Survey
+            <DialogTitle className={`${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>
+              {t('surveys.management.quickEditSurvey', currentLocale)}
               {editingSurveyId && surveys.find(s => s.surveyId === editingSurveyId) && (
                 <span className="block text-sm font-normal text-gray-600 mt-1">
                   {surveys.find(s => s.surveyId === editingSurveyId)?.title}
                 </span>
               )}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className={`${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>
               {editingSurveyId && surveys.find(s => s.surveyId === editingSurveyId)?.status === 'active' && surveys.find(s => s.surveyId === editingSurveyId)?.currentParticipants > 0
-                ? "Update the end date and participant requirements for this active survey. Start date cannot be changed once survey has participants."
+                ? t('surveys.management.updateEndDateAndParticipants', currentLocale)
                 : editingSurveyId && surveys.find(s => s.surveyId === editingSurveyId)?.status === 'expired' && surveys.find(s => s.surveyId === editingSurveyId)?.currentParticipants > 0
-                ? "Update the end date and participant requirements for this expired survey. Start date cannot be changed once survey has participants."
+                ? t('surveys.management.updateEndDateAndParticipantsExpired', currentLocale)
                 : editingSurveyId && surveys.find(s => s.surveyId === editingSurveyId)?.status === 'completed' && surveys.find(s => s.surveyId === editingSurveyId)?.currentParticipants > 0
-                ? "Update the end date and participant requirements for this completed survey. Start date cannot be changed once survey has participants."
+                ? t('surveys.management.updateEndDateAndParticipantsCompleted', currentLocale)
                 : editingSurveyId && surveys.find(s => s.surveyId === editingSurveyId)?.status === 'inactive'
-                ? "Update the survey dates and participant requirements for this scheduled survey. All fields can be modified."
-                : "Update the survey dates and participant requirements. Changes will be applied immediately."
+                ? t('surveys.management.updateDatesAndParticipantsInactive', currentLocale)
+                : t('surveys.management.updateDatesAndParticipants', currentLocale)
               }
             </DialogDescription>
           </DialogHeader>
@@ -1805,12 +1825,12 @@ export default function AllSurveys() {
                           ? 'text-purple-800'
                           : 'text-indigo-800'
                       }`}>
-                        Start date is locked because this {surveys.find(s => s.surveyId === editingSurveyId)?.status} survey has participants. Only end date and participant count can be modified.
+                        {t('surveys.management.startDateLocked', currentLocale).replace('{status}', surveys.find(s => s.surveyId === editingSurveyId)?.status || '')}
                       </p>
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('surveys.management.endDate', currentLocale)}</label>
                     <Input
                       type="date"
                       value={editingData.endDate}
@@ -1820,7 +1840,7 @@ export default function AllSurveys() {
                     />
                     {surveys.find(s => s.surveyId === editingSurveyId)?.endDate && (
                       <p className="text-xs text-gray-500 mt-1">
-                        Current: {new Date(surveys.find(s => s.surveyId === editingSurveyId)?.endDate).toLocaleString('en-GB', {
+                        {t('surveys.management.current', currentLocale)}: {new Date(surveys.find(s => s.surveyId === editingSurveyId)?.endDate).toLocaleString('en-GB', {
                           day: '2-digit',
                           month: '2-digit',
                           year: 'numeric',
@@ -1839,12 +1859,12 @@ export default function AllSurveys() {
                     <div className="flex items-center gap-2">
                       <AlertCircle className="h-4 w-4 text-purple-600" />
                       <p className="text-sm text-purple-800">
-                        This survey has expired. Only end date and participant count can be modified.
+                        {t('surveys.management.surveyExpired', currentLocale)}
                       </p>
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('surveys.management.endDate', currentLocale)}</label>
                     <Input
                       type="date"
                       value={editingData.endDate}
@@ -1854,7 +1874,7 @@ export default function AllSurveys() {
                     />
                     {surveys.find(s => s.surveyId === editingSurveyId)?.endDate && (
                       <p className="text-xs text-gray-500 mt-1">
-                        Current: {new Date(surveys.find(s => s.surveyId === editingSurveyId)?.endDate).toLocaleString('en-GB', {
+                        {t('surveys.management.current', currentLocale)}: {new Date(surveys.find(s => s.surveyId === editingSurveyId)?.endDate).toLocaleString('en-GB', {
                           day: '2-digit',
                           month: '2-digit',
                           year: 'numeric',
@@ -1870,7 +1890,7 @@ export default function AllSurveys() {
                 // For surveys without participants - show both start and end date
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('surveys.management.startDate', currentLocale)}</label>
                     <Input
                       type="date"
                       value={editingData.startDate}
@@ -1880,7 +1900,7 @@ export default function AllSurveys() {
                     />
                     {surveys.find(s => s.surveyId === editingSurveyId)?.startDate && (
                       <p className="text-xs text-gray-500 mt-1">
-                        Current: {new Date(surveys.find(s => s.surveyId === editingSurveyId)?.startDate).toLocaleString('en-GB', {
+                        {t('surveys.management.current', currentLocale)}: {new Date(surveys.find(s => s.surveyId === editingSurveyId)?.startDate).toLocaleString('en-GB', {
                           day: '2-digit',
                           month: '2-digit',
                           year: 'numeric',
@@ -1892,7 +1912,7 @@ export default function AllSurveys() {
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('surveys.management.endDate', currentLocale)}</label>
                     <Input
                       type="date"
                       value={editingData.endDate}
@@ -1902,7 +1922,7 @@ export default function AllSurveys() {
                     />
                     {surveys.find(s => s.surveyId === editingSurveyId)?.endDate && (
                       <p className="text-xs text-gray-500 mt-1">
-                        Current: {new Date(surveys.find(s => s.surveyId === editingSurveyId)?.endDate).toLocaleString('en-GB', {
+                        {t('surveys.management.current', currentLocale)}: {new Date(surveys.find(s => s.surveyId === editingSurveyId)?.endDate).toLocaleString('en-GB', {
                           day: '2-digit',
                           month: '2-digit',
                           year: 'numeric',
@@ -1917,18 +1937,18 @@ export default function AllSurveys() {
               )}
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Required Participants</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('surveys.management.requiredParticipants', currentLocale)}</label>
                 <Input
                   type="number"
                   min="1"
                   value={editingData.requiredParticipants}
                   onChange={(e) => handleInputChange('requiredParticipants', parseInt(e.target.value) || 0)}
                   className="h-10"
-                  placeholder="Minimum: 1"
+                  placeholder={t('surveys.management.minimum1', currentLocale)}
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Current: {surveys.find(s => s.surveyId === editingSurveyId)?.requiredParticipants || 0}
-                </p>
+                                  <p className="text-xs text-gray-500 mt-1">
+                    {t('surveys.management.current', currentLocale)}: {surveys.find(s => s.surveyId === editingSurveyId)?.requiredParticipants || 0}
+                  </p>
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
@@ -1937,7 +1957,7 @@ export default function AllSurveys() {
                   onClick={handleCancelEdit}
                   disabled={updatingSurveyId !== null}
                 >
-                  Cancel
+                  {t('surveys.management.cancel', currentLocale)}
                 </Button>
                 <Button
                   onClick={() => handleSaveEdit(editingSurveyId)}
@@ -1947,12 +1967,12 @@ export default function AllSurveys() {
                   {updatingSurveyId !== null ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Saving...
+                      {t('surveys.management.saving', currentLocale)}
                     </>
                   ) : (
                     <>
                       <Save className="h-4 w-4 mr-2" />
-                      Save Changes
+                      {t('surveys.management.saveChanges', currentLocale)}
                     </>
                   )}
                 </Button>
@@ -1966,19 +1986,19 @@ export default function AllSurveys() {
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
-            <DialogTitle>Delete Survey</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete the survey <span className="font-bold">{surveyToDelete?.title}</span>? This action cannot be undone.
+            <DialogTitle className={`${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>{t('surveys.management.deleteSurvey', currentLocale)}</DialogTitle>
+            <DialogDescription className={`${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>
+                              {t('surveys.management.deleteSurveyConfirmDesc', currentLocale).replace('{title}', surveyToDelete?.title || '')}
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-3 pt-4">
-            <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)} disabled={deletingSurveyId !== null}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)} disabled={deletingSurveyId !== null}>{t('surveys.management.cancel', currentLocale)}</Button>
             <Button
               variant="destructive"
               onClick={() => handleDeleteSurvey(surveyToDelete)}
               disabled={deletingSurveyId !== null}
             >
-              {deletingSurveyId !== null ? "Deleting..." : "Delete"}
+              {deletingSurveyId !== null ? t('surveys.management.deleting', currentLocale) : t('surveys.management.delete', currentLocale)}
             </Button>
           </div>
         </DialogContent>

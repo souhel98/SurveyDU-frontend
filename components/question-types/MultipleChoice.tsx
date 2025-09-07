@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2 } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
+import { useLocale } from "@/components/ui/locale-provider";
 
 interface Option {
   id: number;
@@ -17,6 +19,9 @@ interface MultipleChoiceProps {
 }
 
 export default function MultipleChoice({ options, onOptionsChange }: MultipleChoiceProps) {
+  const { t } = useTranslation();
+  const { currentLocale } = useLocale();
+
   return (
     <div className="space-y-3">
       {options.map((option, index) => (
@@ -38,7 +43,7 @@ export default function MultipleChoice({ options, onOptionsChange }: MultipleCho
               newOptions[index] = { ...option, text: e.target.value };
               onOptionsChange(newOptions);
             }}
-            placeholder={`Option ${index + 1}`}
+            placeholder={t('common.questionTypes.optionPlaceholder', currentLocale).replace('{number}', (index + 1).toString())}
             className="flex-1"
           />
           <Button
@@ -69,7 +74,7 @@ export default function MultipleChoice({ options, onOptionsChange }: MultipleCho
         className="w-full"
       >
         <Plus className="h-4 w-4 mr-2" />
-        Add Option
+        {t('common.questionTypes.addOption', currentLocale)}
       </Button>
     </div>
   );

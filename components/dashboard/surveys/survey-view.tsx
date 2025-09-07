@@ -35,6 +35,8 @@ import { SurveyService } from "@/lib/services/survey-service"
 import { DepartmentService } from "@/lib/services/department-service"
 import { ACADEMIC_YEARS, TARGET_GENDER_SELECT, SURVEY_STATUS_LABELS } from "@/lib/constants"
 import { motion } from "framer-motion"
+import { useTranslation } from "@/hooks/useTranslation"
+import { useLocale } from "@/components/ui/locale-provider"
 
 interface SurveyViewProps {
   surveyId?: string | number;
@@ -71,6 +73,8 @@ interface SurveyData {
 export default function SurveyView({ surveyId }: SurveyViewProps) {
   const router = useRouter()
   const { toast } = useToast()
+  const { t } = useTranslation()
+  const { currentLocale } = useLocale()
   const [survey, setSurvey] = useState<SurveyData | null>(null)
   const [loading, setLoading] = useState(true)
   const [duplicating, setDuplicating] = useState(false)
@@ -93,8 +97,8 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
         setSurvey(data)
       } catch (error: any) {
         toast({
-          title: "Error",
-          description: error.message || "Failed to fetch survey details",
+          title: t('common.error', currentLocale),
+          description: error.message || t('surveyView.failedToFetchSurveyDetails', currentLocale),
           variant: "destructive"
         })
       } finally {
@@ -117,11 +121,11 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      active: { color: "bg-green-50 text-green-600 border-green-200", label: "Active", icon: <Play className="h-3 w-3 mr-1" /> },
-      draft: { color: "bg-orange-50 text-orange-600 border-orange-200", label: "Draft", icon: <Clock className="h-3 w-3 mr-1" /> },
-      completed: { color: "bg-blue-50 text-blue-600 border-blue-200", label: "Completed", icon: <CheckCircle className="h-3 w-3 mr-1" /> },
-      inactive: { color: "bg-red-50 text-red-600 border-red-200", label: "Inactive", icon: <AlertCircle className="h-3 w-3 mr-1" /> },
-      expired: { color: "bg-purple-50 text-purple-600 border-purple-200", label: "Expired", icon: <Clock className="h-3 w-3 mr-1" /> }
+      active: { color: "bg-green-50 text-green-600 border-green-200", label: t('common.active', currentLocale), icon: <Play className="h-3 w-3 mr-1" /> },
+      draft: { color: "bg-orange-50 text-orange-600 border-orange-200", label: t('common.draft', currentLocale), icon: <Clock className="h-3 w-3 mr-1" /> },
+      completed: { color: "bg-blue-50 text-blue-600 border-blue-200", label: t('common.completed', currentLocale), icon: <CheckCircle className="h-3 w-3 mr-1" /> },
+      inactive: { color: "bg-red-50 text-red-600 border-red-200", label: t('common.inactive', currentLocale), icon: <AlertCircle className="h-3 w-3 mr-1" /> },
+      expired: { color: "bg-purple-50 text-purple-600 border-purple-200", label: t('common.expired', currentLocale), icon: <Clock className="h-3 w-3 mr-1" /> }
     }
     
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft
@@ -151,13 +155,13 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
   const getQuestionTypeLabel = (type: string) => {
     switch (type) {
       case 'single_answer':
-        return 'Single Answer'
+        return t('common.questionTypes.singleChoice', currentLocale)
       case 'multiple_choice':
-        return 'Multiple Choice'
+        return t('common.questionTypes.multipleChoice', currentLocale)
       case 'open_text':
-        return 'Open Text'
+        return t('common.questionTypes.text', currentLocale)
       case 'percentage':
-        return 'Rating Scale (1-5)'
+        return t('surveyCreator.questionTypes.percentage', currentLocale)
       default:
         return type
     }
@@ -192,8 +196,8 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
       // Validate required participants
       if (editingData.requiredParticipants <= 0) {
         toast({
-          title: "Error",
-          description: "Required participants must be greater than 0",
+          title: t('common.error', currentLocale),
+          description: t('surveys.management.requiredParticipantsMustBeGreater', currentLocale),
           variant: "destructive"
         });
         return;
@@ -206,8 +210,8 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
         
         if (startDate >= endDate) {
           toast({
-            title: "Error",
-            description: "End date must be after start date",
+            title: t('common.error', currentLocale),
+            description: t('surveys.management.endDateMustBeAfterStartDate', currentLocale),
             variant: "destructive"
           });
           return;
@@ -244,16 +248,16 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
       setSurvey(updatedSurvey)
       
       toast({
-        title: "Success",
-        description: "Survey updated successfully!",
+        title: t('common.success', currentLocale),
+        description: t('success.surveyUpdated', currentLocale),
       })
       
       setQuickEditDialogOpen(false)
       
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update survey",
+        title: t('common.error', currentLocale),
+        description: error.message || t('errors.failedToUpdateSurvey', currentLocale),
         variant: "destructive"
       })
     } finally {
@@ -276,19 +280,19 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
       const duplicatedSurvey = await SurveyService.duplicateTeacherSurvey(survey.surveyId)
       
       toast({
-        title: "Success",
-        description: "Survey duplicated successfully! Redirecting to the new survey...",
+        title: t('common.success', currentLocale),
+        description: t('surveys.management.surveyDuplicatedSuccessfully', currentLocale) + ' ' + t('surveyView.redirectingToNewSurvey', currentLocale),
       })
       
       // Redirect to the new survey view page
       setTimeout(() => {
-                 router.push(`/dashboard/teacher/surveys/${duplicatedSurvey.surveyId}/view`)
+        router.push(`/dashboard/teacher/surveys/${duplicatedSurvey.surveyId}/view`)
       }, 1500)
       
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to duplicate survey",
+        title: t('common.error', currentLocale),
+        description: error.message || t('errors.failedToDuplicateSurvey', currentLocale),
         variant: "destructive"
       })
     } finally {
@@ -301,7 +305,7 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent mb-4" />
-          <p className="text-gray-600">Loading survey details...</p>
+          <p className="text-gray-600">{t('surveyView.loadingSurvey', currentLocale)}</p>
         </div>
       </div>
     )
@@ -311,9 +315,9 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Survey Not Found</h2>
-          <p className="text-gray-600 mb-4">The survey you're looking for doesn't exist or you don't have permission to view it.</p>
-          <Button onClick={() => router.back()}>Go Back</Button>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('surveyView.surveyNotFound', currentLocale)}</h2>
+          <p className="text-gray-600 mb-4">{t('surveyView.surveyNotFoundDescription', currentLocale)}</p>
+          <Button onClick={() => router.back()}>{t('common.back', currentLocale)}</Button>
         </div>
       </div>
     )
@@ -331,59 +335,7 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
   const isActive = survey.status === 'active' && !isExpired
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.back()}
-                className="flex items-center space-x-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                <span>Back</span>
-              </Button>
-              <Separator orientation="vertical" className="h-6" />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">{survey.title}</h1>
-                <p className="text-sm text-gray-500">Survey Details</p>
-              </div>
-            </div>
-                         <div className="flex items-center space-x-2">
-                                       <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => router.push(`/dashboard/teacher/surveys/${survey.surveyId}/statistics`)}
-                        >
-                          <BarChart2 className="h-4 w-4 mr-2" />
-                          View Statistics
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleStartQuickEdit}
-                        >
-                          <Edit className="h-4 w-4 mr-2" />
-                          Quick Edit
-                        </Button>
-               {survey.status === 'draft' && (
-                 <Button
-                   variant="outline"
-                   size="sm"
-                   onClick={() => router.push(`/dashboard/teacher/create-survey?edit=${survey.surveyId}`)}
-                 >
-                   <Edit className="h-4 w-4 mr-2" />
-                   Edit
-                 </Button>
-               )}
-             </div>
-          </div>
-        </div>
-      </div>
-
+    <div className="bg-gray-50">
       <div className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
@@ -393,7 +345,7 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <FileText className="h-5 w-5" />
-                  <span>Survey Overview</span>
+                  <span>{t('surveyView.surveyOverview', currentLocale)}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -406,7 +358,7 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                   {getStatusBadge(survey.status)}
                   <div className="flex items-center space-x-1 text-sm text-gray-500">
                     <Users className="h-4 w-4" />
-                    <span>Created by {survey.ownerName}</span>
+                    <span>{t('surveyView.createdBy', currentLocale)} {survey.ownerName}</span>
                   </div>
                 </div>
               </CardContent>
@@ -417,7 +369,7 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <FileText className="h-5 w-5" />
-                  <span>Questions ({survey.questions.length})</span>
+                  <span>{t('common.questions', currentLocale)} ({survey.questions.length})</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -440,7 +392,7 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                             {getQuestionTypeLabel(question.questionType)}
                           </span>
                           {question.isRequired && (
-                            <Badge variant="destructive" className="text-xs">Required</Badge>
+                            <Badge variant="destructive" className="text-xs">{t('common.required', currentLocale)}</Badge>
                           )}
                         </div>
                       </div>
@@ -469,16 +421,16 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
             {/* Survey Stats */}
             <Card>
               <CardHeader>
-                <CardTitle>Survey Statistics</CardTitle>
+                <CardTitle>{t('surveys.management.statistics', currentLocale)}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">Status</span>
+                  <span className="text-sm text-gray-500">{t('common.status', currentLocale)}</span>
                   {getStatusBadge(survey.status)}
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">Participants</span>
+                  <span className="text-sm text-gray-500">{t('common.participants', currentLocale)}</span>
                   <span className="font-medium">
                     {currentParticipants} / {requiredParticipants}
                   </span>
@@ -486,7 +438,7 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                 
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm text-gray-500">Completion Rate</span>
+                    <span className="text-sm text-gray-500">{t('surveyView.completionRate', currentLocale)}</span>
                     <span className="text-sm font-medium">{completionRate.toFixed(1)}%</span>
                   </div>
                   <div className="relative h-2 w-full overflow-hidden rounded-full bg-gray-200">
@@ -498,7 +450,7 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">Points Reward</span>
+                  <span className="text-sm text-gray-500">{t('common.pointsReward', currentLocale)}</span>
                   <div className="flex items-center space-x-1">
                     <Award className="h-4 w-4 text-yellow-500" />
                     <span className="font-medium">{survey.pointsReward}</span>
@@ -510,13 +462,13 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
             {/* Survey Details */}
             <Card>
               <CardHeader>
-                <CardTitle>Survey Details</CardTitle>
+                <CardTitle>{t('surveyView.surveyDetails', currentLocale)}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center space-x-2">
                   <Calendar className="h-4 w-4 text-gray-400" />
                   <div>
-                    <p className="text-sm font-medium">Start Date</p>
+                    <p className="text-sm font-medium">{t('common.startDate', currentLocale)}</p>
                     <p className="text-sm text-gray-500">
                       {new Date(survey.startDate).toLocaleDateString()}
                     </p>
@@ -526,7 +478,7 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                 <div className="flex items-center space-x-2">
                   <Clock className="h-4 w-4 text-gray-400" />
                   <div>
-                    <p className="text-sm font-medium">End Date</p>
+                    <p className="text-sm font-medium">{t('common.endDate', currentLocale)}</p>
                     <p className="text-sm text-gray-500">
                       {new Date(survey.endDate).toLocaleDateString()}
                     </p>
@@ -536,9 +488,12 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                 <div className="flex items-center space-x-2">
                   <Target className="h-4 w-4 text-gray-400" />
                   <div>
-                    <p className="text-sm font-medium">Target Gender</p>
+                    <p className="text-sm font-medium">{t('common.targetGender', currentLocale)}</p>
                     <p className="text-sm text-gray-500">
-                      {TARGET_GENDER_SELECT.find(g => g.value === survey.targetGender)?.label || survey.targetGender}
+                      {survey.targetGender === 'all' ? t('common.all', currentLocale) : 
+                       survey.targetGender === 'male' ? t('common.male', currentLocale) : 
+                       survey.targetGender === 'female' ? t('common.female', currentLocale) : 
+                       survey.targetGender}
                     </p>
                   </div>
                 </div>
@@ -546,11 +501,17 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                 <div className="flex items-start space-x-2">
                   <GraduationCap className="h-4 w-4 text-gray-400 mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium">Academic Years</p>
+                    <p className="text-sm font-medium">{t('common.targetAcademicYears', currentLocale)}</p>
                     <p className="text-sm text-gray-500">
                       {survey.targetAcademicYears.map(year => {
-                        const found = ACADEMIC_YEARS.find(y => y.value === year)
-                        return found ? found.label : year
+                        switch(year) {
+                          case 1: return t('common.academicYears.first', currentLocale)
+                          case 2: return t('common.academicYears.second', currentLocale)
+                          case 3: return t('common.academicYears.third', currentLocale)
+                          case 4: return t('common.academicYears.fourth', currentLocale)
+                          case 5: return t('common.academicYears.fifth', currentLocale)
+                          default: return year.toString()
+                        }
                       }).join(", ")}
                     </p>
                   </div>
@@ -559,7 +520,7 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                 <div className="flex items-start space-x-2">
                   <Building className="h-4 w-4 text-gray-400 mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium">Departments</p>
+                    <p className="text-sm font-medium">{t('common.targetDepartments', currentLocale)}</p>
                     <p className="text-sm text-gray-500">
                       {survey.targetDepartmentIds.map(id => {
                         const found = departments.find(dep => dep.id === id)
@@ -574,7 +535,7 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
             {/* Actions */}
             <Card>
               <CardHeader>
-                <CardTitle>Actions</CardTitle>
+                <CardTitle>{t('surveyView.actions', currentLocale)}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <Button 
@@ -583,7 +544,7 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                   onClick={() => router.push(`/dashboard/teacher/surveys/${survey.surveyId}/statistics`)}
                 >
                   <BarChart2 className="h-4 w-4 mr-2" />
-                  View Statistics
+                  {t('surveys.management.viewStatistics', currentLocale)}
                 </Button>
                 <Button 
                   className="w-full justify-start" 
@@ -591,27 +552,27 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                   onClick={handleStartQuickEdit}
                 >
                   <Edit className="h-4 w-4 mr-2" />
-                  Quick Edit
+                  {t('common.quickEdit', currentLocale)}
                 </Button>
-                                 {survey.status === 'draft' && (
-                   <Button 
-                     className="w-full justify-start" 
-                     variant="outline"
-                     onClick={() => router.push(`/dashboard/teacher/create-survey?edit=${survey.surveyId}`)}
-                   >
-                     <Edit className="h-4 w-4 mr-2" />
-                     Edit Survey
-                   </Button>
-                 )}
-                                 <Button 
-                   className="w-full justify-start" 
-                   variant="outline"
-                   onClick={handleDuplicateSurvey}
-                   disabled={duplicating}
-                 >
-                   <Copy className="h-4 w-4 mr-2" />
-                   {duplicating ? "Duplicating..." : "Duplicate Survey"}
-                 </Button>
+                {survey.status === 'draft' && (
+                  <Button 
+                    className="w-full justify-start" 
+                    variant="outline"
+                    onClick={() => router.push(`/dashboard/teacher/create-survey?edit=${survey.surveyId}`)}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    {t('surveyView.editSurvey', currentLocale)}
+                  </Button>
+                )}
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={handleDuplicateSurvey}
+                  disabled={duplicating}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  {duplicating ? t('surveyView.duplicating', currentLocale) : t('surveyView.duplicateSurvey', currentLocale)}
+                </Button>
                 <Button 
                   className="w-full justify-start" 
                   variant="outline"
@@ -619,13 +580,13 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                     // Copy student survey URL to clipboard
                     navigator.clipboard.writeText(`${window.location.origin}/dashboard/student/surveys/${survey.surveyId}/`)
                     toast({
-                      title: "Student link copied",
-                      description: "Survey link for students has been copied to clipboard",
+                      title: t('surveyView.studentLinkCopied', currentLocale),
+                      description: t('surveyView.surveyLinkCopiedToClipboard', currentLocale),
                     })
                   }}
                 >
                   <Copy className="h-4 w-4 mr-2" />
-                  Copy Link For Students
+                  {t('surveyView.copyLinkForStudents', currentLocale)}
                 </Button>
               </CardContent>
             </Card>
@@ -635,26 +596,27 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
 
       {/* Quick Edit Dialog */}
       <Dialog open={quickEditDialogOpen} onOpenChange={setQuickEditDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className={`sm:max-w-[600px] ${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>
           <DialogHeader>
-            <DialogTitle>
-              Quick Edit Survey
+            <DialogTitle className={`${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>
+              {t('surveyView.quickEditSurvey', currentLocale)}
               {survey && (
                 <span className="block text-sm font-normal text-gray-600 mt-1">
                   {survey.title}
                 </span>
               )}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className={`${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>
               {survey?.status === 'active' && hasParticipants
-                ? "Update the end date and participant requirements for this active survey. Start date cannot be changed once survey has participants."
+                ? t('surveys.management.updateEndDateAndParticipantRequirementsForActiveSurvey', currentLocale)
                 : survey?.status === 'expired' && hasParticipants
-                ? "Update the end date and participant requirements for this expired survey. Start date cannot be changed once survey has participants."
+                ? t('surveys.management.updateEndDateAndParticipantRequirementsForExpiredSurvey', currentLocale)
                 : survey?.status === 'completed' && hasParticipants
-                ? "Update the end date and participant requirements for this completed survey. Start date cannot be changed once survey has participants."
+                ? t('surveys.management.updateEndDateAndParticipantRequirementsForCompletedSurvey', currentLocale)
                 : survey?.status === 'inactive'
-                ? "Update the survey dates and participant requirements for this scheduled survey. All fields can be modified."
-                : "Update the survey dates and participant requirements."}
+                ? t('surveys.management.updateSurveyDatesAndParticipantRequirementsForScheduledSurvey', currentLocale)
+                : t('surveys.management.updateSurveyDatesAndParticipantRequirements', currentLocale)
+              }
             </DialogDescription>
           </DialogHeader>
 
@@ -686,12 +648,12 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                         ? 'text-purple-800'
                         : 'text-indigo-800'
                     }`}>
-                      Start date is locked because this {survey?.status} survey has participants. Only end date and participant count can be modified.
+                      {t('surveys.management.startDateIsLockedBecauseThisSurveyHasParticipants', currentLocale)}
                     </p>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('common.endDate', currentLocale)}</label>
                   <Input
                     type="date"
                     value={editingData.endDate}
@@ -701,7 +663,7 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                   />
                   {survey?.endDate && (
                     <p className="text-xs text-gray-500 mt-1">
-                      Current: {new Date(survey.endDate).toLocaleString('en-GB', {
+                      {t('surveyView.current', currentLocale)}: {new Date(survey.endDate).toLocaleString('en-GB', {
                         day: '2-digit',
                         month: '2-digit',
                         year: 'numeric',
@@ -720,12 +682,12 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                   <div className="flex items-center gap-2">
                     <AlertCircle className="h-4 w-4 text-purple-600" />
                     <p className="text-sm text-purple-800">
-                      This survey has expired. Only end date and participant count can be modified.
+                      {t('surveys.management.thisSurveyHasExpired', currentLocale)}
                     </p>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('common.endDate', currentLocale)}</label>
                   <Input
                     type="date"
                     value={editingData.endDate}
@@ -735,7 +697,7 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                   />
                   {survey?.endDate && (
                     <p className="text-xs text-gray-500 mt-1">
-                      Current: {new Date(survey.endDate).toLocaleString('en-GB', {
+                      {t('surveyView.current', currentLocale)}: {new Date(survey.endDate).toLocaleString('en-GB', {
                         day: '2-digit',
                         month: '2-digit',
                         year: 'numeric',
@@ -751,7 +713,7 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
               // For surveys without participants - show both start and end date
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                  <label className={`block text-sm font-medium text-gray-700 mb-2 ${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>{t('common.startDate', currentLocale)}</label>
                   <Input
                     type="date"
                     value={editingData.startDate}
@@ -761,7 +723,7 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                   />
                   {survey?.startDate && (
                     <p className="text-xs text-gray-500 mt-1">
-                      Current: {new Date(survey.startDate).toLocaleString('en-GB', {
+                      {t('surveyView.current', currentLocale)}: {new Date(survey.startDate).toLocaleString('en-GB', {
                         day: '2-digit',
                         month: '2-digit',
                         year: 'numeric',
@@ -773,7 +735,7 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('common.endDate', currentLocale)}</label>
                   <Input
                     type="date"
                     value={editingData.endDate}
@@ -783,7 +745,7 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                   />
                   {survey?.endDate && (
                     <p className="text-xs text-gray-500 mt-1">
-                      Current: {new Date(survey.endDate).toLocaleString('en-GB', {
+                      {t('surveyView.current', currentLocale)}: {new Date(survey.endDate).toLocaleString('en-GB', {
                         day: '2-digit',
                         month: '2-digit',
                         year: 'numeric',
@@ -798,17 +760,17 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
             )}
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Required Participants</label>
+              <label className={`block text-sm font-medium text-gray-700 mb-2 ${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>{t('common.requiredParticipants', currentLocale)}</label>
               <Input
                 type="number"
                 min="1"
                 value={editingData.requiredParticipants}
                 onChange={(e) => handleInputChange('requiredParticipants', parseInt(e.target.value) || 0)}
                 className="h-10"
-                placeholder="Minimum: 1"
+                placeholder={t('surveys.management.minimum1', currentLocale)}
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Current: {survey?.requiredParticipants || 0}
+              <p className={`text-xs text-gray-500 mt-1 ${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>
+                {t('surveys.management.current', currentLocale)}: {survey?.requiredParticipants || 0}
               </p>
             </div>
 
@@ -818,7 +780,7 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                 onClick={handleCancelQuickEdit}
                 disabled={updatingSurveyId !== null}
               >
-                Cancel
+                {t('common.cancel', currentLocale)}
               </Button>
               <Button
                 onClick={handleSaveQuickEdit}
@@ -828,12 +790,12 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
                 {updatingSurveyId !== null ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Saving...
+                    {t('surveys.management.saving', currentLocale)}
                   </>
                 ) : (
                   <>
                     <Save className="h-4 w-4 mr-2" />
-                    Save Changes
+                    {t('surveys.management.saveChanges', currentLocale)}
                   </>
                 )}
               </Button>
@@ -843,4 +805,4 @@ export default function SurveyView({ surveyId }: SurveyViewProps) {
       </Dialog>
     </div>
   )
-} 
+}

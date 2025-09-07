@@ -24,15 +24,17 @@ import { useEffect } from "react";
 import api from "@/lib/api/axios";
 import { DepartmentService } from "@/lib/services/department-service";
 import { CustomSelect, CustomSelectOption } from "@/components/ui/custom-select";
+import { useTranslation } from "@/hooks/useTranslation";
+import { useLocale } from "@/components/ui/locale-provider";
 
 // Personal Information Form Schema
 const personalInfoSchema = z.object({
   firstName: z.string().min(2, { message: "First name must be at least 2 characters." }),
   lastName: z.string().min(2, { message: "Last name must be at least 2 characters." }),
-  departmentName: z.string({ required_error: "Please select a department." }).min(2, { message: "Department must be at least 2 characters." }),
-  academicYear: z.string({ required_error: "Please select an academic year." }),
-  gender: z.string({ required_error: "Please select a gender." }),
-  dateOfBirth: z.date({ required_error: "Please select a date of birth." }),
+  departmentName: z.string().min(2, { message: "Department must be at least 2 characters." }),
+  academicYear: z.string(),
+  gender: z.string(),
+  dateOfBirth: z.date(),
   universityIdNumber: z.string().min(5, { message: "University ID must be at least 5 characters." }),
   email: z.string().email({ message: "Invalid email address." }),
 })
@@ -62,6 +64,8 @@ function getGenderLabel(apiValue: string) {
 export default function StudentProfile() {
   const router = useRouter()
   const { toast } = useToast()
+  const { t } = useTranslation();
+  const { currentLocale } = useLocale();
   const [activeTab, setActiveTab] = useState("personal-info")
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
@@ -86,6 +90,8 @@ export default function StudentProfile() {
     },
   })
 
+
+
   useEffect(() => {
     async function fetchProfile() {
       setLoading(true);
@@ -104,7 +110,7 @@ export default function StudentProfile() {
           email: data.email || "",
         });
       } catch (error) {
-        toast({ title: "Error", description: "Failed to load profile.", variant: "destructive" });
+        toast({ title: t('common.error', currentLocale), description: t('profile.failedToLoadProfile', currentLocale), variant: "destructive" });
       } finally {
         setLoading(false);
       }
@@ -162,7 +168,7 @@ export default function StudentProfile() {
         gender: values.gender.toLowerCase(),
         dateOfBirth: values.dateOfBirth ? new Date(values.dateOfBirth).toISOString() : undefined,
       });
-      toast({ title: "Success", description: "Profile updated successfully" });
+      toast({ title: t('common.success', currentLocale), description: t('profile.profileUpdateSuccess', currentLocale) });
       setLoading(true);
       // Refetch profile to update state
       const response = await api.get("/Student/profile");
@@ -180,7 +186,7 @@ export default function StudentProfile() {
       setLoading(false);
       window.dispatchEvent(new Event('profile-updated'));
     } catch (error: any) {
-      toast({ title: "Error", description: error?.response?.data?.message || "Failed to update profile.", variant: "destructive" });
+      toast({ title: t('common.error', currentLocale), description: error?.response?.data?.message || t('profile.failedToUpdateProfile', currentLocale), variant: "destructive" });
       setLoading(false);
     } finally {
       setIsSubmitting(false);
@@ -197,8 +203,8 @@ export default function StudentProfile() {
       });
       const data = response.data;
       toast({
-        title: "Password Changed",
-        description: data.message || "Your password has been changed successfully.",
+        title: t('profile.passwordChangeSuccess', currentLocale),
+        description: data.message || t('profile.passwordChangeSuccess', currentLocale),
       });
       passwordChangeForm.reset({
         currentPassword: "",
@@ -207,8 +213,8 @@ export default function StudentProfile() {
       });
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error?.response?.data?.message || "Failed to change password.",
+        title: t('common.error', currentLocale),
+        description: error?.response?.data?.message || t('profile.failedToChangePassword', currentLocale),
         variant: "destructive",
       });
     }
@@ -220,22 +226,22 @@ export default function StudentProfile() {
       <main className="container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="personal-info">Personal Information</TabsTrigger>
-            <TabsTrigger value="change-password">Change Password</TabsTrigger>
+            <TabsTrigger value="personal-info">{t('profile.personalInfo', currentLocale)}</TabsTrigger>
+            <TabsTrigger value="change-password">{t('profile.changePassword', currentLocale)}</TabsTrigger>
           </TabsList>
 
           {/* Personal Information Tab */}
           <TabsContent value="personal-info">
             <Card>
               <CardHeader>
-                <CardTitle>Personal Information</CardTitle>
-                <CardDescription>Update your personal details and contact information</CardDescription>
+                <CardTitle>{t('profile.personalInfo', currentLocale)}</CardTitle>
+                <CardDescription>{t('profile.personalDetails', currentLocale)}</CardDescription>
               </CardHeader>
               {loading ? (
-                <div className="py-8 text-center text-gray-500">Loading profile...</div>
+                <div className="py-8 text-center text-gray-500">{t('common.loadingProfile', currentLocale)}</div>
               ) : (
                 <Form {...personalInfoForm}>
-                  <form onSubmit={personalInfoForm.handleSubmit(onPersonalInfoSubmit)}>
+                  <form onSubmit={personalInfoForm.handleSubmit(onPersonalInfoSubmit)} dir={currentLocale === 'ar' ? 'rtl' : 'ltr'}>
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Full Name */}
@@ -244,7 +250,7 @@ export default function StudentProfile() {
                           name="firstName"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>First Name</FormLabel>
+                              <FormLabel>{t('profile.firstName', currentLocale)}</FormLabel>
                               <FormControl>
                                 <Input {...field} />
                               </FormControl>
@@ -257,7 +263,7 @@ export default function StudentProfile() {
                           name="lastName"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Last Name</FormLabel>
+                              <FormLabel>{t('profile.lastName', currentLocale)}</FormLabel>
                               <FormControl>
                                 <Input {...field} />
                               </FormControl>
@@ -275,7 +281,7 @@ export default function StudentProfile() {
                           name="email"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Email</FormLabel>
+                              <FormLabel>{t('profile.email', currentLocale)}</FormLabel>
                               <FormControl>
                                 <Input {...field} type="email" readOnly className="bg-gray-100 cursor-not-allowed" />
                               </FormControl>
@@ -284,7 +290,7 @@ export default function StudentProfile() {
                           )}
                           />
                           <p className="text-xs text-gray-500">
-                            Email cannot be changed
+                            {t('common.emailCannotBeChanged', currentLocale)}
                           </p>
                           </div>
                           
@@ -295,8 +301,8 @@ export default function StudentProfile() {
                           name="departmentName"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Department</FormLabel>
-                              <CustomSelect value={field.value} onChange={field.onChange} placeholder="Select department">
+                              <FormLabel>{t('profile.department', currentLocale)}</FormLabel>
+                              <CustomSelect value={field.value} onChange={field.onChange} placeholder={t('profile.selectDepartment', currentLocale)}>
                                 {departments.map((dept) => (
                                   <CustomSelectOption key={dept.id} value={dept.name}>{dept.name}</CustomSelectOption>
                                 ))}
@@ -314,10 +320,10 @@ export default function StudentProfile() {
                           name="academicYear"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Academic Year</FormLabel>
-                              <CustomSelect value={field.value} onChange={field.onChange} placeholder="Select academic year">
+                              <FormLabel>{t('profile.academicYear', currentLocale)}</FormLabel>
+                              <CustomSelect value={field.value} onChange={field.onChange} placeholder={t('profile.selectAcademicYear', currentLocale)}>
                                 {ACADEMIC_YEARS.map((year) => (
-                                  <CustomSelectOption key={year.value} value={year.label}>{year.label}</CustomSelectOption>
+                                  <CustomSelectOption key={year.value} value={year.label}>{t(`common.academicYears.${year.label.toLowerCase()}`, currentLocale)}</CustomSelectOption>
                                 ))}
                               </CustomSelect>
                               <FormMessage />
@@ -331,10 +337,10 @@ export default function StudentProfile() {
                           name="gender"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Gender</FormLabel>
-                              <CustomSelect value={field.value} onChange={field.onChange} placeholder="Select gender">
+                              <FormLabel>{t('profile.gender', currentLocale)}</FormLabel>
+                              <CustomSelect value={field.value} onChange={field.onChange} placeholder={t('profile.selectGender', currentLocale)}>
                                 {GENDERS.map((g) => (
-                                  <CustomSelectOption key={g.value} value={g.label}>{g.label}</CustomSelectOption>
+                                  <CustomSelectOption key={g.value} value={g.label}>{t(`common.${g.label.toLowerCase()}`, currentLocale)}</CustomSelectOption>
                                 ))}
                               </CustomSelect>
                               <FormMessage />
@@ -350,7 +356,7 @@ export default function StudentProfile() {
                           name="dateOfBirth"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Date of Birth</FormLabel>
+                              <FormLabel>{t('profile.dateOfBirth', currentLocale)}</FormLabel>
                               <FormControl>
                                 <Input
                                   type="date"
@@ -369,7 +375,7 @@ export default function StudentProfile() {
                           name="universityIdNumber"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>University ID</FormLabel>
+                              <FormLabel>{t('profile.universityId', currentLocale)}</FormLabel>
                               <FormControl>
                                 <Input {...field} />
                               </FormControl>
@@ -382,7 +388,7 @@ export default function StudentProfile() {
                     <CardFooter>
                       <Button type="submit" className="bg-[#FF9814] hover:bg-orange-600" disabled={!isFormChanged || isSubmitting}>
                         {isSubmitting ? <span className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full inline-block align-middle"></span> : <Save className="mr-2 h-4 w-4" />}
-                        {isSubmitting ? "Saving..." : "Save Changes"}
+                        {isSubmitting ? t('common.processing', currentLocale) : t('common.save', currentLocale)}
                       </Button>
                     </CardFooter>
                   </form>
@@ -395,11 +401,11 @@ export default function StudentProfile() {
           <TabsContent value="change-password">
             <Card>
               <CardHeader>
-                <CardTitle>Change Password</CardTitle>
-                <CardDescription>Update your password to keep your account secure</CardDescription>
+                <CardTitle>{t('profile.changePassword', currentLocale)}</CardTitle>
+                <CardDescription>{t('profile.passwordSecurity', currentLocale)}</CardDescription>
               </CardHeader>
               <Form {...passwordChangeForm}>
-                <form onSubmit={passwordChangeForm.handleSubmit(onPasswordChangeSubmit)}>
+                <form onSubmit={passwordChangeForm.handleSubmit(onPasswordChangeSubmit)} dir={currentLocale === 'ar' ? 'rtl' : 'ltr'}>
                   <CardContent className="space-y-4">
                     {/* Current Password */}
                     <FormField
@@ -407,7 +413,7 @@ export default function StudentProfile() {
                       name="currentPassword"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Current Password</FormLabel>
+                          <FormLabel>{t('profile.currentPassword', currentLocale)}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Input {...field} type={showCurrent ? "text" : "password"} />
@@ -427,7 +433,7 @@ export default function StudentProfile() {
                       name="newPassword"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>New Password</FormLabel>
+                          <FormLabel>{t('profile.newPassword', currentLocale)}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Input {...field} type={showNew ? "text" : "password"} />
@@ -436,7 +442,7 @@ export default function StudentProfile() {
                               </button>
                             </div>
                           </FormControl>
-                          <FormDescription>Password must be at least 8 characters long.</FormDescription>
+                          <FormDescription>{t('common.passwordRequirements', currentLocale)}</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -448,7 +454,7 @@ export default function StudentProfile() {
                       name="confirmPassword"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Confirm New Password</FormLabel>
+                          <FormLabel>{t('profile.confirmNewPassword', currentLocale)}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Input {...field} type={showConfirm ? "text" : "password"} />
@@ -465,7 +471,7 @@ export default function StudentProfile() {
                   <CardFooter>
                     <Button type="submit" className="bg-red-600 hover:bg-red-700" disabled={!isPasswordDirty || isSubmitting}>
                       {isSubmitting ? <span className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full inline-block align-middle"></span> : <Save className="mr-2 h-4 w-4" />}
-                      {isSubmitting ? "Saving..." : "Change Password"}
+                      {isSubmitting ? t('common.processing', currentLocale) : t('profile.changePassword', currentLocale)}
                     </Button>
                   </CardFooter>
                 </form>

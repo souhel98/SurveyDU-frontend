@@ -1,18 +1,16 @@
-import "./globals.css"
+import type { Metadata } from "next"
 import { Cairo } from "next/font/google"
+import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
 import RoutePreloader from "@/components/ui/RoutePreloader"
 import { LoaderProvider } from "@/components/ui/LoaderContext"
+import LocaleProvider from "@/components/ui/locale-provider"
 
-const cairo = Cairo({ 
-  subsets: ["latin", "arabic"],
-  weight: ["200", "300", "400", "500", "600", "700", "800", "900"],
-  variable: "--font-cairo"
-})
+const cairo = Cairo({ subsets: ["latin"] })
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "SurveyDU - University Survey System",
-  description: "A comprehensive survey system for Damascus University",
+  description: "A comprehensive survey platform for universities, built with Next.js 14 and ASP.NET Core",
 }
 
 export default function RootLayout({
@@ -21,13 +19,15 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={`${cairo.variable} font-cairo`}>
-        <LoaderProvider>
-          <RoutePreloader />
-          {children}
-          <Toaster />
-        </LoaderProvider>
+    <html>
+      <body className={cairo.className}>
+        <LocaleProvider>
+          <LoaderProvider>
+            {children}
+            <Toaster />
+            <RoutePreloader />
+          </LoaderProvider>
+        </LocaleProvider>
       </body>
     </html>
   )

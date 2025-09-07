@@ -5,7 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Save, Eye, EyeOff } from "lucide-react";
-
+import { useTranslation } from "@/hooks/useTranslation";
+import { useLocale } from "@/components/ui/locale-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -54,6 +55,8 @@ const passwordChangeSchema = z
   });
 
 export default function AdminProfile() {
+  const { t } = useTranslation();
+  const { currentLocale } = useLocale();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("personal-info");
   const [showCurrent, setShowCurrent] = useState(false);
@@ -95,8 +98,8 @@ export default function AdminProfile() {
       });
     } catch {
       toast({
-        title: "Error",
-        description: "Failed to load profile.",
+        title: t('common.error', currentLocale),
+        description: t('profile.failedToLoadProfile', currentLocale),
         variant: "destructive",
       });
     } finally {
@@ -112,15 +115,15 @@ export default function AdminProfile() {
         lastName: values.lastName,
       });
       toast({
-        title: "Profile Updated",
-        description: response.data.message || "Your profile information has been updated.",
+        title: t('profile.profileUpdated', currentLocale),
+        description: response.data.message || t('profile.profileUpdateSuccess', currentLocale),
       });
       await fetchProfile();
       window.dispatchEvent(new Event('profile-updated'));
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error?.response?.data?.message || "Failed to update profile.",
+        title: t('common.error', currentLocale),
+        description: error?.response?.data?.message || t('profile.failedToUpdateProfile', currentLocale),
         variant: "destructive",
       });
     } finally {
@@ -137,14 +140,14 @@ export default function AdminProfile() {
         confirmNewPassword: values.confirmPassword,
       });
       toast({
-        title: "Password Changed",
-        description: response.data.message || "Your password has been changed successfully.",
+        title: t('profile.changePassword', currentLocale),
+        description: response.data.message || t('profile.passwordChangeSuccess', currentLocale),
       });
       passwordChangeForm.reset();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error?.response?.data?.message || "Failed to change password.",
+        title: t('common.error', currentLocale),
+        description: error?.response?.data?.message || t('profile.failedToChangePassword', currentLocale),
         variant: "destructive",
       });
     } finally {
@@ -162,8 +165,8 @@ export default function AdminProfile() {
       <main className="container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="personal-info">Personal Information</TabsTrigger>
-            <TabsTrigger value="change-password">Change Password</TabsTrigger>
+            <TabsTrigger value="personal-info">{t('profile.personalInfo', currentLocale)}</TabsTrigger>
+            <TabsTrigger value="change-password">{t('profile.changePassword', currentLocale)}</TabsTrigger>
           </TabsList>
 
           {/* Personal Info */}
@@ -171,17 +174,17 @@ export default function AdminProfile() {
             {loading ? (
               <Card>
                 <CardContent>
-                  <div className="py-8 text-center text-gray-500">Loading profile...</div>
+                  <div className="py-8 text-center text-gray-500">{t('common.loadingProfile', currentLocale)}</div>
                 </CardContent>
               </Card>
             ) : (
               <Card>
                 <CardHeader>
-                  <CardTitle>Personal Information</CardTitle>
-                  <CardDescription>Update your personal details</CardDescription>
+                  <CardTitle>{t('profile.personalInfo', currentLocale)}</CardTitle>
+                  <CardDescription>{t('profile.personalDetails', currentLocale)}</CardDescription>
                 </CardHeader>
                 <Form {...personalInfoForm}>
-                  <form onSubmit={personalInfoForm.handleSubmit(onPersonalInfoSubmit)}>
+                  <form onSubmit={personalInfoForm.handleSubmit(onPersonalInfoSubmit)} dir={currentLocale === 'ar' ? 'rtl' : 'ltr'}>
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
@@ -189,7 +192,7 @@ export default function AdminProfile() {
                           name="firstName"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>First Name</FormLabel>
+                              <FormLabel>{t('profile.firstName', currentLocale)}</FormLabel>
                               <FormControl>
                                 <Input {...field} />
                               </FormControl>
@@ -202,7 +205,7 @@ export default function AdminProfile() {
                           name="lastName"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Last Name</FormLabel>
+                              <FormLabel>{t('profile.lastName', currentLocale)}</FormLabel>
                               <FormControl>
                                 <Input {...field} />
                               </FormControl>
@@ -217,7 +220,7 @@ export default function AdminProfile() {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email</FormLabel>
+                            <FormLabel>{t('profile.email', currentLocale)}</FormLabel>
                             <FormControl>
                               <Input {...field} type="email" readOnly className="bg-gray-100 cursor-not-allowed" />
                             </FormControl>
@@ -225,7 +228,7 @@ export default function AdminProfile() {
                           </FormItem>
                         )}
                       />
-                      <p className="text-xs text-gray-500">Email cannot be changed</p>
+                      <p className="text-xs text-gray-500">{t('common.emailCannotBeChanged', currentLocale)}</p>
                       </div>
                     </CardContent>
                     <CardFooter>
@@ -239,7 +242,7 @@ export default function AdminProfile() {
                         ) : (
                           <Save className="mr-2 h-4 w-4" />
                         )}
-                        {isProfileSubmitting ? "Saving..." : "Save Changes"}
+                        {isProfileSubmitting ? t('profile.saving', currentLocale) : t('profile.saveChanges', currentLocale)}
                       </Button>
                     </CardFooter>
                   </form>
@@ -252,11 +255,11 @@ export default function AdminProfile() {
           <TabsContent value="change-password">
             <Card>
               <CardHeader>
-                <CardTitle>Change Password</CardTitle>
-                <CardDescription>Update your password to keep your account secure</CardDescription>
+                <CardTitle>{t('profile.changePassword', currentLocale)}</CardTitle>
+                <CardDescription>{t('profile.passwordSecurity', currentLocale)}</CardDescription>
               </CardHeader>
               <Form {...passwordChangeForm}>
-                <form onSubmit={passwordChangeForm.handleSubmit(onPasswordChangeSubmit)}>
+                <form onSubmit={passwordChangeForm.handleSubmit(onPasswordChangeSubmit)} dir={currentLocale === 'ar' ? 'rtl' : 'ltr'}>
                   <CardContent className="space-y-4">
                     {/* Current */}
                     <FormField
@@ -264,7 +267,7 @@ export default function AdminProfile() {
                       name="currentPassword"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Current Password</FormLabel>
+                          <FormLabel>{t('profile.currentPassword', currentLocale)}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Input {...field} type={showCurrent ? "text" : "password"} autoComplete="current-password" />
@@ -289,7 +292,7 @@ export default function AdminProfile() {
                       name="newPassword"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>New Password</FormLabel>
+                          <FormLabel>{t('profile.newPassword', currentLocale)}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Input {...field} type={showNew ? "text" : "password"} autoComplete="new-password" />
@@ -303,7 +306,7 @@ export default function AdminProfile() {
                               </button>
                             </div>
                           </FormControl>
-                          <FormDescription>Password must be at least 8 characters long.</FormDescription>
+                          <FormDescription>{t('common.passwordRequirements', currentLocale)}</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -315,7 +318,7 @@ export default function AdminProfile() {
                       name="confirmPassword"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Confirm New Password</FormLabel>
+                          <FormLabel>{t('profile.confirmNewPassword', currentLocale)}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Input {...field} type={showConfirm ? "text" : "password"} autoComplete="new-password" />
@@ -345,7 +348,7 @@ export default function AdminProfile() {
                       ) : (
                         <Save className="mr-2 h-4 w-4" />
                       )}
-                      {isPasswordSubmitting ? "Saving..." : "Change Password"}
+                      {isPasswordSubmitting ? t('profile.saving', currentLocale) : t('profile.changePassword', currentLocale)}
                     </Button>
                   </CardFooter>
                 </form>

@@ -13,7 +13,6 @@ import {
   Filter,
   Edit,
   Copy,
-
   MoreVertical,
   User,
   FileText,
@@ -40,13 +39,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CustomSelect, CustomSelectOption } from "@/components/ui/custom-select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ACADEMIC_YEARS, TARGET_GENDER_SELECT, SURVEY_STATUS_LABELS } from "@/lib/constants"
-
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { useTranslation } from "@/hooks/useTranslation"
+import { useLocale } from "@/components/ui/locale-provider"
 
 export default function TeacherDashboard() {
   const { toast } = useToast();
+  const { t } = useTranslation();
+  const { currentLocale } = useLocale();
   const [surveys, setSurveys] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -99,7 +101,7 @@ export default function TeacherDashboard() {
         setLoading(false);
       })
       .catch((err) => {
-        toast({ title: err.message || "Failed to fetch surveys", variant: "destructive" });
+        toast({ title: err.message || t('teacher.failedToFetchSurveys', currentLocale), variant: "destructive" });
         setLoading(false);
       });
     DepartmentService.getDepartments()
@@ -212,8 +214,8 @@ export default function TeacherDashboard() {
       const duplicatedSurvey = await SurveyService.duplicateTeacherSurvey(surveyId);
       
       toast({
-        title: "Success",
-        description: "Survey duplicated successfully!",
+        title: t('surveys.management.success', currentLocale),
+        description: t('surveys.management.duplicateSurveySuccess', currentLocale),
       })
       
       // Refresh the surveys list
@@ -222,8 +224,8 @@ export default function TeacherDashboard() {
       
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to duplicate survey",
+        title: t('surveys.management.error', currentLocale),
+        description: error.message || t('surveys.management.duplicateSurveyError', currentLocale),
         variant: "destructive"
       })
     } finally {
@@ -237,8 +239,8 @@ export default function TeacherDashboard() {
       await SurveyService.publishTeacherSurvey(surveyId);
       
       toast({
-        title: "Success",
-        description: "Survey published successfully!",
+        title: t('surveys.management.success', currentLocale),
+        description: t('surveys.management.publishSurveySuccess', currentLocale),
       })
       
       // Refresh the surveys list
@@ -247,8 +249,8 @@ export default function TeacherDashboard() {
       
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to publish survey",
+        title: t('surveys.management.error', currentLocale),
+        description: error.message || t('surveys.management.publishSurveyError', currentLocale),
         variant: "destructive"
       })
     } finally {
@@ -262,8 +264,8 @@ export default function TeacherDashboard() {
       await SurveyService.unpublishTeacherSurvey(surveyId);
       
       toast({
-        title: "Success",
-        description: "Survey unpublished successfully and returned to draft status!",
+        title: t('surveys.management.success', currentLocale),
+        description: t('surveys.management.unpublishSurveySuccess', currentLocale),
       })
       
       // Refresh the surveys list
@@ -272,8 +274,8 @@ export default function TeacherDashboard() {
       
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to unpublish survey",
+        title: t('surveys.management.error', currentLocale),
+        description: error.message || t('surveys.management.unpublishSurveyError', currentLocale),
         variant: "destructive"
       })
     } finally {
@@ -309,8 +311,8 @@ export default function TeacherDashboard() {
       // Validate required participants
       if (editingData.requiredParticipants <= 0) {
         toast({
-          title: "Error",
-          description: "Required participants must be greater than 0",
+          title: t('surveys.management.error', currentLocale),
+          description: t('surveys.management.requiredParticipantsError', currentLocale),
           variant: "destructive"
         });
         return;
@@ -323,8 +325,8 @@ export default function TeacherDashboard() {
         
         if (startDate >= endDate) {
           toast({
-            title: "Error",
-            description: "End date must be after start date",
+            title: t('surveys.management.error', currentLocale),
+            description: t('surveys.management.endDateBeforeStartDateError', currentLocale),
             variant: "destructive"
           });
           return;
@@ -357,8 +359,8 @@ export default function TeacherDashboard() {
       await SurveyService.updateTeacherSurveyDates(surveyId, updateData);
       
       toast({
-        title: "Success",
-        description: "Survey updated successfully!",
+        title: t('surveys.management.success', currentLocale),
+        description: t('surveys.management.updateSurveySuccess', currentLocale),
       });
       
       // Refresh the surveys list
@@ -378,8 +380,8 @@ export default function TeacherDashboard() {
       
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update survey",
+        title: t('surveys.management.error', currentLocale),
+        description: error.message || t('surveys.management.updateSurveyError', currentLocale),
         variant: "destructive"
       });
     } finally {
@@ -419,7 +421,7 @@ export default function TeacherDashboard() {
                       <FileText className="h-6 w-6 text-blue-500" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Total Surveys</p>
+                      <p className="text-sm font-medium text-gray-500">{t('teacher.allSurveys', currentLocale)}</p>
                       <h3 className="text-2xl font-bold">{surveys.length}</h3>
                     </div>
                   </div>
@@ -443,7 +445,7 @@ export default function TeacherDashboard() {
                   disabled={activeFilter === "all"}
                 >
                   <FileText className="h-4 w-4" />
-                  {activeFilter === "all" ? "Viewing All Surveys" : "View All Surveys"}
+                  {activeFilter === "all" ? t('teacher.viewingAllSurveys', currentLocale) : t('teacher.viewActiveSurveys', currentLocale)}
                 </Button>
               </CardContent>
             </Card>
@@ -463,7 +465,7 @@ export default function TeacherDashboard() {
                       <BarChart2 className="h-6 w-6 text-emerald-500" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Total Responses</p>
+                      <p className="text-sm font-medium text-gray-500">{t('teacher.allResponses', currentLocale)}</p>
                       <h3 className="text-2xl font-bold">{surveys.reduce((acc: number, s: any) => acc + (s.currentParticipants || 0), 0)}</h3>
                     </div>
                   </div>
@@ -480,7 +482,7 @@ export default function TeacherDashboard() {
                   }}
                 >
                   <BarChart3 className="h-4 w-4" />
-                  {activeFilter === "responses" ? "Show All" : "View Responses"}
+                  {activeFilter === "responses" ? t('teacher.showAllSurveys', currentLocale) : t('surveys.management.viewResponses', currentLocale)}
                 </Button>
               </CardContent>
             </Card>
@@ -504,7 +506,7 @@ export default function TeacherDashboard() {
                     <Play className="h-6 w-6 text-green-500" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Active Surveys</p>
+                    <p className="text-sm font-medium text-gray-500">{t('teacher.activeSurveys', currentLocale)}</p>
                     <h3 className="text-2xl font-bold">{surveys.filter((s: any) => s.status === 'active').length}</h3>
                   </div>
                 </div>
@@ -521,7 +523,7 @@ export default function TeacherDashboard() {
                 }}
               >
                 <Play className="h-4 w-4" />
-                {activeFilter === "active" ? "Show All Surveys" : "View Active Surveys"}
+                {activeFilter === "active" ? t('teacher.showAllSurveys', currentLocale) : t('teacher.viewActiveSurveys', currentLocale)}
               </Button>
             </CardContent>
           </Card>
@@ -541,7 +543,7 @@ export default function TeacherDashboard() {
                     <Clock className="h-6 w-6 text-orange-500" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Draft Surveys</p>
+                    <p className="text-sm font-medium text-gray-500">{t('teacher.draftSurveys', currentLocale)}</p>
                     <h3 className="text-2xl font-bold">{surveys.filter((s: any) => s.status === 'draft').length}</h3>
                   </div>
                 </div>
@@ -558,7 +560,7 @@ export default function TeacherDashboard() {
                 }}
               >
                 <Clock className="h-4 w-4" />
-                {activeFilter === "draft" ? "Show All Surveys" : "View Draft Surveys"}
+                {activeFilter === "draft" ? t('teacher.showAllSurveys', currentLocale) : t('teacher.viewDraftSurveys', currentLocale)}
               </Button>
             </CardContent>
           </Card>
@@ -578,7 +580,7 @@ export default function TeacherDashboard() {
                     <AlertCircle className="h-6 w-6 text-red-500" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Inactive Surveys</p>
+                    <p className="text-sm font-medium text-gray-500">{t('teacher.inactiveSurveys', currentLocale)}</p>
                     <h3 className="text-2xl font-bold">{surveys.filter((s: any) => s.status === 'inactive').length}</h3>
                   </div>
                 </div>
@@ -595,7 +597,7 @@ export default function TeacherDashboard() {
                 }}
               >
                 <AlertCircle className="h-4 w-4" />
-                {activeFilter === "inactive" ? "Show All Surveys" : "View Inactive Surveys"}
+                {activeFilter === "inactive" ? t('teacher.showAllSurveys', currentLocale) : t('teacher.viewInactiveSurveys', currentLocale)}
               </Button>
             </CardContent>
           </Card>
@@ -615,7 +617,7 @@ export default function TeacherDashboard() {
                     <Clock className="h-6 w-6 text-purple-500" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Expired Surveys</p>
+                    <p className="text-sm font-medium text-gray-500">{t('teacher.expiredSurveys', currentLocale)}</p>
                     <h3 className="text-2xl font-bold">{surveys.filter((s: any) => s.status === 'expired').length}</h3>
                   </div>
                 </div>
@@ -632,7 +634,7 @@ export default function TeacherDashboard() {
                 }}
               >
                 <Clock className="h-4 w-4" />
-                {activeFilter === "expired" ? "Show All Surveys" : "View Expired Surveys"}
+                {activeFilter === "expired" ? t('teacher.showAllSurveys', currentLocale) : t('teacher.viewExpiredSurveys', currentLocale)}
               </Button>
             </CardContent>
           </Card>
@@ -652,7 +654,7 @@ export default function TeacherDashboard() {
                     <CheckCircle className="h-6 w-6 text-indigo-500" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Completed Surveys</p>
+                    <p className="text-sm font-medium text-gray-500">{t('teacher.completedSurveys', currentLocale)}</p>
                     <h3 className="text-2xl font-bold">{surveys.filter((s: any) => s.status === 'completed').length}</h3>
                   </div>
                 </div>
@@ -669,7 +671,7 @@ export default function TeacherDashboard() {
                 }}
               >
                 <CheckCircle className="h-4 w-4" />
-                {activeFilter === "completed" ? "Show All Surveys" : "View Completed Surveys"}
+                {activeFilter === "completed" ? t('teacher.showAllSurveys', currentLocale) : t('teacher.viewCompletedSurveys', currentLocale)}
               </Button>
             </CardContent>
           </Card>
@@ -680,21 +682,21 @@ export default function TeacherDashboard() {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              {activeFilter === "responses" && "Surveys with Responses"}
-              {activeFilter === "all" && "All Surveys"}
-              {activeFilter === "active" && "Active Surveys"}
-              {activeFilter === "draft" && "Draft Surveys"}
-              {activeFilter === "inactive" && "Inactive Surveys"}
-              {activeFilter === "expired" && "Expired Surveys"}
-              {activeFilter === "completed" && "Completed Surveys"}
-              {!activeFilter && "Your Surveys"}
+              {activeFilter === "responses" && t('teacher.surveysWithResponses', currentLocale)}
+              {activeFilter === "all" && t('teacher.allSurveys', currentLocale)}
+              {activeFilter === "active" && t('teacher.activeSurveys', currentLocale)}
+              {activeFilter === "draft" && t('teacher.draftSurveys', currentLocale)}
+              {activeFilter === "inactive" && t('teacher.inactiveSurveys', currentLocale)}
+              {activeFilter === "expired" && t('teacher.expiredSurveys', currentLocale)}
+              {activeFilter === "completed" && t('teacher.completedSurveys', currentLocale)}
+              {!activeFilter && t('teacher.yourSurveys', currentLocale)}
             </h1>
-            <p className="text-gray-600 mt-1">Manage your surveys and view analytics</p>
+            <p className="text-gray-600 mt-1">{t('dashboard.teacher.manageAndAnalyze', currentLocale)}</p>
           </div>
           <Link href="/dashboard/teacher/create-survey">
             <Button className="bg-emerald-500 hover:bg-emerald-600">
               <PlusCircle className="h-4 w-4 mr-2" />
-              Create New Survey
+              {t('dashboard.teacher.createNewSurvey', currentLocale)}
             </Button>
           </Link>
         </div>
@@ -705,7 +707,7 @@ export default function TeacherDashboard() {
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Search surveys..."
+              placeholder={t('surveys.management.searchSurveys', currentLocale)}
               className="pl-10"
               value={searchQuery}
               onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
@@ -725,26 +727,26 @@ export default function TeacherDashboard() {
                     setActiveFilter(value);
                   }
                 }}
-                placeholder="Filter by status"
+                placeholder={t('surveys.management.filterByStatus', currentLocale)}
               >
-                <CustomSelectOption value="all">All Surveys</CustomSelectOption>
-                <CustomSelectOption value="responses">Surveys with Responses</CustomSelectOption>
-                <CustomSelectOption value="draft">Draft</CustomSelectOption>
-                <CustomSelectOption value="inactive">Inactive</CustomSelectOption>
-                <CustomSelectOption value="active">Active</CustomSelectOption>
-                <CustomSelectOption value="completed">Completed</CustomSelectOption>
-                <CustomSelectOption value="expired">Expired</CustomSelectOption>
+                <CustomSelectOption value="all">{t('teacher.allSurveys', currentLocale)}</CustomSelectOption>
+                <CustomSelectOption value="responses">{t('teacher.surveysWithResponses', currentLocale)}</CustomSelectOption>
+                <CustomSelectOption value="draft">{t('common.draft', currentLocale)}</CustomSelectOption>
+                <CustomSelectOption value="inactive">{t('common.inactive', currentLocale)}</CustomSelectOption>
+                <CustomSelectOption value="active">{t('common.active', currentLocale)}</CustomSelectOption>
+                <CustomSelectOption value="completed">{t('common.completed', currentLocale)}</CustomSelectOption>
+                <CustomSelectOption value="expired">{t('common.expired', currentLocale)}</CustomSelectOption>
               </CustomSelect>
             </div>
             <div className="w-full md:w-64">
               <CustomSelect
                 value={departmentFilter}
                 onChange={setDepartmentFilter}
-                placeholder="Filter by departments"
+                placeholder={t('surveys.management.filterByDepartments', currentLocale)}
                 multiple
               >
                 <CustomSelectOption value="all" multiple>
-                  All Departments
+                  {t('surveys.management.allDepartments', currentLocale)}
                 </CustomSelectOption>
                 {departments.map((dep) => (
                   <CustomSelectOption key={dep.id} value={String(dep.id)} multiple>
@@ -757,15 +759,15 @@ export default function TeacherDashboard() {
               <CustomSelect
                 value={yearFilter}
                 onChange={setYearFilter}
-                placeholder="Filter by academic years"
+                placeholder={t('surveys.management.filterByAcademicYears', currentLocale)}
                 multiple
               >
                 <CustomSelectOption value="all" multiple>
-                  All Academic Years
+                  {t('surveys.management.allAcademicYears', currentLocale)}
                 </CustomSelectOption>
                 {ACADEMIC_YEARS.map((y) => (
                   <CustomSelectOption key={y.value} value={String(y.value)} multiple>
-                    {y.label}
+                    {t(`common.academicYears.${y.value === 1 ? 'first' : y.value === 2 ? 'second' : y.value === 3 ? 'third' : y.value === 4 ? 'fourth' : 'fifth'}`, currentLocale)}
                   </CustomSelectOption>
                 ))}
               </CustomSelect>
@@ -774,12 +776,12 @@ export default function TeacherDashboard() {
               <CustomSelect
                 value={genderFilter}
                 onChange={setGenderFilter}
-                placeholder="Filter by gender"
+                placeholder={t('surveys.management.filterByGender', currentLocale)}
               >
-                <CustomSelectOption value="all">All Gender</CustomSelectOption>
+                <CustomSelectOption value="all">{t('surveys.management.allGender', currentLocale)}</CustomSelectOption>
                 {TARGET_GENDER_SELECT.filter(g => g.value !== 'all').map((g) => (
                   <CustomSelectOption key={g.value} value={String(g.value)}>
-                    {g.label}
+                    {t(`common.${g.value.toLowerCase()}`, currentLocale)}
                   </CustomSelectOption>
                 ))}
               </CustomSelect>
@@ -797,10 +799,10 @@ export default function TeacherDashboard() {
                   setActiveFilter("all");
                 }}
                 className="flex items-center gap-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50"
-                title="Clear all filters"
+                title={t('surveys.management.clearAllFilters', currentLocale)}
               >
                 <X className="h-4 w-4" />
-                Clear
+                {t('surveys.management.clear', currentLocale)}
               </Button>
             )}
             <div className="flex gap-2">
@@ -815,7 +817,7 @@ export default function TeacherDashboard() {
                 }`}
               >
                 <FileText className="h-4 w-4" />
-                Table
+                {t('surveys.management.table', currentLocale)}
               </Button>
               <Button
                 variant={viewMode === 'cards' ? 'default' : 'outline'}
@@ -828,7 +830,7 @@ export default function TeacherDashboard() {
                 }`}
               >
                 <Grid3X3 className="h-4 w-4" />
-                Grid
+                {t('surveys.management.grid', currentLocale)}
               </Button>
             </div>
           </div>
@@ -839,31 +841,31 @@ export default function TeacherDashboard() {
           <div className="space-y-6">
                           <div>
                 <h2 className="text-2xl font-bold text-gray-900">
-                  {activeFilter === "responses" && "Surveys with Responses"}
-                  {activeFilter === "all" && "All Surveys"}
-                  {activeFilter === "active" && "Active Surveys"}
-                  {activeFilter === "draft" && "Draft Surveys"}
-                  {activeFilter === "inactive" && "Inactive Surveys"}
-                  {activeFilter === "expired" && "Expired Surveys"}
-                  {activeFilter === "completed" && "Completed Surveys"}
-                  {!activeFilter && viewMode === 'cards' && "All Surveys"}
+                  {activeFilter === "responses" && t('teacher.surveysWithResponses', currentLocale)}
+                  {activeFilter === "all" && t('teacher.allSurveys', currentLocale)}
+                  {activeFilter === "active" && t('teacher.activeSurveys', currentLocale)}
+                  {activeFilter === "draft" && t('teacher.draftSurveys', currentLocale)}
+                  {activeFilter === "inactive" && t('teacher.inactiveSurveys', currentLocale)}
+                  {activeFilter === "expired" && t('teacher.expiredSurveys', currentLocale)}
+                  {activeFilter === "completed" && t('teacher.completedSurveys', currentLocale)}
+                  {!activeFilter && viewMode === 'cards' && t('teacher.allSurveys', currentLocale)}
                 </h2>
                 <p className="text-gray-600">
-                  {activeFilter === "responses" && "Surveys that have received responses from participants"}
-                  {activeFilter === "all" && "All surveys created by you"}
-                  {activeFilter === "active" && "Surveys that are currently active and accepting responses"}
-                  {activeFilter === "draft" && "Surveys that are in draft status and not yet published"}
-                  {activeFilter === "inactive" && "Surveys that are inactive and not accepting responses"}
-                  {activeFilter === "expired" && "Surveys that have passed their end date and are no longer accepting responses"}
-                  {activeFilter === "completed" && "Surveys that have been completed and are no longer accepting responses"}
-                  {!activeFilter && viewMode === 'cards' && "All surveys created by you"}
+                  {activeFilter === "responses" && t('teacher.surveysWithResponsesDesc', currentLocale)}
+                  {activeFilter === "all" && t('teacher.allSurveysDesc', currentLocale)}
+                  {activeFilter === "active" && t('teacher.activeSurveysDesc', currentLocale)}
+                  {activeFilter === "draft" && t('teacher.draftSurveysDesc', currentLocale)}
+                  {activeFilter === "inactive" && t('teacher.inactiveSurveysDesc', currentLocale)}
+                  {activeFilter === "expired" && t('teacher.expiredSurveysDesc', currentLocale)}
+                  {activeFilter === "completed" && t('teacher.completedSurveysDesc', currentLocale)}
+                  {!activeFilter && viewMode === 'cards' && t('teacher.allSurveysDesc', currentLocale)}
                 </p>
               </div>
 
             {loading ? (
               <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
-                <p className="mt-4 text-gray-600">Loading surveys...</p>
+                <p className="mt-4 text-gray-600">{t('teacher.loadingSurveys', currentLocale)}</p>
               </div>
             ) : filteredSurveys.length > 0 ? (
                             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -896,27 +898,27 @@ export default function TeacherDashboard() {
                         {survey.status === "draft" ? (
                           <Badge className="bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-200 transition-colors">
                             <Clock className="h-3 w-3 mr-1.5" />
-                            {survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
+                            {t(`common.${survey.status}`, currentLocale)}
                           </Badge>
                         ) : survey.status === "active" ? (
                           <Badge className="bg-green-100 text-green-700 border-green-200 hover:bg-green-200 transition-colors">
                             <Play className="h-3 w-3 mr-1.5" />
-                            {SURVEY_STATUS_LABELS[survey.status as keyof typeof SURVEY_STATUS_LABELS] || survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
+                            {t(`common.${survey.status}`, currentLocale)}
                           </Badge>
                         ) : survey.status === "expired" ? (
                           <Badge className="bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200 transition-colors">
                             <Clock className="h-3 w-3 mr-1.5" />
-                            {SURVEY_STATUS_LABELS[survey.status as keyof typeof SURVEY_STATUS_LABELS] || survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
+                            {t(`common.${survey.status}`, currentLocale)}
                           </Badge>
                         ) : (
                           <Badge className={`
                             ${survey.status === "completed" ? "bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200" : ""}
                             ${survey.status === "inactive" ? "bg-red-100 text-red-700 border-red-200 hover:bg-red-200" : ""}
-                            transition-colors
+                            transition-colors whitespace-nowrap
                           `}>
                             {survey.status === "completed" && <CheckCircle className="h-3 w-3 mr-1.5" />}
                             {survey.status === "inactive" && <AlertCircle className="h-3 w-3 mr-1.5" />}
-                            {SURVEY_STATUS_LABELS[survey.status as keyof typeof SURVEY_STATUS_LABELS] || survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
+                            {t(`common.${survey.status}`, currentLocale)}
                           </Badge>
                         )}
                         
@@ -932,7 +934,7 @@ export default function TeacherDashboard() {
                       {/* Participants Progress */}
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-700">Participants</span>
+                          <span className="text-sm font-medium text-gray-700">{t('teacher.participants', currentLocale)}</span>
                           <span className="text-sm font-bold text-gray-900">{survey.currentParticipants} / {survey.requiredParticipants}</span>
                         </div>
                         <div className="relative">
@@ -957,21 +959,21 @@ export default function TeacherDashboard() {
                         <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
                           <Calendar className="h-4 w-4 text-emerald-500" />
                           <div className="min-w-0">
-                            <p className="text-xs text-gray-500 font-medium">Created</p>
+                            <p className="text-xs text-gray-500 font-medium">{t('teacher.created', currentLocale)}</p>
                             <p className="text-gray-700 truncate">{formattedDates[survey.surveyId || survey.id]?.createdAt || "-"}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
                           <Clock className="h-4 w-4 text-orange-500" />
                           <div className="min-w-0">
-                            <p className="text-xs text-gray-500 font-medium">Expires</p>
+                            <p className="text-xs text-gray-500 font-medium">{t('teacher.expires', currentLocale)}</p>
                             <p className="text-gray-700 truncate">{formattedDates[survey.surveyId || survey.id]?.expiresAt || "-"}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
                           <Target className="h-4 w-4 text-blue-500" />
                           <div className="min-w-0">
-                            <p className="text-xs text-gray-500 font-medium">Gender</p>
+                            <p className="text-xs text-gray-500 font-medium">{t('teacher.gender', currentLocale)}</p>
                             <p className="text-gray-700 truncate">
                               {TARGET_GENDER_SELECT.find(g => g.value.toLowerCase() === String(survey.targetGender).toLowerCase())?.label || survey.targetGender}
                             </p>
@@ -980,11 +982,11 @@ export default function TeacherDashboard() {
                         <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
                           <GraduationCap className="h-4 w-4 text-purple-500" />
                           <div className="min-w-0">
-                            <p className="text-xs text-gray-500 font-medium">Years</p>
+                            <p className="text-xs text-gray-500 font-medium">{t('teacher.years', currentLocale)}</p>
                             {(() => {
                               const academicYearsText = Array.isArray(survey.targetAcademicYears) && survey.targetAcademicYears.length > 0
                                 ? survey.targetAcademicYears.length === ACADEMIC_YEARS.length
-                                  ? "All"
+                                  ? t('teacher.all', currentLocale)
                                   : survey.targetAcademicYears.map((year: number) => {
                                       const found = ACADEMIC_YEARS.find(y => y.value === year);
                                       return found ? found.label : year;
@@ -1024,11 +1026,11 @@ export default function TeacherDashboard() {
                       <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
                         <Building className="h-4 w-4 text-indigo-500" />
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs text-gray-500 font-medium">Departments</p>
+                          <p className="text-xs text-gray-500 font-medium">{t('teacher.departments', currentLocale)}</p>
                           {(() => {
                             const departmentsText = Array.isArray(survey.targetDepartmentIds) && survey.targetDepartmentIds.length > 0
                               ? survey.targetDepartmentIds.length === departments.length
-                                ? "All"
+                                ? t('teacher.all', currentLocale)
                                 : survey.targetDepartmentIds.map((id: number) => {
                                     const found = departments.find(dep => dep.id === id);
                                     return found ? found.name : id;
@@ -1068,7 +1070,7 @@ export default function TeacherDashboard() {
                         <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/statistics`}>
                           <Button className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-medium shadow-sm transition-all duration-200">
                             <BarChart3 className="h-4 w-4 mr-2" />
-                            View Statistics
+                            {t('surveys.management.viewStatistics', currentLocale)}
                           </Button>
                         </Link>
                         
@@ -1076,7 +1078,7 @@ export default function TeacherDashboard() {
                           <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/view`} className="flex-1">
                             <Button variant="outline" size="sm" className="w-full border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 transition-all duration-200">
                               <FileText className="h-3 w-3 mr-1" />
-                              View
+                              {t('surveys.management.view', currentLocale)}
                             </Button>
                           </Link>
                           {(survey.currentParticipants > 0 || survey.status === 'expired') ? (
@@ -1085,10 +1087,10 @@ export default function TeacherDashboard() {
                               size="sm"
                               disabled
                               className="flex-1 border-gray-200 text-gray-400 cursor-not-allowed"
-                              title={survey.currentParticipants > 0 ? "Edit not available when survey has responses" : "Edit not available for expired surveys"}
+                              title={t('surveys.management.editNotAvailable', currentLocale)}
                             >
                               <Edit className="h-3 w-3 mr-1" />
-                              Edit
+                              {t('surveys.management.edit', currentLocale)}
                             </Button>
                           ) : (
                             <Link href={`/dashboard/teacher/create-survey?edit=${survey.surveyId}`} className="flex-1">
@@ -1098,7 +1100,7 @@ export default function TeacherDashboard() {
                                 className="w-full border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200"
                               >
                                 <Edit className="h-3 w-3 mr-1" />
-                                Edit
+                                {t('surveys.management.edit', currentLocale)}
                               </Button>
                             </Link>
                           )}
@@ -1109,7 +1111,7 @@ export default function TeacherDashboard() {
                             className="flex-1 border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all duration-200"
                           >
                             <Settings className="h-3 w-3 mr-1" />
-                            Quick Edit
+                            {t('surveys.management.quickEdit', currentLocale)}
                           </Button>
                           <Popover>
                             <PopoverTrigger asChild>
@@ -1119,22 +1121,22 @@ export default function TeacherDashboard() {
                             </PopoverTrigger>
                             <PopoverContent align="end" className="w-48 p-2">
                               <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/view`} className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded">
-                                <FileText className="h-4 w-4 mr-2" /> View
+                                <FileText className="h-4 w-4 mr-2" /> {t('surveys.management.view', currentLocale)}
                               </Link>
                               {(survey.currentParticipants > 0 || survey.status === 'expired') ? (
                                 <div className="flex items-center w-full px-2 py-2 text-gray-400 cursor-not-allowed">
-                                  <Edit className="h-4 w-4 mr-2" /> Edit (Not available)
+                                  <Edit className="h-4 w-4 mr-2" /> {t('surveys.management.editNotAvailable', currentLocale)}
                                 </div>
                               ) : (
                                 <Link 
                                   href={`/dashboard/teacher/create-survey?edit=${survey.surveyId}`}
                                   className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded text-left"
                                 >
-                                  <Edit className="h-4 w-4 mr-2" /> Edit
+                                  <Edit className="h-4 w-4 mr-2" /> {t('surveys.management.edit', currentLocale)}
                                 </Link>
                               )}
                               <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/statistics`} className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded">
-                                <BarChart2 className="h-4 w-4 mr-2" /> View Statistics
+                                <BarChart2 className="h-4 w-4 mr-2" /> {t('surveys.management.viewStatistics', currentLocale)}
                               </Link>
                               {survey.status === 'draft' && (
                                 <button 
@@ -1143,7 +1145,7 @@ export default function TeacherDashboard() {
                                   disabled={publishingSurveyId === survey.surveyId}
                                 >
                                   <Play className="h-4 w-4 mr-2" /> 
-                                  {publishingSurveyId === survey.surveyId ? "Publishing..." : "Publish"}
+                                  {publishingSurveyId === survey.surveyId ? t('surveys.management.publishing', currentLocale) : t('surveys.management.publish', currentLocale)}
                                 </button>
                               )}
                               {survey.status === 'active' && (
@@ -1157,8 +1159,8 @@ export default function TeacherDashboard() {
                                   disabled={unpublishingSurveyId === survey.surveyId || survey.currentParticipants > 0}
                                 >
                                   <Pause className="h-4 w-4 mr-2" /> 
-                                  {unpublishingSurveyId === survey.surveyId ? "Unpublishing..." : 
-                                   survey.currentParticipants > 0 ? "Unpublish (Not available)" : "Unpublish"}
+                                  {unpublishingSurveyId === survey.surveyId ? t('surveys.management.unpublishing', currentLocale) : 
+                                   survey.currentParticipants > 0 ? t('surveys.management.unpublishNotAvailable', currentLocale) : t('surveys.management.unpublish', currentLocale)}
                                 </button>
                               )}
                               <button 
@@ -1167,7 +1169,7 @@ export default function TeacherDashboard() {
                                 disabled={duplicatingSurveyId === survey.surveyId}
                               >
                                 <Copy className="h-4 w-4 mr-2" /> 
-                                {duplicatingSurveyId === survey.surveyId ? "Duplicating..." : "Duplicate"}
+                                {duplicatingSurveyId === survey.surveyId ? t('surveys.management.duplicating', currentLocale) : t('surveys.management.duplicate', currentLocale)}
                               </button>
 
                             </PopoverContent>
@@ -1184,27 +1186,27 @@ export default function TeacherDashboard() {
                   <Search className="h-8 w-8 text-gray-400" />
                 </div>
                 <h3 className="text-lg font-medium text-gray-900 mb-1">
-                  {activeFilter === "responses" && "No surveys with responses found"}
-                  {activeFilter === "all" && "No surveys found"}
-                  {activeFilter === "active" && "No active surveys found"}
-                  {activeFilter === "draft" && "No draft surveys found"}
-                  {activeFilter === "inactive" && "No inactive surveys found"}
-                  {activeFilter === "expired" && "No expired surveys found"}
-                  {activeFilter === "completed" && "No completed surveys found"}
+                  {activeFilter === "responses" && t('teacher.noSurveysWithResponsesFound', currentLocale)}
+                  {activeFilter === "all" && t('teacher.noSurveysFound', currentLocale)}
+                  {activeFilter === "active" && t('teacher.noActiveSurveysFound', currentLocale)}
+                  {activeFilter === "draft" && t('teacher.noDraftSurveysFound', currentLocale)}
+                  {activeFilter === "inactive" && t('teacher.noInactiveSurveysFound', currentLocale)}
+                  {activeFilter === "expired" && t('teacher.noExpiredSurveysFound', currentLocale)}
+                  {activeFilter === "completed" && t('teacher.noCompletedSurveysFound', currentLocale)}
                 </h3>
                 <p className="text-gray-500 mb-4">
-                  {activeFilter === "responses" && "Surveys will appear here once they receive responses from participants"}
-                  {activeFilter === "all" && "Create your first survey to get started"}
-                  {activeFilter === "active" && "No surveys are currently active"}
-                  {activeFilter === "draft" && "No surveys are currently in draft status"}
-                  {activeFilter === "inactive" && "No surveys are currently inactive"}
-                  {activeFilter === "expired" && "No surveys have expired yet"}
-                  {activeFilter === "completed" && "No surveys have been completed yet"}
+                  {activeFilter === "responses" && t('surveys.management.surveysWillAppearHere', currentLocale)}
+                  {activeFilter === "all" && t('surveys.management.createYourFirstSurvey', currentLocale)}
+                  {activeFilter === "active" && t('surveys.management.noSurveysAreCurrentlyActive', currentLocale)}
+                  {activeFilter === "draft" && t('surveys.management.noSurveysAreCurrentlyInDraftStatus', currentLocale)}
+                  {activeFilter === "inactive" && t('surveys.management.noSurveysAreCurrentlyInactive', currentLocale)}
+                  {activeFilter === "expired" && t('surveys.management.noSurveysHaveExpiredYet', currentLocale)}
+                  {activeFilter === "completed" && t('surveys.management.noSurveysHaveBeenCompletedYet', currentLocale)}
                 </p>
                 <Link href="/dashboard/teacher/create-survey">
                   <Button className="bg-emerald-500 hover:bg-emerald-600">
                     <PlusCircle className="h-4 w-4 mr-2" />
-                    Create New Survey
+                    {t('dashboard.teacher.createNewSurvey', currentLocale)}
                   </Button>
                 </Link>
               </div>
@@ -1218,30 +1220,30 @@ export default function TeacherDashboard() {
               {loading || refreshingSurveys ? (
                 <div className="text-center py-12">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto mb-2"></div>
-                  {refreshingSurveys ? "Refreshing surveys..." : "Loading surveys..."}
+                  {refreshingSurveys ? t('surveys.management.refreshingSurveys', currentLocale) : t('surveys.management.loadingSurveys', currentLocale)}
                 </div>
               ) : filteredSurveys.length > 0 ? (
                 <div className="overflow-x-auto md:overflow-x-hidden">
-                  <table className="w-full min-w-[900px]">
+                  <table className={`w-full min-w-[900px] ${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>
                     <thead>
                       <tr className="border-b">
-                        <th className="text-left py-3 px-4 font-medium text-gray-500 w-40 max-w-xs">Title</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-500">Status</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-500">Created</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-500">Expires</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-500">Participants</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-500">Target Gender</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-500">Academic Years</th>
-                        <th className="text-right py-3 px-4 font-medium text-gray-500">Actions</th>
+                        <th className={`${currentLocale === 'ar' ? 'text-right' : 'text-left'} py-3 px-4 font-medium text-gray-500 w-40 max-w-xs`}>{t('teacher.title', currentLocale)}</th>
+                        <th className={`${currentLocale === 'ar' ? 'text-right' : 'text-left'} py-3 px-4 font-medium text-gray-500`}>{t('teacher.status', currentLocale)}</th>
+                        <th className={`${currentLocale === 'ar' ? 'text-right' : 'text-left'} py-3 px-4 font-medium text-gray-500`}>{t('teacher.created', currentLocale)}</th>
+                        <th className={`${currentLocale === 'ar' ? 'text-right' : 'text-left'} py-3 px-4 font-medium text-gray-500`}>{t('teacher.expires', currentLocale)}</th>
+                        <th className={`${currentLocale === 'ar' ? 'text-right' : 'text-left'} py-3 px-4 font-medium text-gray-500`}>{t('teacher.participants', currentLocale)}</th>
+                        <th className={`${currentLocale === 'ar' ? 'text-right' : 'text-left'} py-3 px-4 font-medium text-gray-500`}>{t('surveys.management.targetGender', currentLocale)}</th>
+                        <th className={`${currentLocale === 'ar' ? 'text-right' : 'text-left'} py-3 px-4 font-medium text-gray-500`}>{t('surveys.management.academicYears', currentLocale)}</th>
+                        <th className={`${currentLocale === 'ar' ? 'text-left' : 'text-right'} py-3 px-4 font-medium text-gray-500`}>{t('teacher.actions', currentLocale)}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredSurveys.map((survey: any, idx: number) => (
-                        <tr key={survey.surveyId} className={`${idx === filteredSurveys.length - 1 ? '' : 'border-b'} hover:bg-gray-50 group`}>
+                        <tr key={survey.surveyId} className={`${idx === filteredSurveys.length - 1 ? '' : 'border-b'} hover:bg-gray-50 group ${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>
                           {/* Title Column */}
-                          <td className="py-3 px-4 text-left">
+                          <td className={`py-3 px-4 ${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>
                             <div>
-                              <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/view`} className=" -m-2 p-2 rounded transition-colors">
+                              <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/view`} className="">
                                 <div className="font-bold text-lg text-emerald-600 hover:text-emerald-700 cursor-pointer break-words max-w-xs" title={survey.title}>
                                   {survey.title}
                                   </div>
@@ -1255,14 +1257,14 @@ export default function TeacherDashboard() {
                           </td>
                           
                           {/* Status Column */}
-                          <td className="py-3 px-4 text-left">
+                          <td className={`py-3 px-4 ${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>
                             {survey.status === "draft" ? (
                               <Badge
                                 variant="outline"
                                 className="bg-orange-50 text-orange-600 border-orange-200 text-xs"
                               >
                                 <Clock className="h-3 w-3 mr-1" />
-                                {survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
+                                {t(`common.${survey.status}`, currentLocale)}
                               </Badge>
                             ) : survey.status === "active" ? (
                               <Badge
@@ -1270,7 +1272,7 @@ export default function TeacherDashboard() {
                                 className="bg-green-50 text-green-600 border-green-200 text-xs"
                               >
                                 <Play className="h-3 w-3 mr-1" />
-                                {SURVEY_STATUS_LABELS[survey.status as keyof typeof SURVEY_STATUS_LABELS] || survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
+                                {t(`common.${survey.status}`, currentLocale)}
                               </Badge>
                             ) : survey.status === "expired" ? (
                               <Badge
@@ -1278,7 +1280,7 @@ export default function TeacherDashboard() {
                                 className="bg-purple-50 text-purple-600 border-purple-200 text-xs"
                               >
                                 <Clock className="h-3 w-3 mr-1" />
-                                {SURVEY_STATUS_LABELS[survey.status as keyof typeof SURVEY_STATUS_LABELS] || survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
+                                {t(`common.${survey.status}`, currentLocale)}
                               </Badge>
                             ) : (
                               <Badge
@@ -1286,23 +1288,24 @@ export default function TeacherDashboard() {
                                 className={`
                                   ${survey.status === "completed" ? "bg-blue-50 text-blue-600 border-blue-200 text-xs" : ""}
                                   ${survey.status === "inactive" ? "bg-red-50 text-red-600 border-red-200 text-xs" : ""}
+                                  whitespace-nowrap
                                 `}
                               >
                                 {survey.status === "completed" && <CheckCircle className="h-3 w-3 mr-1" />}
                                 {survey.status === "inactive" && <AlertCircle className="h-3 w-3 mr-1" />}
-                                {SURVEY_STATUS_LABELS[survey.status as keyof typeof SURVEY_STATUS_LABELS] || survey.status.charAt(0).toUpperCase() + survey.status.slice(1)}
+                                {t(`common.${survey.status}`, currentLocale)}
                               </Badge>
                             )}
                           </td>
                           
                           {/* Created Date Column */}
-                          <td className="py-3 px-4 text-left text-base">{formattedDates[survey.surveyId]?.createdAt || "-"}</td>
+                          <td className={`py-3 px-4 ${currentLocale === 'ar' ? 'text-right' : 'text-left'} text-base`}>{formattedDates[survey.surveyId]?.createdAt || "-"}</td>
                           
                           {/* Expires Date Column */}
-                          <td className="py-3 px-4 text-left text-base">{formattedDates[survey.surveyId]?.expiresAt || "-"}</td>
+                          <td className={`py-3 px-4 ${currentLocale === 'ar' ? 'text-right' : 'text-left'} text-base`}>{formattedDates[survey.surveyId]?.expiresAt || "-"}</td>
                           
                           {/* Participants Column */}
-                          <td className="py-3 px-4 text-left">
+                          <td className={`py-3 px-4 ${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>
                             <div>
                               <div className="font-medium text-base flex items-center gap-2">
                                 {survey.currentParticipants} / {survey.requiredParticipants}
@@ -1322,16 +1325,16 @@ export default function TeacherDashboard() {
                           </td>
                           
                           {/* Target Gender Column */}
-                          <td className="py-3 px-4 text-left text-base">
-                            {TARGET_GENDER_SELECT.find(g => g.value.toLowerCase() === String(survey.targetGender).toLowerCase())?.label || survey.targetGender}
+                          <td className={`py-3 px-4 ${currentLocale === 'ar' ? 'text-right' : 'text-left'} text-base`}>
+                            {survey.targetGender === 'all' ? t('teacher.all', currentLocale) : t(`common.${String(survey.targetGender).toLowerCase()}`, currentLocale)}
                           </td>
                           
                           {/* Academic Years Column */}
-                          <td className="py-3 px-4 text-left text-base">
+                          <td className={`py-3 px-4 ${currentLocale === 'ar' ? 'text-right' : 'text-left'} text-base`}>
                             {(() => {
                               const academicYearsText = Array.isArray(survey.targetAcademicYears) && survey.targetAcademicYears.length > 0
                                 ? survey.targetAcademicYears.length === ACADEMIC_YEARS.length
-                                  ? "All"
+                                  ? t('teacher.all', currentLocale)
                                   : survey.targetAcademicYears.map((year: number) => {
                                       const found = ACADEMIC_YEARS.find(y => y.value === year);
                                       return found ? found.label : year;
@@ -1364,19 +1367,19 @@ export default function TeacherDashboard() {
                           </td>
                           
                           {/* Actions Column */}
-                          <td className="py-3 px-4 text-right">
+                          <td className={`py-3 px-4 ${currentLocale === 'ar' ? 'text-left' : 'text-right'}`}>
                             <div className="flex gap-2 justify-end">
-                              <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/view`}>
+                              {/* <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/view`}>
                                 <Button 
                                   variant="ghost" 
                                   size="sm"
                                   className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                                  title="View Survey"
+                                  title={t('surveys.management.viewSurvey', currentLocale)}
                                 >
                                   <FileText className="h-3 w-3 mr-1" />
-                                  View
+                                  {t('surveys.management.view', currentLocale)}
                                 </Button>
-                              </Link>
+                              </Link> */}
                               <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/statistics`}>
                                 <Button 
                                   variant="ghost" 
@@ -1393,10 +1396,10 @@ export default function TeacherDashboard() {
                                 size="sm"
                                 onClick={() => handleStartEdit(survey)}
                                 className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                                title="Quick Edit"
+                                title={t('surveys.management.quickEdit', currentLocale)}
                               >
                                 <Settings className="h-3 w-3 mr-1" />
-                                Quick Edit
+                                {t('surveys.management.quickEdit', currentLocale)}
                               </Button>
                               <Popover>
                                 <PopoverTrigger asChild>
@@ -1406,22 +1409,22 @@ export default function TeacherDashboard() {
                                 </PopoverTrigger>
                                 <PopoverContent align="end" className="w-48 p-2">
                                   <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/view`} className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded">
-                                    <FileText className="h-4 w-4 mr-2" /> View
+                                    <FileText className="h-4 w-4 mr-2" /> {t('surveys.management.view', currentLocale)}
                                   </Link>
                                   {(survey.currentParticipants > 0 || survey.status === 'expired') ? (
                                     <div className="flex items-center w-full px-2 py-2 text-gray-400 cursor-not-allowed">
-                                      <Edit className="h-4 w-4 mr-2" /> Edit (Not available)
+                                      <Edit className="h-4 w-4 mr-2" /> {t('surveys.management.editNotAvailable', currentLocale)}
                                     </div>
                                   ) : (
                                     <Link 
                                       href={`/dashboard/teacher/create-survey?edit=${survey.surveyId}`}
                                       className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded text-left"
                                     >
-                                      <Edit className="h-4 w-4 mr-2" /> Edit
+                                      <Edit className="h-4 w-4 mr-2" /> {t('surveys.management.edit', currentLocale)}
                                     </Link>
                                   )}
                                   <Link href={`/dashboard/teacher/surveys/${survey.surveyId}/statistics`} className="flex items-center w-full px-2 py-2 hover:bg-gray-100 rounded">
-                                    <BarChart2 className="h-4 w-4 mr-2" /> View Statistics
+                                    <BarChart2 className="h-4 w-4 mr-2" /> {t('surveys.management.viewStatistics', currentLocale)}
                                   </Link>
                                   {survey.status === 'draft' && (
                                     <button 
@@ -1430,7 +1433,7 @@ export default function TeacherDashboard() {
                                       disabled={publishingSurveyId === survey.surveyId}
                                     >
                                       <Play className="h-4 w-4 mr-2" /> 
-                                      {publishingSurveyId === survey.surveyId ? "Publishing..." : "Publish"}
+                                      {publishingSurveyId === survey.surveyId ? t('surveys.management.publishing', currentLocale) : t('surveys.management.publish', currentLocale)}
                                     </button>
                                   )}
                                   {survey.status === 'active' && (
@@ -1444,8 +1447,8 @@ export default function TeacherDashboard() {
                                       disabled={unpublishingSurveyId === survey.surveyId || survey.currentParticipants > 0}
                                     >
                                       <Pause className="h-4 w-4 mr-2" /> 
-                                      {unpublishingSurveyId === survey.surveyId ? "Unpublishing..." : 
-                                       survey.currentParticipants > 0 ? "Unpublish (Not available)" : "Unpublish"}
+                                      {unpublishingSurveyId === survey.surveyId ? t('surveys.management.unpublishing', currentLocale) : 
+                                       survey.currentParticipants > 0 ? t('surveys.management.unpublishNotAvailable', currentLocale) : t('surveys.management.unpublish', currentLocale)}
                                     </button>
                                   )}
                                   <button 
@@ -1454,7 +1457,7 @@ export default function TeacherDashboard() {
                                     disabled={duplicatingSurveyId === survey.surveyId}
                                   >
                                     <Copy className="h-4 w-4 mr-2" /> 
-                                    {duplicatingSurveyId === survey.surveyId ? "Duplicating..." : "Duplicate"}
+                                    {duplicatingSurveyId === survey.surveyId ? t('surveys.management.duplicating', currentLocale) : t('surveys.management.duplicate', currentLocale)}
                                   </button>
 
                                 </PopoverContent>
@@ -1471,12 +1474,12 @@ export default function TeacherDashboard() {
                   <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                     <Search className="h-8 w-8 text-gray-400" />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">No surveys found</h3>
-                  <p className="text-gray-500 mb-4">Try adjusting your search or filter criteria</p>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">{t('teacher.noSurveysFound', currentLocale)}</h3>
+                  <p className="text-gray-500 mb-4">{t('teacher.tryAdjustingSearchOrFilterCriteria', currentLocale)}</p>
                   <Link href="/dashboard/teacher/create-survey">
                     <Button className="bg-emerald-500 hover:bg-emerald-600">
                       <PlusCircle className="h-4 w-4 mr-2" />
-                      Create New Survey
+                      {t('dashboard.teacher.createNewSurvey', currentLocale)}
                     </Button>
                   </Link>
                 </div>
@@ -1488,26 +1491,26 @@ export default function TeacherDashboard() {
 
       {/* Quick Edit Dialog */}
       <Dialog open={quickEditDialogOpen} onOpenChange={setQuickEditDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className={`sm:max-w-[600px] ${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>
           <DialogHeader>
-            <DialogTitle>
-              Quick Edit Survey
+            <DialogTitle className={`${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>
+              {t('surveys.management.quickEditSurvey', currentLocale)}
               {editingSurveyId && surveys.find(s => s.surveyId === editingSurveyId) && (
                 <span className="block text-sm font-normal text-gray-600 mt-1">
                   {surveys.find(s => s.surveyId === editingSurveyId)?.title}
                 </span>
               )}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className={`${currentLocale === 'ar' ? 'text-right' : 'text-left'}`}>
               {editingSurveyId && surveys.find(s => s.surveyId === editingSurveyId)?.status === 'active' && surveys.find(s => s.surveyId === editingSurveyId)?.currentParticipants > 0
-                ? "Update the end date and participant requirements for this active survey. Start date cannot be changed once survey has participants."
+                ? t('surveys.management.updateEndDateAndParticipantRequirementsForActiveSurvey', currentLocale)
                 : editingSurveyId && surveys.find(s => s.surveyId === editingSurveyId)?.status === 'expired' && surveys.find(s => s.surveyId === editingSurveyId)?.currentParticipants > 0
-                ? "Update the end date and participant requirements for this expired survey. Start date cannot be changed once survey has participants."
+                ? t('surveys.management.updateEndDateAndParticipantRequirementsForExpiredSurvey', currentLocale)
                 : editingSurveyId && surveys.find(s => s.surveyId === editingSurveyId)?.status === 'completed' && surveys.find(s => s.surveyId === editingSurveyId)?.currentParticipants > 0
-                ? "Update the end date and participant requirements for this completed survey. Start date cannot be changed once survey has participants."
+                ? t('surveys.management.updateEndDateAndParticipantRequirementsForCompletedSurvey', currentLocale)
                 : editingSurveyId && surveys.find(s => s.surveyId === editingSurveyId)?.status === 'inactive'
-                ? "Update the survey dates and participant requirements for this scheduled survey. All fields can be modified."
-                : "Update the survey dates and participant requirements. Changes will be applied immediately."
+                ? t('surveys.management.updateSurveyDatesAndParticipantRequirementsForScheduledSurvey', currentLocale)
+                : t('surveys.management.updateSurveyDatesAndParticipantRequirements', currentLocale)
               }
             </DialogDescription>
           </DialogHeader>
@@ -1539,12 +1542,12 @@ export default function TeacherDashboard() {
                           ? 'text-purple-800'
                           : 'text-indigo-800'
                       }`}>
-                        Start date is locked because this {surveys.find(s => s.surveyId === editingSurveyId)?.status} survey has participants. Only end date and participant count can be modified.
+                        {t('surveys.management.startDateIsLockedBecauseThisSurveyHasParticipants', currentLocale)}
                       </p>
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('surveys.management.endDate', currentLocale)}</label>
                     <Input
                       type="date"
                       value={editingData.endDate}
@@ -1554,7 +1557,7 @@ export default function TeacherDashboard() {
                     />
                     {surveys.find(s => s.surveyId === editingSurveyId)?.endDate && (
                       <p className="text-xs text-gray-500 mt-1">
-                        Current: {new Date(surveys.find(s => s.surveyId === editingSurveyId)?.endDate).toLocaleString('en-GB', {
+                        {t('surveys.management.current', currentLocale)} {new Date(surveys.find(s => s.surveyId === editingSurveyId)?.endDate).toLocaleString('en-GB', {
                           day: '2-digit',
                           month: '2-digit',
                           year: 'numeric',
@@ -1573,12 +1576,12 @@ export default function TeacherDashboard() {
                     <div className="flex items-center gap-2">
                       <AlertCircle className="h-4 w-4 text-purple-600" />
                       <p className="text-sm text-purple-800">
-                        This survey has expired. Only end date and participant count can be modified.
+                        {t('surveys.management.thisSurveyHasExpired', currentLocale)}
                       </p>
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('surveys.management.endDate', currentLocale)}</label>
                     <Input
                       type="date"
                       value={editingData.endDate}
@@ -1588,7 +1591,7 @@ export default function TeacherDashboard() {
                     />
                     {surveys.find(s => s.surveyId === editingSurveyId)?.endDate && (
                       <p className="text-xs text-gray-500 mt-1">
-                        Current: {new Date(surveys.find(s => s.surveyId === editingSurveyId)?.endDate).toLocaleString('en-GB', {
+                        {t('surveys.management.current', currentLocale)} {new Date(surveys.find(s => s.surveyId === editingSurveyId)?.endDate).toLocaleString('en-GB', {
                           day: '2-digit',
                           month: '2-digit',
                           year: 'numeric',
@@ -1604,7 +1607,7 @@ export default function TeacherDashboard() {
                 // For surveys without participants - show both start and end date
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('surveys.management.startDate', currentLocale)}</label>
                     <Input
                       type="date"
                       value={editingData.startDate}
@@ -1614,7 +1617,7 @@ export default function TeacherDashboard() {
                     />
                     {surveys.find(s => s.surveyId === editingSurveyId)?.startDate && (
                       <p className="text-xs text-gray-500 mt-1">
-                        Current: {new Date(surveys.find(s => s.surveyId === editingSurveyId)?.startDate).toLocaleString('en-GB', {
+                        {t('surveys.management.current', currentLocale)} {new Date(surveys.find(s => s.surveyId === editingSurveyId)?.startDate).toLocaleString('en-GB', {
                           day: '2-digit',
                           month: '2-digit',
                           year: 'numeric',
@@ -1626,7 +1629,7 @@ export default function TeacherDashboard() {
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('surveys.management.endDate', currentLocale)}</label>
                     <Input
                       type="date"
                       value={editingData.endDate}
@@ -1636,7 +1639,7 @@ export default function TeacherDashboard() {
                     />
                     {surveys.find(s => s.surveyId === editingSurveyId)?.endDate && (
                       <p className="text-xs text-gray-500 mt-1">
-                        Current: {new Date(surveys.find(s => s.surveyId === editingSurveyId)?.endDate).toLocaleString('en-GB', {
+                        {t('surveys.management.current', currentLocale)} {new Date(surveys.find(s => s.surveyId === editingSurveyId)?.endDate).toLocaleString('en-GB', {
                           day: '2-digit',
                           month: '2-digit',
                           year: 'numeric',
@@ -1651,7 +1654,7 @@ export default function TeacherDashboard() {
               )}
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Required Participants</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('surveys.management.requiredParticipants', currentLocale)}</label>
                 <Input
                   type="number"
                   min="1"
@@ -1661,7 +1664,7 @@ export default function TeacherDashboard() {
                   placeholder="Minimum: 1"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Current: {surveys.find(s => s.surveyId === editingSurveyId)?.requiredParticipants || 0}
+                  {t('surveys.management.current', currentLocale)} {surveys.find(s => s.surveyId === editingSurveyId)?.requiredParticipants || 0}
                 </p>
               </div>
 
@@ -1671,7 +1674,7 @@ export default function TeacherDashboard() {
                   onClick={handleCancelEdit}
                   disabled={updatingSurveyId !== null}
                 >
-                  Cancel
+                  {t('surveys.management.cancel', currentLocale)}
                 </Button>
                 <Button
                   onClick={() => handleSaveEdit(editingSurveyId)}
@@ -1681,12 +1684,12 @@ export default function TeacherDashboard() {
                   {updatingSurveyId !== null ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Saving...
+                      {t('surveys.management.saving', currentLocale)}
                     </>
                   ) : (
                     <>
                       <Save className="h-4 w-4 mr-2" />
-                      Save Changes
+                      {t('surveys.management.saveChanges', currentLocale)}
                     </>
                   )}
                 </Button>

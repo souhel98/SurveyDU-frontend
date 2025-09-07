@@ -20,6 +20,8 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useTranslation } from "@/hooks/useTranslation"
+import { useLocale } from "@/components/ui/locale-provider"
 
 interface PointsHistoryItem {
   historyId: number
@@ -34,6 +36,8 @@ interface PointsHistoryItem {
 export default function PointsHistory() {
   const { toast } = useToast()
   const router = useRouter()
+  const { t } = useTranslation()
+  const { currentLocale } = useLocale()
   const [history, setHistory] = useState<PointsHistoryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
@@ -53,8 +57,8 @@ export default function PointsHistory() {
       }
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to fetch points history",
+        title: t('common.error', currentLocale),
+        description: error.message || t('points.failedToFetchHistory', currentLocale),
         variant: "destructive"
       })
     } finally {
@@ -86,50 +90,27 @@ export default function PointsHistory() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent mb-4" />
-          <p className="text-gray-600">Loading points history...</p>
+          <p className="text-gray-600">{t('points.loadingHistory', currentLocale)}</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.back()}
-                className="text-gray-600 hover:text-gray-900"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
-              <div className="flex items-center space-x-3">
-                <Award className="h-6 w-6 text-emerald-600" />
-                <h1 className="text-xl font-semibold text-gray-900">Points History</h1>
-              </div>
-            </div>
-            <Link href="/dashboard/student">
-              <Button variant="outline" size="sm">
-                Dashboard
-              </Button>
-            </Link>
-          </div>
+    <div className="container mx-auto px-4 py-6">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <Award className="h-6 w-6 text-emerald-600" />
+          <h1 className="text-2xl font-bold text-gray-900">{t('points.pointsHistory', currentLocale)}</h1>
         </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card className="bg-gradient-to-r from-emerald-50 to-emerald-100 border-emerald-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-emerald-600">Current Balance</p>
+                  <p className="text-sm font-medium text-emerald-600">{t('points.currentBalance', currentLocale)}</p>
                   <p className="text-2xl font-bold text-emerald-900">{currentBalance}</p>
                 </div>
                 <Award className="h-8 w-8 text-emerald-600" />
@@ -141,7 +122,7 @@ export default function PointsHistory() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-green-600">Total Earned</p>
+                  <p className="text-sm font-medium text-green-600">{t('points.totalEarned', currentLocale)}</p>
                   <p className="text-2xl font-bold text-green-900">{totalPointsEarned}</p>
                 </div>
                 <Plus className="h-8 w-8 text-green-600" />
@@ -153,7 +134,7 @@ export default function PointsHistory() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-red-600">Total Spent</p>
+                  <p className="text-sm font-medium text-red-600">{t('points.totalSpent', currentLocale)}</p>
                   <p className="text-2xl font-bold text-red-900">{totalPointsSpent}</p>
                 </div>
                 <Minus className="h-8 w-8 text-red-600" />
@@ -169,7 +150,7 @@ export default function PointsHistory() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Search transactions by description or type..."
+                  placeholder={t('points.searchTransactions', currentLocale)}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -184,10 +165,10 @@ export default function PointsHistory() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <TrendingUp className="h-5 w-5 text-emerald-600" />
-              <span>Points Transaction History</span>
+              <span>{t('points.transactionHistory', currentLocale)}</span>
             </CardTitle>
             <CardDescription>
-              View all your points transactions and earnings
+              {t('points.viewAllTransactions', currentLocale)}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -195,18 +176,18 @@ export default function PointsHistory() {
               <div className="text-center py-12">
                 <Award className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  {searchQuery ? "No matching transactions found" : "No points history yet"}
+                  {searchQuery ? t('points.noMatchingTransactions', currentLocale) : t('points.noHistoryYet', currentLocale)}
                 </h3>
                 <p className="text-gray-500 mb-4">
                   {searchQuery 
-                    ? "Try adjusting your search terms" 
-                    : "Complete surveys to start earning points and see your transaction history here"
+                    ? t('points.tryAdjustingSearch', currentLocale) 
+                    : t('points.completeSurveysToEarn', currentLocale)
                   }
                 </p>
                 {!searchQuery && (
                   <Link href="/dashboard/student">
                     <Button className="bg-emerald-600 hover:bg-emerald-700">
-                      Browse Available Surveys
+                      {t('dashboard.student.browseAvailableSurveys', currentLocale)}
                     </Button>
                   </Link>
                 )}
@@ -218,10 +199,10 @@ export default function PointsHistory() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-gray-200">
-                        <th className="text-left py-3 px-4 font-medium text-gray-900">Transaction</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-900">Amount</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-900">Type</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-900">Date</th>
+                        <th className={`${currentLocale === 'ar' ? 'text-right' : 'text-left'} py-3 px-4 font-medium text-gray-900`}>{t('points.transaction', currentLocale)}</th>
+                        <th className={`${currentLocale === 'ar' ? 'text-right' : 'text-left'} py-3 px-4 font-medium text-gray-900`}>{t('points.amount', currentLocale)}</th>
+                        <th className={`${currentLocale === 'ar' ? 'text-right' : 'text-left'} py-3 px-4 font-medium text-gray-900`}>{t('points.type', currentLocale)}</th>
+                        <th className={`${currentLocale === 'ar' ? 'text-right' : 'text-left'} py-3 px-4 font-medium text-gray-900`}>{t('points.date', currentLocale)}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -229,7 +210,7 @@ export default function PointsHistory() {
                         <tr key={item.historyId} className="border-b border-gray-100 hover:bg-gray-50">
                           <td className="py-4 px-4">
                             <div>
-                              <h4 className="font-medium text-gray-900">{item.description}</h4>
+                              <h4 className="font-medium text-gray-900">{item.description.replace('Completed survey:', t('points.completedSurvey', currentLocale) + ':')}</h4>
                               <p className="text-sm text-gray-600 mt-1">
                                 Transaction ID: {item.historyId}
                               </p>
@@ -244,7 +225,7 @@ export default function PointsHistory() {
                                   : 'bg-red-100 text-red-800 border-red-200'
                               }`}
                             >
-                              {item.transactionType === 'earned' ? '+' : '-'}{item.pointsAmount} points
+                              {item.transactionType === 'earned' ? '+' : '-'}{item.pointsAmount} {t('points.title', currentLocale)}
                             </Badge>
                           </td>
                           <td className="py-4 px-4">
@@ -256,7 +237,7 @@ export default function PointsHistory() {
                                   : 'bg-red-50 text-red-700 border-red-200'
                               }`}
                             >
-                              {item.transactionType.charAt(0).toUpperCase() + item.transactionType.slice(1)}
+                              {t(`points.${item.transactionType}`, currentLocale)}
                             </Badge>
                           </td>
                           <td className="py-4 px-4">
@@ -277,7 +258,7 @@ export default function PointsHistory() {
                     <div key={item.historyId} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
                       <div className="flex items-start justify-between">
                         <div>
-                          <h4 className="font-semibold text-gray-900">{item.description}</h4>
+                          <h4 className="font-semibold text-gray-900">{item.description.replace('Completed survey:', t('points.completedSurvey', currentLocale) + ':')}</h4>
                           <p className="text-xs text-gray-500 mt-1">Transaction ID: {item.historyId}</p>
                         </div>
                         <Badge 
@@ -293,7 +274,7 @@ export default function PointsHistory() {
                             variant="outline" 
                             className={`${item.transactionType === 'earned' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}
                           >
-                            {item.transactionType.charAt(0).toUpperCase() + item.transactionType.slice(1)}
+                            {t(`points.${item.transactionType}`, currentLocale)}
                           </Badge>
                         </div>
                         <div className="flex items-center text-sm text-gray-600">
