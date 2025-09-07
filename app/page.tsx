@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { 
   BookOpen, 
   ChevronRight, 
+  ChevronLeft,
   GraduationCap, 
   BarChart2, 
   MessageSquare, 
@@ -169,7 +170,10 @@ export default function Home2Page() {
                     className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-8 py-4 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group"
                   >
                     {t('home.hero.cta', currentLocale)}
-                    <ChevronRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                    {currentLocale === 'ar' ? 
+                      <ChevronLeft className="mr-2 h-5 w-5 group-hover:-translate-x-1 transition-transform" /> : 
+                      <ChevronRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                    }
                   </Button>
                   <Button
                     variant="outline"
@@ -226,7 +230,7 @@ export default function Home2Page() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              {t('home.features.title', currentLocale)} <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">SurveyDU</span>?
+              {t('home.features.title', currentLocale)} <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">SurveyDU</span>{currentLocale === 'ar' ? ' ؟ ': ' ?' } 
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               {t('home.features.subtitle', currentLocale)}
@@ -288,7 +292,7 @@ export default function Home2Page() {
             {/* For Students */}
             <div className="bg-white p-8 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500">
               <div className="flex items-center mb-8">
-                <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 p-4 rounded-2xl mr-6">
+                <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 p-4 rounded-2xl mr-5">
                   <GraduationCap className="h-10 w-10 text-white" />
                 </div>
                 <h3 className="text-3xl font-bold text-gray-900">{t('home.howItWorks.forStudents', currentLocale)}</h3>
@@ -313,7 +317,7 @@ export default function Home2Page() {
             {/* For Faculty */}
             <div className="bg-white p-8 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500">
               <div className="flex items-center mb-8">
-                <div className="bg-gradient-to-r from-orange-500 to-red-500 p-4 rounded-2xl mr-6">
+                <div className="bg-gradient-to-r from-orange-500 to-red-500 p-4 rounded-2xl mr-5">
                   <BookOpen className="h-10 w-10 text-white" />
                 </div>
                 <h3 className="text-3xl font-bold text-gray-900">{t('home.howItWorks.forFaculty', currentLocale)}</h3>

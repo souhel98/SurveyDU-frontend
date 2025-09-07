@@ -3,16 +3,20 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { BookOpen, ChevronRight, GraduationCap, BarChart2, MessageSquare, Award } from "lucide-react"
+import { BookOpen, ChevronRight, ChevronLeft, GraduationCap, BarChart2, MessageSquare, Award } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Image from "next/image"
 import { AuthService } from "@/lib/services/auth-service"
+import { useLocale } from "@/components/ui/locale-provider"
+import { useTranslation } from "@/hooks/useTranslation"
 
 export default function LandingPage() {
 const router = useRouter()
 const [isMenuOpen, setIsMenuOpen] = useState(false)
 const [isLoading, setIsLoading] = useState(true)
+const { currentLocale } = useLocale()
+const { t } = useTranslation()
 
 // Check authentication and redirect if logged in
 // If user is already logged in, they will be automatically redirected to their dashboard
@@ -136,7 +140,7 @@ return (
                 onClick={() => router.push("/auth/student/signup")}
                 className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-6 text-lg"
                 >
-                Get Started <ChevronRight className="ml-2 h-5 w-5" />
+                Get Started {currentLocale === 'ar' ? <ChevronLeft className="mr-2 h-5 w-5" /> : <ChevronRight className="ml-2 h-5 w-5" />}
                 </Button>
                 <Button
                 variant="outline"

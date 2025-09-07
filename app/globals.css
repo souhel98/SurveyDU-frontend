@@ -40,6 +40,14 @@ body {
   margin-right: 0 !important;
   margin-left: 1rem !important;
 }
+.rtl .mr-5{
+  margin-right: 0 !important;
+  margin-left: 1.25rem !important;
+}
+.rtl .mr-6{
+  margin-right: 0 !important;
+  margin-left: 1.5rem !important;
+}
 
 .rtl .ml-8 {
   margin-left: 0 !important;
