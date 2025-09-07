@@ -244,7 +244,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </div>
             </Link>
             {/* Title and subtitle with better mobile responsiveness */}
-            <div className="flex flex-col justify-center ml-4 min-w-0 flex-1">
+            <div className="flex flex-col justify-center ml-1 min-w-0 flex-1">
               <span className="text-xl md:text-2xl font-bold text-gray-900 leading-tight truncate">{title}</span>
               <span className="hidden md:block text-gray-500 text-sm leading-tight truncate">{subtitle}</span>
             </div>
